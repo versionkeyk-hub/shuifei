@@ -1,0 +1,6 @@
+{
+  "name": "惠民皓天内部技术综合平台",
+  "description": "专为惠民皓天农业科技有限公司打造的各大类作物全周期水肥一体化方案管理、病虫害分类图谱、产品五维实训及标准红头带印章多端导出平台。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
