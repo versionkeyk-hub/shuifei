@@ -96,10 +96,6 @@ export const getStorageData = () => {
       }
     }
 
-    if (!currentUser) {
-      currentUser = users.find(u => u.role === 'super_admin') || users[0];
-    }
-
     return { categories, crops, schemes, pests, users, settings, currentUser };
   } catch (err) {
     console.error('Storage read error:', err);
@@ -110,7 +106,7 @@ export const getStorageData = () => {
       pests: INITIAL_PESTS,
       users: INITIAL_USERS,
       settings: INITIAL_SETTINGS,
-      currentUser: INITIAL_USERS[0],
+      currentUser: null,
     };
   }
 };
@@ -152,7 +148,7 @@ export const resetToInitialData = () => {
   localStorage.setItem(STORAGE_KEYS.PESTS, JSON.stringify(INITIAL_PESTS));
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(INITIAL_SETTINGS));
-  localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_USERS[0]));
+  localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
   return getStorageData();
 };
 

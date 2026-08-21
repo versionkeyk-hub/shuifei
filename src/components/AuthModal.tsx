@@ -1,84 +1,98 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Shield, User, CheckCircle2, AlertCircle, X, Lock } from 'lucide-react';
+import { LogIn, UserPlus, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { AppUser } from '../types';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: AppUser | null;
-  users: AppUser[];
   onLogin: (user: AppUser) => void;
   onLogout: () => void;
-  onRegisterSubmit: (newUser: Partial<AppUser>) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   currentUser,
-  users,
   onLogin,
   onLogout,
-  onRegisterSubmit,
 }) => {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [realName, setRealName] = useState('');
   const [phone, setPhone] = useState('');
   const [department, setDepartment] = useState('');
   const [registerSubmitted, setRegisterSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-
-    const targetUser = users.find(
-      (u) => u.username.toLowerCase() === username.trim().toLowerCase()
-    );
-
-    if (!targetUser) {
-      setErrorMsg('未找到该账号，若新用户请先注册并等待管理员审核');
-      return;
-    }
-
-    if (targetUser.status === 'pending') {
-      setErrorMsg('该账号注册申请正在审核中，请联系管理员在后台“成员审核”中通过');
-      return;
-    }
-
-    if (targetUser.status === 'rejected') {
-      setErrorMsg('该账号申请已被拒绝，请联系管理员');
-      return;
-    }
-
-    onLogin(targetUser);
-    onClose();
+  const toAppRole = (role: string): AppUser['role'] => {
+    if (role === 'super_admin' || role === 'admin') return role;
+    if (role === 'staff') return 'member';
+    if (role === 'dealer') return 'expert';
+    return 'viewer';
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !realName.trim()) {
-      setErrorMsg('请填写账号和真实姓名');
+    setErrorMsg('');
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      const payload = await response.json() as {
+        token?: string;
+        error?: string;
+        user?: { id: string; username: string; display_name: string; role: string };
+      };
+      if (!response.ok || !payload.token || !payload.user) throw new Error(payload.error || '账号或密码错误');
+      sessionStorage.setItem('hmht_api_token', payload.token);
+      onLogin({
+        id: payload.user.id,
+        username: payload.user.username,
+        realName: payload.user.display_name,
+        role: toAppRole(payload.user.role),
+        status: 'approved',
+        registeredAt: new Date().toISOString().slice(0, 10),
+      });
+      setPassword('');
+      onClose();
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : '登录失败，请稍后重试');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim() || !realName.trim() || !password) {
+      setErrorMsg('请填写账号、真实姓名和密码');
       return;
     }
-
-    const exists = users.some((u) => u.username.toLowerCase() === username.trim().toLowerCase());
-    if (exists) {
-      setErrorMsg('该账号已被使用，请换一个用户名');
-      return;
+    setErrorMsg('');
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), display_name: realName.trim(), password }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || '注册申请提交失败');
+      setPassword('');
+      setRegisterSubmitted(true);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : '注册申请提交失败');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onRegisterSubmit({
-      username: username.trim(),
-      realName: realName.trim(),
-      phone: phone.trim(),
-      department: department.trim() || '业务部',
-    });
-
-    setRegisterSubmitted(true);
   };
 
   return (
@@ -114,32 +128,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <p className="text-xs text-slate-400 mt-0.5">
                   账号: {currentUser.username} · 部门: {currentUser.department}
                 </p>
-              </div>
-            </div>
-
-            {/* Quick Switch User Demo Bar */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-600 block">
-                快速切换身份体验（演示）：
-              </span>
-              <div className="space-y-1.5">
-                {users.map((u) => (
-                  <button
-                    key={u.id}
-                    onClick={() => {
-                      onLogin(u);
-                      onClose();
-                    }}
-                    className={`w-full p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors border ${
-                      currentUser.id === u.id
-                        ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold'
-                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>{u.realName} ({u.role === 'super_admin' || u.role === 'admin' ? '管理员' : '普通伙伴'})</span>
-                    <span className="text-[10px] text-slate-400 font-mono">@{u.username}</span>
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -224,12 +212,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     required
                   />
                 </div>
-
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500 space-y-1">
-                  <div className="font-bold text-slate-700">💡 演示账号快速登录：</div>
-                  <div>• 管理员账号: <code className="bg-slate-200 px-1 rounded text-slate-800">admin</code></div>
-                  <div>• 专家账号: <code className="bg-slate-200 px-1 rounded text-slate-800">expert1</code></div>
-                  <div>• 公司伙伴账号: <code className="bg-slate-200 px-1 rounded text-slate-800">partner1</code></div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">密码</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="输入密码"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-hidden font-medium"
+                    required
+                  />
                 </div>
 
                 <button
@@ -237,7 +229,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-colors text-xs flex items-center justify-center gap-1.5"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>立即登录</span>
+                  <span>{isSubmitting ? '验证中…' : '安全登录'}</span>
                 </button>
               </form>
             ) : (
@@ -262,6 +254,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onChange={(e) => setRealName(e.target.value)}
                     placeholder="如: 李伟"
                     className="w-full p-2 border border-slate-300 rounded-xl"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">登录密码 *</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="至少 8 位"
+                    className="w-full p-2 border border-slate-300 rounded-xl"
+                    minLength={8}
                     required
                   />
                 </div>
@@ -293,7 +298,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md transition-colors text-xs flex items-center justify-center gap-1.5"
                 >
                   <UserPlus className="w-4 h-4" />
-                  <span>提交审核申请</span>
+                  <span>{isSubmitting ? '提交中…' : '提交审核申请'}</span>
                 </button>
               </form>
             )}

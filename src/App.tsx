@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Crop,
   CropCategory,
@@ -20,6 +20,7 @@ import { PestGalleryView } from './components/PestGalleryView';
 import { LocalImporterView } from './components/LocalImporterView';
 import { ExportStudioView } from './components/ExportStudioView';
 import { ProductQuizView } from './components/ProductQuizView';
+import { CatalogStats, ProductLibraryView } from './components/ProductLibraryView';
 import { AdminSettingsView } from './components/AdminSettingsView';
 import { UserApprovalView } from './components/UserApprovalView';
 import { CommunityView } from './components/CommunityView';
@@ -86,7 +87,7 @@ export const App: React.FC = () => {
   const [pests, setPests] = useState<PestDiseaseItem[]>(initial.pests);
   const [users, setUsers] = useState<AppUser[]>(initial.users);
   const [settings, setSettings] = useState<SystemSettings>(initial.settings);
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(initial.currentUser);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => sessionStorage.getItem('hmht_api_token') ? initial.currentUser : null);
 
   // Community Comments State
   const [comments, setComments] = useState<CommunityComment[]>(() => {
@@ -102,11 +103,13 @@ export const App: React.FC = () => {
   });
 
   // Navigation & View State
-  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<NavTab>(() => window.location.pathname === '/admin' ? 'product_library' : 'dashboard');
   const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
   const [cropInitialTab, setCropInitialTab] = useState<'scheme' | 'pest'>('scheme');
   const [previousSourceTab, setPreviousSourceTab] = useState<NavTab>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [catalogStats, setCatalogStats] = useState<CatalogStats>({ products: 43, skus: 320, pesticides: 74, products_with_legacy_images: 15, source: 'snapshot' });
+  const handleCatalogStatsChange = useCallback((nextStats: CatalogStats) => setCatalogStats(nextStats), []);
 
   // Modals state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -244,11 +247,8 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    sessionStorage.removeItem('hmht_api_token');
     setCurrentUser(null);
-  };
-
-  const handleRegisterSubmit = (newUser: AppUser) => {
-    setUsers([...users, newUser]);
   };
 
   const handleUpdateUserProfile = (updatedUser: AppUser) => {
@@ -356,6 +356,8 @@ export const App: React.FC = () => {
         pendingUsersCount={pendingUsersCount}
         totalCropsCount={crops.length}
         commentsCount={comments.length}
+        totalProductCatalogCount={catalogStats.products}
+        totalPesticideIngredients={catalogStats.pesticides}
         hasUnreadComments={false}
         onOpenVersionModal={() => setIsVersionModalOpen(true)}
       />
@@ -401,6 +403,8 @@ export const App: React.FC = () => {
                 setActiveTab('crops');
               }}
               onOpenProductQuiz={() => setActiveTab('product_quiz')}
+              catalogStats={catalogStats}
+              onNavigateToProductLibrary={() => setActiveTab('product_library')}
               onOpenQuickAI={() => setActiveTab('local_import')}
               onOpenNewScheme={() => {
                 setSelectedCropId(crops[0]?.id || null);
@@ -508,6 +512,15 @@ export const App: React.FC = () => {
             <ProductQuizView currentUser={currentUser} />
           )}
 
+          {activeTab === 'product_library' && (
+            <ProductLibraryView
+              currentUser={currentUser}
+              initialMode={window.location.pathname === '/admin' ? 'admin' : 'catalog'}
+              onStatsChange={handleCatalogStatsChange}
+              onNavigateToCrops={() => setActiveTab('crops')}
+            />
+          )}
+
           {activeTab === 'local_import' && (
             <LocalImporterView
               crops={crops}
@@ -548,10 +561,11 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'users_approval' && (
-            <UserApprovalView
-              users={users}
+            <ProductLibraryView
               currentUser={currentUser}
-              onUpdateUsers={setUsers}
+              initialMode="admin"
+              onStatsChange={handleCatalogStatsChange}
+              onNavigateToCrops={() => setActiveTab('crops')}
             />
           )}
         </main>
@@ -562,10 +576,8 @@ export const App: React.FC = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         currentUser={currentUser}
-        users={users}
         onLogin={handleLogin}
         onLogout={handleLogout}
-        onRegisterSubmit={handleRegisterSubmit}
       />
 
       {/* Version & Release Notes Modal */}

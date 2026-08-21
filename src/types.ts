@@ -259,6 +259,7 @@ export interface SystemSettings {
     community?: string;
     local_import?: string;
     product_quiz?: string;
+    product_library?: string;
     admin_settings?: string;
     users_approval?: string;
     profile_settings?: string;
@@ -287,6 +288,7 @@ export type NavTab =
   | 'pests'
   | 'community'
   | 'product_quiz'
+  | 'product_library'
   | 'local_import'
   | 'export_studio'
   | 'admin_settings'

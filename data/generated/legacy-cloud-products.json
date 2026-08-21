@@ -1,0 +1,934 @@
+{
+  "source": {
+    "kind": "legacy-supabase-products-readonly-snapshot",
+    "sha256": "125f8b93ac115131b5387dc7b0630c2c90e5414329daf60dee87c3a5c8ece947"
+  },
+  "products": [
+    {
+      "legacy_id": "fengshuo",
+      "updated_at": "2026-07-29T08:00:29.23963+00:00",
+      "data": {
+        "id": "fengshuo",
+        "name": "沣硕40+",
+        "intro": "微量元素水溶肥料（粉剂），含硅钙镁等40余种矿物元素，促花芽分化、防裂果、抗逆：\n\n是利用韩国独有的矿物质提纯，通过离心和活化技术提取出的多营养肥料，产品富含农作物生长所需的微量元素、中量元素、稀土元素和有益元素等多种成分，通过给农作物生长中补充均衡的养分，有助于农作物更好的生长发育，提高农产品产出和质量，本产品对农作物安全，对土壤环境友好，对农作物生长和农产品质量起到积极的帮助。",
+        "usage": "叶喷1200-1500倍（严重800-1000倍）；灌根150g/亩；飞防150g/5亩。",
+        "images": [
+          "images/products/沣硕 (1).png",
+          "images/products/沣硕.png"
+        ],
+        "origin": "韩国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "微量元素水溶肥料",
+        "functions": "促花芽分化、防裂果、增强抗逆性、补充硅钙及中微量元素：\n\n1.预防因缺乏营养元素带来的缺素黄化；\n2.促进花芽分化，促花保果；\n3.预防脐腐，畸形果，减少落果。\n4.预防裂果、气果，提升果实硬度和口感。\n5.提升农作物茎秆和叶片强度，提高光合作用，提升抗倒伏能力。",
+        "advantages": "含40余种矿物元素，营养全面；粉剂易溶，飞防灌根均可：\n\n1. 纯天然矿物质活化而成，获得有机材料认证，适合于高品质及有机农场栽培。\n2. 特有的硅钙同补，解决传统化学元素拮抗问题，混用性好，安全性高；\n3. 一次性补充中量元素、微量元素、有益元素、稀土元素达40余种，为用户节省成本；",
+        "description": "",
+        "ingredients": "SiO2 38.6%、CaO 16.1%、MgO 0.5%、K2O 3.17%、P2O5 0.13%、B 3.16%、Fe2O3 3.18%、MnO 2.44%、Zn 2.24%、Cu 0.52%、Mo 0.002%、TiO2 0.28%，另含锗、钴、锶、钒、硒、稀土等微量元素",
+        "mix_profile": {
+          "ph": "7",
+          "is_acidic": false,
+          "has_copper": true,
+          "has_calcium": true,
+          "has_microbe": false,
+          "has_silicon": true,
+          "is_alkaline": true,
+          "copper_level": "medium",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": true
+        },
+        "price_range": "150g/39.9元，600g/138元",
+        "manufacturer": "韩国丰产生物株式会社",
+        "custom_fields": [
+          {
+            "label": "产品混用禁忌",
+            "value": "傲土"
+          },
+          {
+            "label": "使用注意事项",
+            "value": "1)本品为天然矿物质肥料，配水后静置情况下会有少许沉底不溶物，不影响效果，建议使用时开启搅拌器;2)叶面喷雾后叶片形成的粉末为离子保护膜，具有长效释放和叶面保护的作用，不伤叶片及果实;3)本品可与大部分农药混合使用，强酸强碱除外;4)喷施后4小时内下雨会对肥效带来影响，建议重新补喷;5)有轻微氨刺鼻味属正常现象，非高氮肥料，不影响使用安全;6)本品易吸潮，开盖后未使用完的产品及时密封，存放于阴凉干燥处。"
+          }
+        ],
+        "registrations": {
+          "record_number": "WLSRJK2024-00744",
+          "import_contract": "XW2025-PS001",
+          "execution_standard": "NY1428-2010",
+          "customs_declaration": "520220251025060338"
+        },
+        "specifications": [
+          {
+            "form": "粉剂",
+            "name": "15g",
+            "image": "",
+            "formula": "",
+            "capacity": "15g"
+          },
+          {
+            "form": "粉剂",
+            "name": "150g",
+            "image": "",
+            "formula": "",
+            "capacity": "150g"
+          },
+          {
+            "form": "粉剂",
+            "name": "600g",
+            "image": "",
+            "formula": "",
+            "capacity": "600g"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、大田作物均可",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "aolan",
+      "updated_at": "2026-07-29T09:41:02.379059+00:00",
+      "data": {
+        "id": "aolan",
+        "name": "傲岚",
+        "intro": "磷酸二氢钾（粉剂），农用优等品，KH2PO4≥99%\n\n本品采用纯热法工艺制造，产品纯度高，易溶解、吸收快，无杂质、无重金属物质，可满足作物在不同时期对磷元素的需求。磷元素是农作物生长必需的营养元素，有助于促进农作物根系发育，促进花芽分化和开花，提升果实甜度，辅助果实转色，增强农作物的抗逆能力，属于高效又安全的大量元素营养。",
+        "usage": "500倍或2-5kg/亩。粉剂，喷施为主也可冲施滴灌",
+        "images": [
+          "images/products/aolan_200g.png",
+          "images/products/aolan_1kg.png"
+        ],
+        "origin": "中国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "磷酸二氢钾",
+        "functions": "促花促果、膨果着色、增强抗逆\n\n促进根系发育：磷元素有助于促进作物根系生长，提高水分和养分吸收能力。\n促进花芽分化与开花：可辅助作物顺利完成开花、坐果等生殖生长过程。\n提升果实品质：有助于果实发育、转色和甜度积累，提升商品品质。\n增强抗逆能力：帮助作物提高对干旱、低温等不良环境的适应能力。\n纯度高、易吸收：采用纯热法工艺制造，溶解性好，吸收效率高，使用更安全。",
+        "advantages": "KH2PO4≥99%农用优等品；高纯度磷酸二氢钾",
+        "description": "",
+        "ingredients": "磷酸二氢钾（KH2PO4），P2O5≥52%、K2O≥34%",
+        "mix_profile": {
+          "ph": "6",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": true
+        },
+        "price_range": "200g/9.9元，1kg/26.8元",
+        "manufacturer": "深圳惠民皓天生态科技有限公司",
+        "custom_fields": [],
+        "registrations": {
+          "product_grade": "农用优等品",
+          "execution_standard": "HG/T2321-2016"
+        },
+        "specifications": [
+          {
+            "form": "粉剂",
+            "name": "200g",
+            "image": "images/products/aolan_200g.png",
+            "formula": "",
+            "capacity": "200g"
+          },
+          {
+            "form": "粉剂",
+            "name": "1kg",
+            "image": "images/products/aolan_1kg.png",
+            "formula": "",
+            "capacity": "1000g"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类、大田作物均可",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "chutoumao_yudanbai",
+      "updated_at": "2026-07-30T08:43:41.796124+00:00",
+      "data": {
+        "id": "chutoumao_yudanbai",
+        "name": "锄头猫·有机水溶肥",
+        "intro": "有机水溶肥料（水剂），含氨基酸、黄腐酸、蛋白质及微生物菌剂，生根养根",
+        "usage": "幼苗期2.5L灌根1-2亩，开花结果期灌根1亩，或250-300倍。液体根际肥",
+        "images": [
+          "images/products/chutoumaoyoujifei1.png"
+        ],
+        "origin": "韩国",
+        "seller": "锄头邦网络科技（深圳）有限公司",
+        "category": "有机水溶肥",
+        "functions": "生根养根、改良根际环境、促进根系发育",
+        "advantages": "氨基酸+黄腐酸+蛋白质+微生物四效合一；生根养根",
+        "description": "",
+        "ingredients": "NPK 60g/L、Ca+Mg 5g、B+Zn+Fe 20g/L、有机质180g/L、腐殖酸30g/L、黄腐酸100g/L、氨基酸≥100g/L、蛋白质200g/L、微生物菌剂0.5亿/mL",
+        "mix_profile": {
+          "ph": "3.5",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": true,
+          "has_humic_acid": true,
+          "has_phosphorus": true
+        },
+        "price_range": "44元/桶",
+        "manufacturer": "韩国阿米诺实验室株式会社",
+        "custom_fields": [],
+        "registrations": {
+          "execution_standard": "NY 1429-2010",
+          "fertilizer_registration": "农肥(2025)准字20124号"
+        },
+        "specifications": [
+          {
+            "form": "水剂",
+            "name": "2.5L",
+            "image": "",
+            "formula": "",
+            "capacity": "2.5L"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类、大田作物均可",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "heiyan",
+      "updated_at": "2026-07-30T08:44:29.345686+00:00",
+      "data": {
+        "id": "heiyan",
+        "name": "黑岩",
+        "intro": "含氨基酸水溶肥料（水剂），富含多种氨基酸及微量元素，抗逆促长：\n\n黑岩系韩国阿米诺实验室株式会社 (AMINOLAB) 研发生产，产品以动植物双原料提取，专利酵素低温发酵技术，富含高含量的游离氨基酸，氨基酸种类达到 18 种以上，不含氯离子，分子量小，同时添加多种葡萄糖酸螯合的硼铁锰锌钼等微量元素，产品含量高，吸收好。通过补充丰富的氨基酸有利于帮助作物提升对不良环境适应能力、异常气候抵抗力、有助于解除休眠、增加叶绿素含量、促进根系发育、帮助农作物提升开花稳果、品质及产量的水平，属于清洁工艺产品，对环境及作物友好。",
+        "usage": "飞防1L/15亩；灌根1L/2亩；800-1000倍喷雾。液体叶面肥",
+        "images": [
+          "images/products/heiyan_20ml.png",
+          "images/products/heiyan_250ml.png",
+          "images/products/heiyan_1000ml.png"
+        ],
+        "origin": "韩国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "含氨基酸水溶肥料",
+        "functions": "抗逆（抗旱抗寒）、促花保果、膨果增甜、缓解药害：\n\n1.本品氨基酸种类全、吸收率高，有利于农作物生理机能活跃，促进各器官的发育作用；\n2.有助于农作物加快营养元素的运转，增加叶绿素含量，提高光合效率；\n3.补充氨基酸有利于打破作物休眠，帮助提升花芽分化、促花稳果、果实着色、提高甜度和品质的作用；\n4.合理的使用氨基酸可帮助农作物提升抗寒和逆境生长能力，帮助农作物在低温、高温情况下更快的恢复生长；\n5.如因农药使用不当造成的药害，使用氨基酸有助于缓解药害影响。",
+        "advantages": "总氨基酸≥486g/L，20种氨基酸全覆盖；抗逆膨果双效：\n\n1. 酵素低温酶解工艺，富含18种以上氨基酸，给农作物补充全面的氨基酸营养；\n2. 动植物双源氨基酸，互补动物和植物氨基酸的含量及吸收缺陷；\n3. 486g/L的游离氨基酸，是普通氨基酸肥料的游离氨基酸含量3-4倍，含量更高，用量更少",
+        "description": "",
+        "ingredients": "总氨基酸≥486g/L、游离氨基酸100g/L（谷氨酸28.47%、甘氨酸14.16%、丙氨酸12.18%、天冬氨酸8.36%、脯氨酸6.94%等20种）、有机氮≥80g/L、B 6.8g/L、Fe 12g/L、Mn 5.5g/L、Zn 1.6g/L、Mo 0.5g/L、Cu 0.05g/L",
+        "mix_profile": {
+          "ph": "6.5",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "trace",
+          "has_amino_acid": true,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "250ml/44.9元，1000ml/149.9元",
+        "manufacturer": "韩国阿米诺实验室株式会社",
+        "custom_fields": [],
+        "registrations": {
+          "import_contract": "HMCG06-AL001",
+          "execution_standard": "NY1429-2010",
+          "customs_declaration": "425820261000062043",
+          "fertilizer_registration": "农肥（2025）准字20124号"
+        },
+        "specifications": [
+          {
+            "form": "粉剂/袋装",
+            "name": "20ml",
+            "image": "images/products/heiyan_20ml.png",
+            "formula": "",
+            "capacity": "20ml"
+          },
+          {
+            "form": "水剂",
+            "name": "250ml",
+            "image": "images/products/heiyan_250ml.png",
+            "formula": "",
+            "capacity": "250ml"
+          },
+          {
+            "form": "水剂",
+            "name": "1000ml",
+            "image": "images/products/heiyan_1000ml.png",
+            "formula": "",
+            "capacity": "1000ml"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类、经济作物均可",
+        "pesticide_compat": [
+          {
+            "reason": "氨基酸与铜离子发生络合反应，降低双方药效",
+            "status": "forbidden",
+            "pesticide": "铜制剂"
+          },
+          {
+            "reason": "含铜，与氨基酸络合",
+            "status": "forbidden",
+            "pesticide": "波尔多液"
+          },
+          {
+            "reason": "强碱性，建议间隔使用",
+            "status": "caution",
+            "pesticide": "石硫合剂"
+          }
+        ]
+      }
+    },
+    {
+      "legacy_id": "aomai",
+      "updated_at": "2026-07-29T07:56:42.055073+00:00",
+      "data": {
+        "id": "aomai",
+        "name": "傲脉",
+        "intro": "有机水溶肥料（水剂），零激素营养型生根肥，调土生根、促长提质:\n\n韩国进口有机水溶肥，核心成分黄腐酸≥280g/L、蛋白质≥220g/L、有机质≥320g/L，另含18种氨基酸及钙镁硼锌。根际肥，冲施滴灌，不做叶喷。零激素营养型生根养根，短期生毛细根、中期根系健壮、长期养根护根三重效果。改善土壤板结、酸化、盐渍化，促进团粒结构形成，抗重茬。激活内源酶提高免疫力，抵御冻害，减少落果畸形和土传病害。配合微生物菌剂（傲生）使用效果最佳，可降氮磷钾用量20-30%。五大核心产品之一，根际肥销量TOP1。注意：蛋白质含氮，转色期禁用。",
+        "usage": "定根300-500倍或2-3kg/亩；提苗/膨果250-300倍或4-5kg/亩。液体根际肥，不做叶喷。注意：蛋白质含氮，表皮转色困难的果实慎用。",
+        "images": [
+          "images/products/aomai_4kg.png",
+          "images/products/aomai_20kg.png"
+        ],
+        "origin": "韩国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "有机水溶肥料",
+        "functions": "生根养根、改良土壤、促进根系发育、无激素\n1.补充土壤有机质：补充土壤有机质可改善土壤物理性质，提升土壤保水保肥能力，促进微生物活动，缓解土壤酸化、板结和盐渍化。\n2.促生根壮苗：提高土壤有益微生物活跃度，抗重茬连作障碍，促进主根和毛细根生长，提升氮磷钾吸收效率。\n3.促长提升品质：富含 18 种以上氨基酸、蛋白质、钙镁和微量元素，让作物吸收更全面均衡的营养物质，提升水果蔬菜的品质，提高农产品甜度、品质和口感。\n4.提高作物活力：提升作物内源生物酶活性，调节作物生理机能，有助于提升作物抗逆能力，减少土传问题，促进作物健康生长。",
+        "advantages": "零激素，生根不依赖刺激；黄腐酸+鱼蛋白+氨基酸三重有机营养",
+        "description": "",
+        "ingredients": "有机质320g/L、黄腐酸280g/L、蛋白质220g/L、腐殖酸30g/L、游离氨基酸≥80g/L、有机氮≥35g/L、磷≥5g/L、钾≥50g/L、Ca≥5g/L、Mg≥10g/L、B+Zn 20g/L",
+        "mix_profile": {
+          "ph": "6.24",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": true,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": true,
+          "has_humic_acid": true,
+          "has_phosphorus": false
+        },
+        "price_range": "4kg/88元，20kg/360元",
+        "manufacturer": "韩国艾玛易诺维株式会社",
+        "custom_fields": [],
+        "registrations": {},
+        "specifications": [
+          {
+            "form": "水剂（桶装）",
+            "name": "4Kg",
+            "image": "",
+            "formula": "",
+            "capacity": "4Kg"
+          },
+          {
+            "form": "水剂（桶装）",
+            "name": "20Kg",
+            "image": "",
+            "formula": "",
+            "capacity": "20Kg"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类、大田作物均可",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "shaianxin",
+      "updated_at": "2026-07-29T09:32:11.419362+00:00",
+      "data": {
+        "id": "shaianxin",
+        "name": "晒安心",
+        "intro": "防晒类防护产品（粉剂），预防高温、日灼、紫外线",
+        "usage": "50-100倍喷雾。粉剂防晒剂，果实上喷施需确保采收前能被雨水冲掉；建议单用",
+        "images": [
+          "images/products/shaianxin_500g.png",
+          "images/products/shaianxin_500g_gongneng.png",
+          "images/products/shaianxin_500g_wupinming.png",
+          "images/products/shaianxin_5kg.png"
+        ],
+        "origin": "韩国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "功能肥",
+        "functions": "果实防晒、延长保鲜期、减少日灼:\n\n1.预防高温日灼的发生\n2.预防因缺钙引起的生理病害\n3.促进细胞分裂，提高果肉厚度和硬度，协助着色\n4.本产品对虫害有一定的规避作用\n5.大幅度提高商品果率",
+        "advantages": "果实防晒专用；防紫外线、表面降温、安全环保:\n\n1.防晒与补钙双效合一，含有高含量的钙及物理紫外线阻隔剂；\n2.\t韩国进口，防晒安全且环保，防晒效果更佳；\n3.产品使用天然原料，无胶水无甲醛。",
+        "description": "",
+        "ingredients": "氧化Ca 41.5%、紫外线阻隔剂",
+        "mix_profile": {
+          "ph": "7",
+          "is_acidic": false,
+          "has_copper": false,
+          "has_calcium": true,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": true,
+          "copper_level": "none",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "500g/19.9元，5kg/169.9元",
+        "manufacturer": "（株）泰京BK",
+        "custom_fields": [
+          {
+            "label": "是否单用",
+            "value": "建议单用"
+          }
+        ],
+        "registrations": {},
+        "specifications": [
+          {
+            "form": "粉剂",
+            "name": "500g",
+            "image": "images/products/shaianxin_500g.png",
+            "formula": "",
+            "capacity": "500g"
+          },
+          {
+            "form": "粉剂",
+            "name": "500g（功能版）",
+            "image": "images/products/shaianxin_500g_gongneng.png",
+            "formula": "",
+            "capacity": "500g"
+          },
+          {
+            "form": "粉剂",
+            "name": "500g（无品名）",
+            "image": "images/products/shaianxin_500g_wupinming.png",
+            "formula": "",
+            "capacity": "500g"
+          },
+          {
+            "form": "粉剂",
+            "name": "5kg",
+            "image": "images/products/shaianxin_5kg.png",
+            "formula": "",
+            "capacity": "5kg"
+          }
+        ],
+        "applicable_crops": "柑橘、猕猴桃等需防晒作物",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "aoliang",
+      "updated_at": "2026-07-30T08:44:21.320692+00:00",
+      "data": {
+        "id": "aoliang",
+        "name": "傲靓",
+        "intro": "有机水溶肥料，LPE专利成分，作物增糖上色专用：\n\n本品系以 LPE 为核心成分的增甜着色功能营养液，其 LPE 提取自蛋黄、大豆中的天然磷脂。LPE 最初应用于医学领域，经韩国与美国联合研究发现，它对果实成熟过程中的内源激素具有正向调节作用，不仅能促进细胞膜的修复并增强其流动性，还能让叶绿体光合作用的效率大幅提升，加速糖分合成，从而提升果实甜度、促进转色。通过全球多地数百种作物开展的实验表明，傲靓 LPE 在快速提升果实甜度与色泽的同时，能有效避免口感缺失，且不会产生残留，是高品质有机农业种植的理想选择。",
+        "usage": "转色30-40%时500-800倍喷雾，间隔12-20天。液体叶面肥，可第一次喷第二次浸果。",
+        "images": [
+          "images/products/aoliang3.png",
+          "images/products/傲靓_2.png"
+        ],
+        "origin": "韩国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "高端叶面肥",
+        "functions": "增糖上色、促进转色、提高果实品质:\n\n1.优化果实外观与质地：修复细胞膜，让果肉质地更为紧实，果面更加光滑细腻，提升果实的商品价值。\n2.加速糖分积累与转色：提升光合作用和钾元素的转运速率，促使果实迅速积累糖分，实现快速转色，达到提前上市的目的。\n3.保障果实风味与耐储性：相比激素催熟，使用傲靓 LPE 更安全，不会对果实品质造成负面影响，同时确保果实的耐储运能力不受损害。\n4.保护树体健康：本品不会导致树体早衰，有利于果树健康及可持续生产。",
+        "advantages": "LPE专利成分，转色增糖效果显著；可喷可浸果:\n\n1. 高含量的碳源，提升农作物的碳氮比；\n2. 独有的LPE成分，\n3. 不含任何激素成分，绿色环保安全；",
+        "description": "",
+        "ingredients": "有机钾20g/L、有机磷10g/L、有机氮8g/L、有机质400g/L、LPE（溶血磷脂酰乙醇胺）≥1%",
+        "mix_profile": {
+          "ph": "7.78",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "200ml/199元，1000ml/899元",
+        "manufacturer": "韩国艾玛易诺维株式会社",
+        "custom_fields": [],
+        "registrations": {
+          "import_contract": "SR2025-1",
+          "execution_standard": "NY/T3831-2021",
+          "customs_declaration": "790220251000011919",
+          "fertilizer_registration": "农肥（2022）准字18289号"
+        },
+        "specifications": [
+          {
+            "form": "水剂",
+            "name": "200ml",
+            "image": "images/products/aoliang_200ml.png",
+            "formula": "",
+            "capacity": "200ml"
+          },
+          {
+            "form": "水剂",
+            "name": "1000ml",
+            "image": "images/products/aoliang_1000ml.png",
+            "formula": "",
+            "capacity": "1L"
+          }
+        ],
+        "applicable_crops": "葡萄、苹果、樱桃、番茄等需转色作物",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "aolei",
+      "updated_at": "2026-07-30T08:45:14.225985+00:00",
+      "data": {
+        "id": "aolei",
+        "name": "傲蕾",
+        "intro": "天然生物刺激素（水剂），打破休眠、控叶促花、调节平衡、稳果转绿：\n\n傲蕾系通过高等植物、种子、藻类提纯的天然生物刺激素。含有大量的微量元素营养、氨基酸、有机酸、维生素和天然植物源调剂，是为农作物开花结果研发的专用产品，傲蕾对农作物亲和力强，吸收效率高、绿色安全，特别适合农作物春冬季节促花期使用能帮助农作物抗低温打破休眠，提升开花的整齐度和稳果效率，是农业种植不可缺的功能性有机水溶肥料。",
+        "usage": "冒芽800-1000倍间隔10-15天；见花苞和谢花后1000倍。液体叶面肥",
+        "images": [
+          "images/products/aolei_200ml.png",
+          "images/products/aolei_1000ml.png"
+        ],
+        "origin": "中国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "有机水溶肥料",
+        "functions": "促进花芽分化、提高坐果率、保花保果、补充微量元素",
+        "advantages": "天然生物刺激素，非激素调节；打破休眠、控叶促花一药多效：\n\n1.采用高达30%的天然植物与藻类提取物作为核心刺激素，内含多种天然内源调节物质与有机酸，完全不依赖化学人工激素即可实现对作物的安全生理激活；\n2.\t罕见地复配了高浓度叶酸与维生素抗氧化剂，这两类物质能强效保护植物细胞膜免受低温等异常气候的损伤；\n3.\t精准定位于生殖生长的养分结构，采用极低氮低磷配合高活性的铁、硼、锌，通过微量元素的强效协同直接驱动花器官的发育。",
+        "description": "",
+        "ingredients": "B 3.6g/L、Fe 4.3g/L、Mn 3g/L、Zn 2.8g/L、Cu 0.5g/L、Mo 0.02g/L、氨基酸30g/L、有机质160g/L、维生素及抗氧化剂1000ppm、叶酸1000ppm、天然植物刺激素1000ppm、天然增效剂30%",
+        "mix_profile": {
+          "ph": "9",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "low",
+          "has_amino_acid": true,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "200ml/69.9元，1000ml/318元",
+        "manufacturer": "韩国艾玛易诺维株式会社",
+        "custom_fields": [],
+        "registrations": {},
+        "specifications": [
+          {
+            "form": "水剂",
+            "name": "200ml",
+            "image": "images/products/aolei_200ml.png",
+            "formula": "",
+            "capacity": "200ml"
+          },
+          {
+            "form": "水剂",
+            "name": "1000ml",
+            "image": "images/products/aolei_1000ml.png",
+            "formula": "",
+            "capacity": "1000ml"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类、经济作物均可",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "shikeshou",
+      "updated_at": "2026-07-30T08:43:02.044441+00:00",
+      "data": {
+        "id": "shikeshou",
+        "name": "施可收",
+        "intro": "有机无机复合水溶肥（水剂），三个配方满足提苗、平衡、膨果需求",
+        "usage": "3-5kg/亩或300-500倍。液体根际肥，冲施滴灌，不做叶喷",
+        "images": [
+          "images/products/shikeshou20kg平衡.jpg",
+          "images/products/shikeshou20kg提苗.jpg",
+          "images/products/shikeshou20kg膨果.jpg",
+          "images/products/shikeshou4kg平衡.jpg",
+          "images/products/shikeshou4kg提苗.jpg",
+          "images/products/shikeshou4kg膨果.jpg"
+        ],
+        "origin": "中国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "大量元素水溶肥料",
+        "functions": "提苗促长（提苗型）、营养均衡（平衡型）、膨果转色（膨果型），改良土壤、提高肥料利用率\n\n1. 有机无机结合，高浓度大量元素和有机质，利用有机胶体缓冲无机盐渗透压刺激，实现高效补肥且不伤根；\n2. 突破高盐度限制，成功融入复合微生物菌群，实现营养快速补充和根际微生态改良同步进行；\n3. 针对快速生长期需求，配比微量元素，预防提苗阶段的隐性缺素问题。",
+        "advantages": "三配方覆盖全生育期；有机+无机+微生物三效合一\n有机无机：科学的大、中、微量元素及有机物配比，改善土壤物理性质，提升土壤的保水保肥能力。\n特殊菌群：独特的复合微生物菌群，有效抑制有害生物活性，对土壤恶化、连作障碍、抗逆能力提升有积极作用。\n节省成本：无需另外搭配氮磷钾成分使用，产品高效，降低用肥成本。\n使用便捷：有机无机同补，为作物不同阶段提供应激配方，减少人工作业成本。",
+        "description": "",
+        "ingredients": "有机质≥100g/L、复合菌（不强调）、B(非螯合)3g/L、Zn 1g/L、Mn 1g/L、Cu 1g/L。三个配方：提苗型N-P2O5-K2O=250-150-100、平衡型170-170-170、膨果型80-120-300。pH 5.0-6.5",
+        "mix_profile": {
+          "ph": "5.66",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "medium",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "提苗型4kg/94元、20kg/460元；平衡型4kg/99元、20kg/480元；膨果型4kg/99元、20kg/480元",
+        "manufacturer": "深圳惠民皓天生态科技有限公司",
+        "custom_fields": [],
+        "registrations": {},
+        "specifications": [
+          {
+            "form": "水剂",
+            "name": "4Kg",
+            "image": "",
+            "formula": "",
+            "capacity": "4Kg"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类等经济作物",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "beineng",
+      "updated_at": "2026-07-30T08:48:26.703963+00:00",
+      "data": {
+        "id": "beineng",
+        "name": "蓓能",
+        "intro": "大量元素水溶肥（粉剂），含小分子肽，四个配方覆盖全生育期:\n韩国原装进口大量元素水溶肥，食品级原料磷酸二氢钾和硝酸钾，不含氯和硫酸根。四种配方按阶段选——高氮提苗、高磷促根促花、高钾膨果转色、平衡型全程通用。另含鱼蛋白酶解小肽和EDTA螯合微量元素，吸收率高无激素不烧苗，草莓葡萄等禁氯作物安全使用。粉剂根际肥，冲施滴灌。价格偏高不是主推产品，不能做底肥。",
+        "usage": "浇灌3-5kg/亩，7-10天一次；滴灌12-15天一次。粉剂根际肥，不做叶喷",
+        "images": [
+          "images/products/beineng_10kg_gaodan.png",
+          "images/products/beineng_10kg_gaolin.png",
+          "images/products/beineng_10kg_gaojia.png",
+          "images/products/beineng_10kg_pingheng.png"
+        ],
+        "origin": "韩国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "大量元素水溶肥",
+        "functions": "提苗促长（高氮）、促根促花（高磷）、膨果转色（高钾）、营养均衡（平衡）:\n\n1. 高氮型：促进作物生长，增强叶片光合作用，提高苗期抗逆性；\n2. 高磷型：促进根系发育，增强花芽分化，提高坐果率；\n3. 高钾型：促进果实膨大和转色，提高果实品质和糖分积累；\n4. 平衡型：提供全面营养，适用于作物全程生长，保持营养均衡;\n5.快速补充作物各阶段所需的大量元素营养，精准实现提苗、促花、膨果；\n6.鱼蛋白小肽等活性成分能有效提升作物抗逆性，并显著改善果实的风味、口感和甜度；\n7.均衡树体营养，有效预防因大量结果导致的植株后期脱肥、早衰和黄化等问题，延长树体的结果年限。",
+        "advantages": "含小分子肽，吸收效率高；四配方灵活选择\n\n1.\t采用磷酸二氢钾、硝酸钾等高纯度原料，肥料吸收利用更高，肥效更持久、更安全；\n2.\t采用DS-CA复螯合技术，不易拮抗，采用OM助溶技术，溶解后形成水合离子吸收更彻底。对土壤环境伤害更小；\n3.\t复配鱼蛋白酶解小肽、海藻酸、海藻多糖，大幅提升肥料生物活性和吸收效率；\n4.\t不含激素与有害成分，长期连续使用不伤根、不导致土壤酸化板结。",
+        "description": "",
+        "ingredients": "大量元素水溶肥+鱼蛋白酶解小肽FPC 0.3%。EDTA微量元素：B 0.22%、EDTA-Fe 0.01%、EDTA-Mn 0.05%、EDTA-Cu 0.01%、EDTA-Zn 0.05%、Mo 0.001%。四个配方：高氮30-10-10、高磷10-40-10、高钾12-6-42、平衡20-20-20",
+        "mix_profile": {
+          "ph": "6",
+          "is_acidic": false,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "trace",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": true
+        },
+        "price_range": "高氮型10kg*2袋/359元，高磷型/高钾型/平衡型10kg*2袋/359-379元",
+        "manufacturer": "韩国分享株式会社",
+        "custom_fields": [],
+        "registrations": {},
+        "specifications": [
+          {
+            "form": "粉剂",
+            "name": "高氮型10kg",
+            "image": "images/products/beineng_10kg_gaodan.png",
+            "formula": "30-10-10+TE",
+            "capacity": "10kg"
+          },
+          {
+            "form": "粉剂",
+            "name": "高磷型10kg",
+            "image": "images/products/beineng_10kg_gaolin.png",
+            "formula": "10-40-10+TE",
+            "capacity": "10kg"
+          },
+          {
+            "form": "粉剂",
+            "name": "高钾型10kg",
+            "image": "images/products/beineng_10kg_gaojia.png",
+            "formula": "12-6-42+TE",
+            "capacity": "10kg"
+          },
+          {
+            "form": "粉剂",
+            "name": "平衡型10kg",
+            "image": "images/products/beineng_10kg_pingheng.png",
+            "formula": "20-20-20+TE",
+            "capacity": "10kg"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类等经济作物",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "chutoumao_huaguo",
+      "updated_at": "2026-07-30T08:50:33.12374+00:00",
+      "data": {
+        "id": "chutoumao_huaguo",
+        "name": "锄头猫·花果多",
+        "intro": "微量元素水溶肥料（水剂），硼钼同补，促花保果\n\n本品是针对作物促花稳果阶段生理需求研发的专用微量元素水溶肥。通过富含硼、钼与海藻的科学复配，强化养分离子的活性与移动性，帮助提升营养元素在作物体内的吸收与转运效率。既能帮助打破作物休眠，增强低温等逆境下的抗逆性，也能促进花芽分化，提升开花整齐度，同时辅助坐果稳果，减少花果脱落，还能帮助改善果实发育状态，降低畸形果、裂果等问题。",
+        "usage": "促花调花期使用1-2次，幼果期使用1次。叶面喷雾1000倍。液体叶面肥",
+        "images": [
+          "images/products/huaguoduo (1).png",
+          "images/products/huaguoduo (2).png"
+        ],
+        "origin": "中国",
+        "seller": "锄头邦网络科技（深圳）有限公司",
+        "category": "微量元素水溶肥料",
+        "functions": "促花保果、提高坐果率、促进花粉管伸长\n\n含海藻提取物，有助于增强农作物在低温、干旱等逆境胁迫条件下的生长适应能力。\n含钼元素，参与作物体内氮素代谢过程，促进氮素高效转化与利用，有助于作物生殖发育，减少因氮素过量引起的开花坐果障碍。\n含硼元素，有助于促进花器官发育与授粉受精，提高坐果率，减少落花落果、花而不实等现象。\n有助于改善果实发育质量，使果皮更加光滑细腻，减少果皮粗糙、凹凸不平等生理性品质问题。\n有助于维持细胞壁结构稳定，减少果实开裂、裂果及畸形等生理性障碍发生。",
+        "advantages": "硼120g/L+钼5g/L高含量；含海藻提取物",
+        "description": "",
+        "ingredients": "B 120g/L、Mo 5g/L、海藻精1g",
+        "mix_profile": {
+          "ph": "8.82",
+          "is_acidic": false,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "44.1元/瓶",
+        "manufacturer": "皓泽农业（广州）有限公司",
+        "custom_fields": [],
+        "registrations": {
+          "record_number": "WLSRGD2025-01095",
+          "execution_standard": "NY 1428-2010"
+        },
+        "specifications": [
+          {
+            "form": "水剂",
+            "name": "1000ml",
+            "image": "",
+            "formula": "",
+            "capacity": "1000ml"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、油菜、豆科作物等需硼钼作物",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "zhuoyan",
+      "updated_at": "2026-08-04T03:34:34.325736+00:00",
+      "data": {
+        "id": "zhuoyan",
+        "name": "卓艳",
+        "intro": "大量元素水溶肥料（水剂），着色期专研配方，调节糖氮、果甜色正：\n\n卓艳专为果实膨大期后的生理需求研发，重点促进糖分快速积累、均匀转色及品质提升。产品采用中后期螯合工艺，将高浓度钾与葡萄糖酸、氨基酸等有机营养复合，能快速促进细胞膨大，提高果皮韧性和果实硬度，增强叶片光合效率，促进果实上糖、转色和成熟。同时，卓艳能强化作物树势，调节营养平衡，减少畸形果和裂果的发生，适用于瓜果及蔬菜类高频率使用。",
+        "usage": "推荐瓜菜2-3kg，果树3-5kg/亩，果实膨大后期使用2-3次；喷施500-800倍。冲施喷施均可。新产品主推",
+        "images": [
+          "images/products/zhuoyan1.png"
+        ],
+        "origin": "中国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "大量元素水溶肥料",
+        "functions": "转色上糖、膨果着色、提高果实品质：\n\n1.补充高活性钾，调节果实糖酸比：有利于改善因偏施氮肥或阴雨寡照造成的口感寡淡和上色慢问题，促进果实增糖转色。\n2.小分子形态，吸收效率高：有利于规避传统钾肥导致的土壤酸化、盐渍化与板结，保护作物根系不受损伤。\n3.富含有机营养，促进土壤微生物活性：提升土壤透气性与根系生长活力，减轻果实中后期的根系早衰问题。\n4.调节作物气孔开闭与细胞渗透压，降低蒸腾失水：帮助植株在干旱、低温或盐碱胁迫下维持正常生理代谢，减轻逆境伤害。",
+        "advantages": "着色期专研配方；乳酸螯合工艺，温和补钾不伤根：\n\n采用乳酸螯合工艺，有效避免钾离子被土壤固定及与钙、镁、硼等元素的拮抗，大幅提升钾素当季利用率。  产品呈弱酸性且盐分指数低，高频次冲施不会损伤毛细根，规避了传统无机钾肥导致的土壤酸化与次生盐渍化。  构建有机与无机协同体系，将高活性钾配合黄腐酸、氨基酸等高浓度有机碳源科学配比。",
+        "description": "",
+        "ingredients": "N 40g/L、P 100g/L、K 350g/L、黄腐酸30g/L、有机质280g/L、腐殖酸30g/L、游离氨基酸30g/L、Zn 1g/L、B 1g/L",
+        "mix_profile": {
+          "ph": "6",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": true,
+          "has_humic_acid": true,
+          "has_phosphorus": true
+        },
+        "price_range": "5kg/桶",
+        "manufacturer": "皓泽农业（广州）有限公司",
+        "custom_fields": [],
+        "registrations": {
+          "record_number": "DLSRGD2022-00146",
+          "execution_standard": "NY/T 1107-2020"
+        },
+        "specifications": [
+          {
+            "form": "水剂",
+            "name": "5Kg",
+            "image": "",
+            "formula": "",
+            "capacity": "5Kg"
+          }
+        ],
+        "applicable_crops": "果树、瓜菜等需转色作物",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "junshi",
+      "updated_at": "2026-08-04T01:45:18.001889+00:00",
+      "data": {
+        "id": "junshi",
+        "name": "均施",
+        "intro": "中量元素水溶肥料（颗粒），钙镁同补，缓解盐碱、促进光合:\n\n本产品选取优质矿质资源，经氨基酸、海藻酸进行螯合，富含镁、钙、硼、锌、铁等中微量元素以及海藻、γ- 氨基丁酸和氨基酸营养，为土壤及农作物补充丰富的无机和有机营养，有助于土壤改善和提升作物长势，适合于滴灌、撒施、底肥以及叶面喷施，产品不含重金属物质，属于安全绿色种植的优秀产品。",
+        "usage": "冲施滴灌：重缺镁钙3-5kg/亩、日常1-2kg/亩；一般按亩用量，非要冲施倍数就按800-1500倍；叶面喷施：1000-1500倍；果树按棵30-100g/棵；新产品主推，均可使用",
+        "images": [
+          "images/products/均施_2.png"
+        ],
+        "origin": "韩国",
+        "seller": "深圳喜沃生态科技有限公司",
+        "category": "钙镁肥",
+        "functions": "钙镁同补、防裂果、防缺镁黄叶:\n\n1.补充镁元素，增加农作物的光合作用，有助于促进蛋白质、淀粉和叶绿素的形成，避免因缺镁元素出现的叶片发黄和黄化现象；\n2.补充钙元素，钙是维持农作物细胞形状和稳定性的重要元素，有助于减少农作物生长过程中因缺钙出现的各种生理性障碍；\n3.补充铁锌硼等微量元素，促进营养相互协同和运转效率，同时有助于根系发育、避免因缺乏微量元素带来的不良生长；\n4.本产品不含氮元素，氯钠和重金属指标均符合最高限量要求，适合于农作物各个生长阶段，果实上色成熟阶段使用本产品不会出现返青现象；\n5.产品和土壤胶体吸附的钠离子发生置换，与盐碱地有酸碱中和作用，有助于缓解土壤盐碱障碍；",
+        "advantages": "钙镁同补；不含氮，果实上色期不返青；缓解盐碱:\n\n1.真螯合抗拮抗，可与磷钾肥混用不沉淀，解决普通钙肥混配痛点\n2.零氮零氯零重金属，转色期使用不返青不刺激旺长\n3.用法灵活，冲施滴灌、撒施埋肥、叶面喷施均可\n4.有机无机双效，海藻酸促根增强整体抗逆性\n5.缓解盐碱障碍，置换钠离子，适用盐碱地改良",
+        "description": "",
+        "ingredients": "Ca 2%、Mg 8%、B 0.15%、Zn 0.15%、Fe 0.7%",
+        "mix_profile": {
+          "ph": "3.92",
+          "is_acidic": true,
+          "has_copper": false,
+          "has_calcium": true,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "1.5kg/袋，20kg/袋",
+        "manufacturer": "韩国丰产生物株式会社",
+        "custom_fields": [
+          {
+            "label": "所属类别",
+            "value": "中微量元素同补水溶肥料，也就是中量+微量一起补充"
+          },
+          {
+            "label": "备案类别",
+            "value": "中量元素水溶肥料"
+          },
+          {
+            "label": "螯合类型",
+            "value": "采用氨基酸、海藻酸进行螯合"
+          }
+        ],
+        "registrations": {
+          "record_number": "ZLSRJK2020-00246",
+          "execution_standard": "NY2266-2012"
+        },
+        "specifications": [
+          {
+            "form": "颗粒",
+            "name": "20Kg",
+            "image": "",
+            "formula": "",
+            "capacity": "20Kg"
+          },
+          {
+            "form": "",
+            "name": "1.5kg",
+            "image": "",
+            "formula": "",
+            "capacity": "1.5kg"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、经济作物均可",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "aojing",
+      "updated_at": "2026-08-07T06:57:39.509954+00:00",
+      "data": {
+        "id": "aojing",
+        "name": "傲净",
+        "intro": "微生物菌剂（液体），复合型菌剂，土壤微生态提升：\n\n本品为复合型微生物菌剂，采用枯草芽孢杆菌、贝莱斯芽孢杆菌、胶冻样芽孢杆菌等多种菌群科学复配而成，属于土壤微生态提升型产品。适用于土壤调理与生长辅助，涵盖土壤改良、促生、营养活化、降解有毒有害物质、改善农产品品质等多种功能。通过微生物协同作用，改善土壤环境，为作物健康生长提供有利环境。",
+        "usage": "冲施/滴灌 + 叶面喷施",
+        "images": [
+          "images/products/aojing1.png",
+          "images/products/傲净_2.png"
+        ],
+        "origin": "中国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "微生物菌剂",
+        "functions": "靶向防病、调土生根、解磷解钾、抑制土传病原菌：\n\n1.依托菌株特性，缓解土壤板结问题：增加土壤团粒结构，提升土壤透气性与保水保肥能力，改善土壤微生态环境。\n2.帮助溶解土壤中固定的磷、钾等养分：转化为作物易吸收的形态，提高土壤养分利用率，为作物生长提供营养支持。\n3.有益于作物根系发育：提升作物根系吸收能力，助力壮苗、促生长，改善作物长势，为稳产提质奠定基础。\n4.通过调节土壤微生态与作物生长状态：增强作物对干旱、盐碱等不良环境的适应能力，减少不良环境对作物的影响。\n5.菌株代谢产生的活性物质可调节土壤微生态平衡：增强作物自身生长韧性，助力作物苗期健壮生长，从而减少死苗情况。",
+        "advantages": "3大靶向功能菌；有效活菌数≥100亿/mL：\n\n1.采用高浓度液体发酵工艺，有效活菌数高达500亿/g，以高抗逆芽孢形态确保在常温液体中的稳定储存与极高定殖率。 \n2. 构建靶向复合菌群生态，科学配比枯草芽孢杆菌、胶冻样芽孢杆菌与贝莱斯芽孢杆菌，实现菌群协同增效且不内耗。  \n3.液体剂型无残渣，兼容冲施、滴灌与叶面喷雾等多种施用途径，操作便捷且不堵塞管网。",
+        "description": "",
+        "ingredients": "3大靶向功能菌：枯草芽孢杆菌+贝莱斯芽孢杆菌+胶冻样芽孢杆菌，有效活菌数549.7亿CFU/g",
+        "mix_profile": {
+          "ph": "7",
+          "is_acidic": false,
+          "has_copper": false,
+          "has_calcium": false,
+          "has_microbe": true,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "",
+        "manufacturer": "广州益国农业科技有限公司",
+        "custom_fields": [],
+        "registrations": {
+          "effective_bacteria": "枯草芽孢杆菌",
+          "execution_standard": "GB20287-2006",
+          "fertilizer_registration": "微生物肥(2024)准字(14389)号"
+        },
+        "specifications": [
+          {
+            "form": "液体",
+            "name": "1000ml",
+            "image": "",
+            "formula": "",
+            "capacity": "1000ml"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类、经济作物均可",
+        "pesticide_compat": []
+      }
+    },
+    {
+      "legacy_id": "fenghui",
+      "updated_at": "2026-08-07T06:58:09.065727+00:00",
+      "data": {
+        "id": "fenghui",
+        "name": "沣惠",
+        "intro": "中量元素水溶肥料（粉剂），植物提取物螯合新一代钙肥，补钙防裂：\n\n沣惠是通过植物提取物进行螯合的新一代肥料，其核心技术在于解决了钙元素在植物体内移动慢的问题，使钙在植物体内更快地被转运和吸收，提高钙对农作物的吸收效率，从而帮助农作物减少因缺钙引起的各种生理性问题，提升作物品质。",
+        "usage": "冲施/滴灌1-2公斤/亩；叶面喷雾1000-1500倍，10-20g一壶水。粉剂叶面肥",
+        "images": [
+          "images/products/fenghui1.png",
+          "images/products/沣惠_2.png"
+        ],
+        "origin": "中国",
+        "seller": "深圳惠民皓天生态科技有限公司",
+        "category": "中量元素钙肥",
+        "functions": "补钙、防裂果、防脐腐病、增强果实硬度、可与磷酸二氢钾混用：\n\n1.补钙效率高，吸收更稳定：本肥采用特殊螯合工艺，可应用于对钙需求量大或易缺钙的作物和关键生育期，不会引起果实返青和营养过剩问题。\n2.促进作物生长与果实发育：本品氨基酸含量高，养分全面，安全性高，可与多种营养元素配合使用，提高肥料利用率。\n3.促进营养吸收与代谢：沣惠中的中量元素和营养成分，有利于农作物根系发育、增强光合作用，促进作物生长，提高果实品质。\n4.预防缺钙引起的生理问题：针对因缺钙导致的裂果、苦痘病、脐腐病、叶焦病以及植株萎蔫等问题，具有较好的预防和改善作用。\n5.提升果实硬度和耐储运性：钙元素能促进细胞壁形成，增强果实硬度和韧性，减少采后运输过程中的损伤。",
+        "advantages": "植物提取物螯合技术，钙移动快；不含氮，不返青；可与磷酸二氢钾混用：\n\n1.采用植物提取物进行螯合的新一代钙肥，攻克了钙元素在植物体内移动极其缓慢的生理传导难题。\n2.选用高纯度原料，不含任何激素成分，安全性高，在推荐使用倍数下具备良好的混配性，可与磷酸二氢钾同施。",
+        "description": "",
+        "ingredients": "Ca≥10.0%（实测Ca≥20.0%）、B≥0.15%、Zn≥0.05%",
+        "mix_profile": {
+          "ph": "7",
+          "is_acidic": false,
+          "has_copper": false,
+          "has_calcium": true,
+          "has_microbe": false,
+          "has_silicon": false,
+          "is_alkaline": false,
+          "copper_level": "none",
+          "has_amino_acid": false,
+          "has_humic_acid": false,
+          "has_phosphorus": false
+        },
+        "price_range": "1Kg/袋",
+        "manufacturer": "皓泽农业（广州）有限公司",
+        "custom_fields": [],
+        "registrations": {
+          "record_number": "ZLSRGD2022-00336",
+          "execution_standard": "NY2266-2012"
+        },
+        "specifications": [
+          {
+            "form": "粉剂",
+            "name": "1Kg",
+            "image": "",
+            "formula": "",
+            "capacity": "1Kg"
+          }
+        ],
+        "applicable_crops": "果树、蔬菜、瓜类等需钙作物",
+        "pesticide_compat": []
+      }
+    }
+  ]
+}

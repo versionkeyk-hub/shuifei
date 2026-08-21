@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hmht-agri-tech",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-21",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hmht-agri-tech",
+      "database_id": "a2f03c44-9ec0-4418-bc56-ae0a8893a98d"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PRODUCT_ASSETS",
+      "bucket_name": "hmht-agri-product-assets"
+    }
+  ]
+}

@@ -12,7 +12,8 @@ import {
   BookOpen,
   MessageSquare,
   Settings,
-  Sparkles
+  Sparkles,
+  Database
 } from 'lucide-react';
 import { NavTab, AppUser, SystemSettings } from '../types';
 import { getSiteText } from '../lib/siteTexts';
@@ -30,6 +31,8 @@ interface SidebarProps {
   pendingUsersCount: number;
   totalCropsCount: number;
   commentsCount: number;
+  totalProductCatalogCount: number;
+  totalPesticideIngredients: number;
   hasUnreadComments?: boolean;
   onOpenVersionModal: () => void;
 }
@@ -46,6 +49,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   pendingUsersCount,
   totalCropsCount,
   commentsCount,
+  totalProductCatalogCount,
+  totalPesticideIngredients,
   hasUnreadComments = false,
   onOpenVersionModal,
 }) => {
@@ -81,6 +86,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: `${totalPestsCount} 种`,
       badgeColor: 'bg-amber-100 text-amber-800',
       desc: '症状图谱、分类归属与农药配方',
+      visible: true,
+    },
+    {
+      id: 'product_library' as NavTab,
+      label: getSiteText('nav_product_library_label', settings?.siteTexts, settings.navTitles?.product_library || '农药混配与产品资料库'),
+      icon: Database,
+      badge: String(totalProductCatalogCount) + ' 品 / ' + String(totalPesticideIngredients) + ' 药',
+      badgeColor: 'bg-indigo-500 text-white font-bold',
+      desc: '产品规格报价、成分用法与农药混配规则',
       visible: true,
     },
     {

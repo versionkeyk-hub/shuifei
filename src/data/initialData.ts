@@ -891,7 +891,6 @@ export const INITIAL_USERS: AppUser[] = [
   {
     id: 'usr-admin-01',
     username: 'admin',
-    password: 'password123',
     realName: '农小蛙系统管理员',
     role: 'super_admin',
     status: 'approved',
@@ -905,7 +904,6 @@ export const INITIAL_USERS: AppUser[] = [
   {
     id: 'usr-expert-01',
     username: 'expert1',
-    password: 'password123',
     realName: '张总农艺师',
     role: 'admin',
     status: 'approved',
@@ -919,7 +917,6 @@ export const INITIAL_USERS: AppUser[] = [
   {
     id: 'usr-partner-01',
     username: 'partner1',
-    password: 'password123',
     realName: '李经理',
     role: 'viewer',
     status: 'approved',
@@ -933,7 +930,6 @@ export const INITIAL_USERS: AppUser[] = [
   {
     id: 'usr-pending-01',
     username: 'new_user2026',
-    password: 'password123',
     realName: '王技术员',
     role: 'viewer',
     status: 'pending',

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Crop, CropCategory, FertilizationScheme, PestDiseaseItem } from '../types';
 import { EditableText, EditableImage } from '../context/VisualEditContext';
+import { CatalogStats } from './ProductLibraryView';
 
 interface DashboardViewProps {
   crops: Crop[];
@@ -27,6 +28,7 @@ interface DashboardViewProps {
   schemes: FertilizationScheme[];
   pests: PestDiseaseItem[];
   fertilizerProductsCount?: number;
+  catalogStats?: CatalogStats;
   onSelectCrop: (cropId: string, tab?: 'scheme' | 'pest') => void;
   onOpenNewScheme?: () => void;
   onOpenQuickAI?: () => void;
@@ -35,6 +37,7 @@ interface DashboardViewProps {
   onNavigateToPests?: () => void;
   onNavigateToSchemes?: () => void;
   onNavigateToCrops?: () => void;
+  onNavigateToProductLibrary?: () => void;
   onOpenLocalImport?: () => void;
   onOpenCommunity?: () => void;
   currentUser?: any;
@@ -47,6 +50,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   schemes,
   pests,
   fertilizerProductsCount = 31,
+  catalogStats,
   onSelectCrop,
   onOpenNewScheme,
   onOpenQuickAI,
@@ -55,6 +59,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToPests,
   onNavigateToSchemes,
   onNavigateToCrops,
+  onNavigateToProductLibrary,
 }) => {
   const activeSchemes = schemes.filter((s) => !s.isDeleted);
   const totalSchemes = activeSchemes.length;
@@ -237,25 +242,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Metric 4: Total Fertilizer Products Count */}
         <div
-          onClick={onOpenProductQuiz}
+          onClick={onNavigateToProductLibrary || onOpenProductQuiz}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-purple-500 hover:shadow-md transition-all cursor-pointer active:scale-98"
-          title="点击进入产品分类实训"
+          title="点击进入产品资料库"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
-              <EditableText textKey="stat_products_label" defaultText="肥料产品与实训库" />
+              <EditableText textKey="stat_products_label" defaultText="产品 / SKU / 农药资料库" />
             </span>
             <span className="p-2 rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
               <Package className="w-5 h-5" />
             </span>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900">{fertilizerProductsCount}+</span>
-            <span className="text-xs text-slate-500 font-semibold">款农小蛙/锄头猫</span>
+            <span className="text-3xl font-black text-slate-900">{catalogStats?.products || fertilizerProductsCount}</span>
+            <span className="text-xs text-slate-500 font-semibold">品 · {catalogStats?.skus || 320} 条 SKU</span>
           </div>
           <div className="mt-2 text-xs text-purple-600 flex items-center gap-1 font-medium">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <EditableText textKey="stat_products_sub" defaultText="傲生/傲脉/施可收/蓓能全系" />
+            <EditableText textKey="stat_products_sub" defaultText={(catalogStats?.pesticides || 74) + ' 种农药有效成分与混配规则'} />
           </div>
         </div>
       </div>

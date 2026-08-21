@@ -44,6 +44,7 @@ import { SchemeTableView } from './SchemeTableView';
 import { MindMapView } from './MindMapView';
 import { ImageUploader } from './ImageUploader';
 import { ImageLightboxModal } from './ImageLightboxModal';
+import { TargetPlanConfigurator } from './TargetPlanConfigurator';
 
 interface CropDetailViewProps {
   crop: Crop;
@@ -100,7 +101,7 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
     selectedPresetId: 'stamp-official-red',
   };
 
-  const [activeTab, setActiveTab] = useState<'scheme' | 'pest' | 'deleted_schemes'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'scheme' | 'target' | 'pest' | 'deleted_schemes'>(initialTab);
   
   // Active and deleted schemes
   const activeSchemes = schemes.filter((s) => !s.isDeleted);
@@ -433,7 +434,7 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
 
         {/* Tab Navigation: Schemes vs Pests vs Recycle Bin */}
         <div className="flex items-center justify-between px-6 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveTab('scheme')}
               className={`py-3.5 px-4 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-2 ${
@@ -456,6 +457,18 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
             >
               <Bug className="w-4 h-4 text-amber-600" />
               <span>病虫害防治图谱与解决方案 ({pests.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('target')}
+              className={`py-3.5 px-4 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-2 ${
+                activeTab === 'target'
+                  ? 'border-sky-600 text-sky-800 bg-white shadow-2xs rounded-t-xl'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sliders className="w-4 h-4 text-sky-600" />
+              <span>目标阶段配置与报价</span>
             </button>
 
             {deletedSchemes.length > 0 && (
@@ -745,6 +758,14 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {activeTab === 'target' && (
+        <TargetPlanConfigurator
+          crop={crop}
+          currentUser={currentUser}
+          onOpenFullCycle={() => setActiveTab('scheme')}
+        />
       )}
 
       {/* TAB 2: Pest & Disease Gallery */}

@@ -1,0 +1,2121 @@
+{
+  "source": {
+    "products": {
+      "path": "data/products.js",
+      "sha256": "3563c0a0125f394a35b8e4f04865da69ff9646d4585ed3be8a22b18cee4cd070"
+    },
+    "pesticides": {
+      "path": "data/pesticides.js",
+      "sha256": "79cff206f4f4d8e9f408b89a2eba5f10b8921ee9a9a70e7a18fe2a89cee5746a"
+    }
+  },
+  "company_products": [
+    {
+      "id": "fengshuo",
+      "name": "沣硕",
+      "category": "中微量元素肥",
+      "description": "含硅钙镁等40余种元素，促花芽分化、防裂果、抗逆",
+      "usage": "叶喷、冲施均可",
+      "price_range": "9.9元引流款",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aoliang",
+      "name": "傲靓",
+      "category": "高端叶面肥",
+      "description": "LPE专利成分，增糖上色，转色期专用",
+      "usage": "仅叶面喷施，禁止冲施",
+      "price_range": "199-899元",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": true,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "heiyan",
+      "name": "黑岩",
+      "category": "氨基酸叶面肥",
+      "description": "486g/L氨基酸，抗逆、促花保果、膨果增甜、解药害",
+      "usage": "叶面喷施，禁止冲施",
+      "price_range": "29.9-44.9元",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": true,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": true,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aoye",
+      "name": "傲叶",
+      "category": "氨基酸叶面肥",
+      "description": "氨基酸叶面肥，促叶壮叶",
+      "usage": "叶面喷施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": true,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aolei",
+      "name": "傲蕾",
+      "category": "氨基酸叶面肥",
+      "description": "氨基酸叶面肥，促花保果",
+      "usage": "叶面喷施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": true,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "huadaifu",
+      "name": "花大夫",
+      "category": "高端叶面肥",
+      "description": "高端叶面肥，促花保果",
+      "usage": "叶面喷施，禁止冲施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": true,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "guodaifu",
+      "name": "果大夫",
+      "category": "磷钾叶面肥",
+      "description": "高磷高钾，促花促果膨果",
+      "usage": "叶面喷施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": true,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aoguo",
+      "name": "傲果",
+      "category": "钙肥",
+      "description": "高钙叶面肥，防裂果、补钙",
+      "usage": "叶面喷施",
+      "price_range": "29.9-44.9元",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": true,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "junshi",
+      "name": "均施",
+      "category": "钙镁肥",
+      "description": "钙镁同补",
+      "usage": "叶面喷施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": true,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aolan",
+      "name": "傲岚",
+      "category": "磷酸二氢钾",
+      "description": "磷酸二氢钾，促花促果、膨果着色",
+      "usage": "叶喷、冲施均可",
+      "price_range": "9.9元引流款",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": true,
+        "is_acidic": true,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aomei",
+      "name": "傲美",
+      "category": "硅肥",
+      "description": "硅肥，增强抗逆、防虫防病",
+      "usage": "叶面喷施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "shaianxin",
+      "name": "晒安心",
+      "category": "功能肥",
+      "description": "采收前使用，延长保鲜期",
+      "usage": "叶面喷施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aomai",
+      "name": "傲脉",
+      "category": "根际肥",
+      "description": "零激素营养型生根肥，黄腐酸含量高，生根养根改良土壤",
+      "usage": "冲施、滴灌（不建议叶喷）",
+      "price_range": "88元",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": true,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": true
+      }
+    },
+    {
+      "id": "aotu",
+      "name": "傲土",
+      "category": "矿源黄腐酸含钙",
+      "description": "矿源黄腐酸+钙，改良土壤、促根",
+      "usage": "冲施",
+      "flags": {
+        "is_microbial": false,
+        "is_calcium": true,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": true,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aosheng",
+      "name": "傲生",
+      "category": "微生物菌剂",
+      "description": "固体粉剂，8大复合菌群，调土防土传病害",
+      "usage": "仅冲施/滴灌，不可叶喷",
+      "flags": {
+        "is_microbial": true,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    },
+    {
+      "id": "aojing",
+      "name": "傲净",
+      "category": "微生物菌剂",
+      "description": "液体剂型，3大靶向功能菌（枯草+贝莱斯+胶冻样），549.7亿CFU/g",
+      "usage": "冲施/滴灌 + 叶面喷施",
+      "flags": {
+        "is_microbial": true,
+        "is_calcium": false,
+        "is_phosphorus": false,
+        "is_acidic": false,
+        "is_humic_acid": false,
+        "is_high_cost_foliar": false,
+        "is_root_fertilizer": false
+      }
+    }
+  ],
+  "pesticides": [
+    {
+      "component": "氢氧化铜",
+      "aliases": [
+        "可杀得",
+        "杀细菌铜"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "无机铜制剂",
+      "problems": "防治细菌性病害（溃疡病、角斑病、软腐病）和部分真菌病害（霜疫霉病、炭疽病）",
+      "usage": "500-1000倍叶面喷雾",
+      "precautions": "不可与酸性农药混用；高温强光下慎用，易产生药害烧叶；对某些果树品种敏感",
+      "brands": [
+        {
+          "name": "可杀得三千",
+          "company": "科迪华"
+        },
+        {
+          "name": "冠菌铜",
+          "company": "国内多家"
+        }
+      ],
+      "related": [],
+      "flags": {
+        "is_copper": true,
+        "is_fungicide": true,
+        "is_basic": true
+      }
+    },
+    {
+      "component": "氧化亚铜",
+      "aliases": [
+        "铜大师"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "无机铜制剂",
+      "problems": "防治细菌和真菌病害，保护性杀菌",
+      "usage": "800-1200倍叶面喷雾",
+      "precautions": "不可与酸性农药混用；高温慎用",
+      "brands": [
+        {
+          "name": "铜大师",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_copper": true,
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "王铜",
+      "aliases": [
+        "碱式氯化铜"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "无机铜制剂",
+      "problems": "防治细菌和真菌病害",
+      "usage": "600-800倍叶面喷雾",
+      "precautions": "不可与酸性农药混用",
+      "brands": [
+        {
+          "name": "王铜",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_copper": true,
+        "is_fungicide": true,
+        "is_basic": true
+      }
+    },
+    {
+      "component": "波尔多液",
+      "aliases": [
+        "石灰硫酸铜液"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "无机铜制剂",
+      "problems": "广谱保护性杀菌，防治霜霉病、黑痘病、褐斑病等，果树清园常用",
+      "usage": "自配，硫酸铜:石灰:水=1:1:100~200",
+      "precautions": "强碱性，不可与任何酸性农药混用；阴天或高温慎用",
+      "brands": [
+        {
+          "name": "波尔多液（自配）",
+          "company": "—"
+        }
+      ],
+      "flags": {
+        "is_copper": true,
+        "is_fungicide": true,
+        "is_strong_base": true
+      }
+    },
+    {
+      "component": "噻菌铜",
+      "aliases": [
+        "龙克菌"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "有机铜制剂",
+      "problems": "防治细菌性病害（溃疡、角斑、软腐）",
+      "usage": "500-800倍叶面喷雾或灌根",
+      "precautions": "虽为有机铜，仍属铜制剂，不建议与肥料混配",
+      "brands": [
+        {
+          "name": "龙克菌",
+          "company": "浙江东风化工"
+        }
+      ],
+      "flags": {
+        "is_copper": true,
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "多菌灵",
+      "aliases": [
+        "苯并咪唑44号"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "苯并咪唑类",
+      "problems": "广谱内吸性杀菌，防治枯萎病、根腐病、白粉病、灰霉病、炭疽病",
+      "usage": "500-1000倍叶面喷雾或灌根",
+      "precautions": "长期单一使用易产生抗药性，建议与其他类杀菌剂轮换；部分作物敏感",
+      "brands": [
+        {
+          "name": "多菌灵可湿性粉剂",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "甲基硫菌灵",
+      "aliases": [
+        "甲基托布津",
+        "甲托"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "苯并咪唑类",
+      "problems": "广谱内吸性杀菌，防治灰霉、白粉、枯萎、炭疽等",
+      "usage": "500-1000倍叶面喷雾或灌根",
+      "precautions": "与多菌灵有交互抗性，两者不宜轮换",
+      "brands": [
+        {
+          "name": "甲基托布津",
+          "company": "日本曹达/国内多家"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "代森锰锌",
+      "aliases": [
+        "大生",
+        "山德生"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "二硫代氨基甲酸酯类",
+      "problems": "广谱保护性杀菌，防治霜霉病、疫病、炭疽病、叶斑病等",
+      "usage": "600-800倍叶面喷雾",
+      "precautions": "不可与碱性农药和铜制剂混用",
+      "brands": [
+        {
+          "name": "大生M-45",
+          "company": "先正达"
+        },
+        {
+          "name": "山德生",
+          "company": "UPL"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "嘧菌酯",
+      "aliases": [
+        "阿米西达"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "甲氧基丙烯酸酯类",
+      "problems": "广谱内吸性杀菌，防治白粉、霜霉、锈病、炭疽等",
+      "usage": "1000-1500倍叶面喷雾",
+      "precautions": "不宜与乳油类农药混用；对某些苹果品种有药害风险",
+      "brands": [
+        {
+          "name": "阿米西达",
+          "company": "先正达"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "吡唑醚菌酯",
+      "aliases": [
+        "百克敏",
+        "凯润"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "甲氧基丙烯酸酯类",
+      "problems": "广谱内吸性杀菌，防治白粉、霜霉、炭疽、叶斑等",
+      "usage": "1000-2000倍叶面喷雾",
+      "precautions": "对某些作物有药害风险，苗期慎用",
+      "brands": [
+        {
+          "name": "凯润",
+          "company": "巴斯夫"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "戊唑醇",
+      "aliases": [
+        "富力库",
+        "立克秀"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "三唑类",
+      "problems": "内吸治疗性杀菌，防治锈病、白粉、纹枯、叶斑等",
+      "usage": "1500-3000倍叶面喷雾；拌种处理",
+      "precautions": "三唑类对某些作物有抑制生长作用，苗期和弱树慎用",
+      "brands": [
+        {
+          "name": "富力库",
+          "company": "拜耳"
+        },
+        {
+          "name": "立克秀",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "苯醚甲环唑",
+      "aliases": [
+        "世高",
+        "思科"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "三唑类",
+      "problems": "内吸广谱杀菌，防治炭疽、白粉、叶斑、黑星病等",
+      "usage": "1500-3000倍叶面喷雾",
+      "precautions": "三唑类，苗期慎用",
+      "brands": [
+        {
+          "name": "世高",
+          "company": "先正达"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "己唑醇",
+      "aliases": [],
+      "category": "杀菌剂",
+      "chemical_class": "三唑类",
+      "problems": "内吸杀菌，防治白粉、锈病、黑星等",
+      "usage": "1500-3000倍叶面喷雾",
+      "precautions": "三唑类，苗期慎用",
+      "brands": [
+        {
+          "name": "己唑醇",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "丙环唑",
+      "aliases": [
+        "敌力脱"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "三唑类",
+      "problems": "内吸杀菌，防治锈病、白粉、叶斑等",
+      "usage": "1500-3000倍叶面喷雾",
+      "precautions": "三唑类，苗期慎用；对某些作物有药害",
+      "brands": [
+        {
+          "name": "敌力脱",
+          "company": "先正达"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "氟硅唑",
+      "aliases": [
+        "福星"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "三唑类",
+      "problems": "内吸杀菌，防治黑星病、白粉、锈病等",
+      "usage": "3000-5000倍叶面喷雾",
+      "precautions": "三唑类，苗期慎用",
+      "brands": [
+        {
+          "name": "福星",
+          "company": "科迪华"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "咪鲜胺",
+      "aliases": [
+        "施保克"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "咪唑类",
+      "problems": "防治炭疽病、恶苗病、白粉等",
+      "usage": "1000-2000倍叶面喷雾或浸果",
+      "precautions": "不可与强酸强碱混用",
+      "brands": [
+        {
+          "name": "施保克",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "异菌脲",
+      "aliases": [
+        "扑海因"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "二甲酰亚胺类",
+      "problems": "防治灰霉病、菌核病、早疫病等",
+      "usage": "1000-1500倍叶面喷雾",
+      "precautions": "不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "扑海因",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "腐霉利",
+      "aliases": [
+        "速克灵"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "二甲酰亚胺类",
+      "problems": "防治灰霉病、菌核病等",
+      "usage": "1000-1500倍叶面喷雾",
+      "precautions": "不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "速克灵",
+          "company": "日本住友"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "嘧霉胺",
+      "aliases": [
+        "施佳乐"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "苯氨基嘧啶类",
+      "problems": "专治灰霉病，兼治黑星病",
+      "usage": "1000-1500倍叶面喷雾",
+      "precautions": "不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "施佳乐",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "乙膦铝",
+      "aliases": [
+        "三乙膦酸铝",
+        "疫霜灵"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "有机磷类",
+      "problems": "防治霜霉病、疫病等卵菌病害",
+      "usage": "500-800倍叶面喷雾或灌根",
+      "precautions": "酸性，不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "乙膦铝",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "霜霉威",
+      "aliases": [
+        "普力克"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "氨基甲酸酯类",
+      "problems": "防治霜霉病、疫病等卵菌病害",
+      "usage": "600-1000倍叶面喷雾或灌根",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "普力克",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "烯酰吗啉",
+      "aliases": [
+        "安克"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "吗啉类",
+      "problems": "防治霜霉病、疫病等卵菌病害",
+      "usage": "1500-3000倍叶面喷雾",
+      "precautions": "建议与保护性杀菌剂混用以延缓抗性",
+      "brands": [
+        {
+          "name": "安克",
+          "company": "巴斯夫"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "氟吡菌胺",
+      "aliases": [
+        "银法利（与霜霉威复配）"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "酰胺类",
+      "problems": "防治卵菌病害（霜霉病、晚疫病）",
+      "usage": "600-1000倍叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "银法利",
+          "company": "拜耳"
+        }
+      ],
+      "related": [
+        "氟菌·肟菌酯"
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "氟菌·肟菌酯",
+      "aliases": [
+        "露娜森",
+        "氟吡菌酰胺·肟菌酯"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "复配（SDHI + 甲氧基丙烯酸酯）",
+      "problems": "广谱杀菌，防治白粉、炭疽、灰霉、斑点病等",
+      "usage": "1500-2000倍叶面喷雾",
+      "precautions": "不宜与乳油混用",
+      "brands": [
+        {
+          "name": "露娜森",
+          "company": "拜耳"
+        }
+      ],
+      "related": [
+        "氟吡菌胺",
+        "肟菌酯"
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "春雷霉素",
+      "aliases": [
+        "加收米"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "农用抗生素",
+      "problems": "防治细菌性病害（溃疡、角斑、褐斑）和部分真菌病害",
+      "usage": "500-1000倍叶面喷雾",
+      "precautions": "酸性，不可与碱性农药混用；对某些豆类敏感",
+      "brands": [
+        {
+          "name": "加收米",
+          "company": "日本北兴"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "井冈霉素",
+      "aliases": [],
+      "category": "杀菌剂",
+      "chemical_class": "农用抗生素",
+      "problems": "防治纹枯病、立枯病",
+      "usage": "灌根或叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "井冈霉素",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true
+      }
+    },
+    {
+      "component": "中生菌素",
+      "aliases": [],
+      "category": "杀菌剂",
+      "chemical_class": "农用抗生素",
+      "problems": "防治细菌性病害和部分真菌病害",
+      "usage": "1000-1500倍叶面喷雾",
+      "precautions": "酸性，不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "中生菌素",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "石硫合剂",
+      "aliases": [
+        "石灰硫磺合剂"
+      ],
+      "category": "杀菌剂",
+      "chemical_class": "无机硫制剂",
+      "problems": "防治白粉、锈病、介壳虫、螨类等，果树清园常用药",
+      "usage": "休眠期3-5波美度喷施，生长期0.3-0.5波美度",
+      "precautions": "强碱性，不可与任何酸性农药、铜制剂混用；高温易烧叶",
+      "brands": [
+        {
+          "name": "石硫合剂（自配/商品）",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_fungicide": true,
+        "is_strong_base": true
+      }
+    },
+    {
+      "component": "阿维菌素",
+      "aliases": [
+        "齐墩螨素",
+        "海正灭虫灵"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "大环内酯类",
+      "problems": "防治螨类（红蜘蛛、锈蜘蛛）、线虫、部分鳞翅目害虫",
+      "usage": "2000-5000倍叶面喷雾；灌根治线虫",
+      "precautions": "对蜜蜂、鱼高毒，花期和水域附近慎用；不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "阿维菌素",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "甲维盐",
+      "aliases": [
+        "甲氨基阿维菌素苯甲酸盐"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "大环内酯类",
+      "problems": "防治鳞翅目害虫（青虫、斜纹夜蛾、甜菜夜蛾、稻纵卷叶螟等）",
+      "usage": "3000-5000倍叶面喷雾",
+      "precautions": "对鱼、蜜蜂有毒；不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "甲维盐",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "吡虫啉",
+      "aliases": [
+        "艾美乐",
+        "高巧"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "新烟碱类",
+      "problems": "防治刺吸式害虫（蚜虫、飞虱、粉虱、蓟马）",
+      "usage": "2000-5000倍叶面喷雾或灌根、拌种",
+      "precautions": "对蜜蜂高毒，花期慎用",
+      "brands": [
+        {
+          "name": "艾美乐",
+          "company": "拜耳"
+        },
+        {
+          "name": "高巧",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "啶虫脒",
+      "aliases": [
+        "莫比朗"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "新烟碱类",
+      "problems": "防治蚜虫、粉虱、蓟马等刺吸式害虫",
+      "usage": "2000-3000倍叶面喷雾",
+      "precautions": "对蜜蜂有毒，花期慎用",
+      "brands": [
+        {
+          "name": "莫比朗",
+          "company": "日本曹达"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "噻虫嗪",
+      "aliases": [
+        "阿克泰",
+        "锐胜"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "新烟碱类",
+      "problems": "防治刺吸式害虫和部分咀嚼式害虫",
+      "usage": "3000-5000倍叶面喷雾或灌根、拌种",
+      "precautions": "对蜜蜂有毒，花期慎用",
+      "brands": [
+        {
+          "name": "阿克泰",
+          "company": "先正达"
+        },
+        {
+          "name": "锐胜",
+          "company": "先正达"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "噻虫胺",
+      "aliases": [
+        "福戈"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "新烟碱类",
+      "problems": "防治刺吸式害虫和部分鳞翅目害虫",
+      "usage": "2000-4000倍叶面喷雾",
+      "precautions": "对蜜蜂有毒",
+      "brands": [
+        {
+          "name": "福戈",
+          "company": "住友"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "氯虫苯甲酰胺",
+      "aliases": [
+        "康宽"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "双酰胺类",
+      "problems": "防治鳞翅目害虫（青虫、夜蛾、钻心虫等），持效期长",
+      "usage": "3000-5000倍叶面喷雾",
+      "precautions": "对水生生物有毒",
+      "brands": [
+        {
+          "name": "康宽",
+          "company": "科迪华"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "高效氯氟氰菊酯",
+      "aliases": [
+        "功夫",
+        "高效氯氟氰"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "拟除虫菊酯类",
+      "problems": "防治鳞翅目、同翅目等多种害虫，触杀性强",
+      "usage": "1500-3000倍叶面喷雾",
+      "precautions": "对鱼、蜜蜂高毒；不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "功夫",
+          "company": "先正达"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "高效氯氰菊酯",
+      "aliases": [
+        "高效氯氰"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "拟除虫菊酯类",
+      "problems": "防治多种害虫，触杀性强",
+      "usage": "1000-2000倍叶面喷雾",
+      "precautions": "对鱼、蜜蜂有毒",
+      "brands": [
+        {
+          "name": "高效氯氰菊酯",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "溴氰菊酯",
+      "aliases": [
+        "敌杀死"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "拟除虫菊酯类",
+      "problems": "防治多种害虫，触杀性强",
+      "usage": "1500-3000倍叶面喷雾",
+      "precautions": "对鱼、蜜蜂高毒；不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "敌杀死",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "毒死蜱",
+      "aliases": [
+        "乐斯本"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "有机磷类",
+      "problems": "防治多种地下和地上害虫",
+      "usage": "1000-2000倍叶面喷雾或灌根",
+      "precautions": "瓜类苗期敏感；部分地区蔬菜已限用",
+      "brands": [
+        {
+          "name": "乐斯本",
+          "company": "科迪华"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "辛硫磷",
+      "aliases": [],
+      "category": "杀虫剂",
+      "chemical_class": "有机磷类",
+      "problems": "防治地下害虫（蛴螬、地老虎等）",
+      "usage": "灌根或土壤处理",
+      "precautions": "见光分解快，宜傍晚施药；瓜类敏感",
+      "brands": [
+        {
+          "name": "辛硫磷",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "螺虫乙酯",
+      "aliases": [
+        "亩旺特"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "季酮酸类",
+      "problems": "防治蚜虫、粉虱、介壳虫等刺吸式害虫，双向传导",
+      "usage": "2000-3000倍叶面喷雾",
+      "precautions": "对蜜蜂低毒",
+      "brands": [
+        {
+          "name": "亩旺特",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "乙基多杀菌素",
+      "aliases": [
+        "艾绿士"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "多杀菌素类",
+      "problems": "防治鳞翅目害虫和蓟马，安全性高",
+      "usage": "1500-3000倍叶面喷雾",
+      "precautions": "对蜜蜂低毒",
+      "brands": [
+        {
+          "name": "艾绿士",
+          "company": "科迪华"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "虫螨腈",
+      "aliases": [
+        "除尽"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "吡咯类",
+      "problems": "防治鳞翅目害虫和螨类",
+      "usage": "1000-2000倍叶面喷雾",
+      "precautions": "瓜类苗期慎用；高温慎用",
+      "brands": [
+        {
+          "name": "除尽",
+          "company": "巴斯夫"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "吡蚜酮",
+      "aliases": [
+        "飞电"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "吡啶类",
+      "problems": "专治蚜虫、粉虱、飞虱等刺吸式害虫，选择性高",
+      "usage": "2000-3000倍叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "飞电",
+          "company": "先正达"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "茚虫威",
+      "aliases": [
+        "安打"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "噁二嗪类",
+      "problems": "防治鳞翅目害虫（夜蛾、青虫等），对抗性害虫有效",
+      "usage": "2000-3000倍叶面喷雾",
+      "precautions": "对蜜蜂低毒",
+      "brands": [
+        {
+          "name": "安打",
+          "company": "科迪华"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "哒螨灵",
+      "aliases": [
+        "哒螨酮",
+        "速螨酮"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "哒嗪酮类",
+      "problems": "防治螨类（红蜘蛛、茶黄螨等），杀卵杀成螨",
+      "usage": "1500-2000倍叶面喷雾",
+      "precautions": "不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "哒螨灵",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "螺螨酯",
+      "aliases": [
+        "螨危"
+      ],
+      "category": "杀虫剂",
+      "chemical_class": "季酮酸类",
+      "problems": "防治螨类，杀卵为主",
+      "usage": "2000-3000倍叶面喷雾",
+      "precautions": "对成螨效果差，建议与其他杀螨剂混用",
+      "brands": [
+        {
+          "name": "螨危",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "乙螨唑",
+      "aliases": [],
+      "category": "杀虫剂",
+      "chemical_class": "噁唑类",
+      "problems": "杀螨卵和幼螨",
+      "usage": "2000-3000倍叶面喷雾",
+      "precautions": "对成螨无效",
+      "brands": [
+        {
+          "name": "乙螨唑",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "赤霉酸",
+      "aliases": [
+        "九二〇",
+        "赤霉素",
+        "GA3"
+      ],
+      "category": "调节剂",
+      "chemical_class": "赤霉素类",
+      "problems": "促进生长、促进坐果、打破休眠、拉长果形",
+      "usage": "10-50ppm叶面喷雾或浸蘸",
+      "precautions": "酸性，不可与碱性农药混用；浓度过高易徒长",
+      "brands": [
+        {
+          "name": "赤霉酸",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "芸苔素内酯",
+      "aliases": [
+        "芸苔素",
+        "油菜素内酯"
+      ],
+      "category": "调节剂",
+      "chemical_class": "芸苔素类",
+      "problems": "抗逆（抗寒抗旱抗药害）、促长、保花保果、解药害",
+      "usage": "0.01-0.04ppm叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "芸苔素内酯",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "胺鲜酯",
+      "aliases": [
+        "DA-6",
+        "己酸二乙氨基乙醇酯"
+      ],
+      "category": "调节剂",
+      "chemical_class": "胺类",
+      "problems": "促长、抗逆、增产",
+      "usage": "叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "胺鲜酯",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "乙烯利",
+      "aliases": [
+        "一试灵",
+        "乙烯磷"
+      ],
+      "category": "调节剂",
+      "chemical_class": "乙烯类",
+      "problems": "催熟、促进转色、控旺矮化",
+      "usage": "500-1000倍叶面喷雾",
+      "precautions": "酸性较强，不可与碱性农药混用；浓度过高易落叶",
+      "brands": [
+        {
+          "name": "乙烯利",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "多效唑",
+      "aliases": [
+        "PP333"
+      ],
+      "category": "调节剂",
+      "chemical_class": "三唑类",
+      "problems": "控旺矮化、促进花芽分化",
+      "usage": "叶面喷雾或土壤灌施",
+      "precautions": "用量过大易导致植株矮化过度，影响后茬",
+      "brands": [
+        {
+          "name": "PP333",
+          "company": "先正达/国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "矮壮素",
+      "aliases": [
+        "CCC"
+      ],
+      "category": "调节剂",
+      "chemical_class": "季铵类",
+      "problems": "控旺、矮化、防倒伏",
+      "usage": "叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "矮壮素",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "甲哌鎓",
+      "aliases": [
+        "缩节胺",
+        "助壮素"
+      ],
+      "category": "调节剂",
+      "chemical_class": "季铵类",
+      "problems": "控旺矮化，棉花上常用",
+      "usage": "叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "缩节胺",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "氯吡脲",
+      "aliases": [
+        "KT-30",
+        "吡脲"
+      ],
+      "category": "调节剂",
+      "chemical_class": "脲类",
+      "problems": "膨果、促进细胞分裂",
+      "usage": "蘸果或叶面喷雾，浓度极低",
+      "precautions": "浓度过高易产生畸形果",
+      "brands": [
+        {
+          "name": "氯吡脲",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "噻苯隆",
+      "aliases": [
+        "脱叶灵",
+        "TDZ"
+      ],
+      "category": "调节剂",
+      "chemical_class": "脲类",
+      "problems": "棉花脱叶、促进细胞分裂",
+      "usage": "叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "噻苯隆",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "6-苄氨基嘌呤",
+      "aliases": [
+        "6-BA",
+        "苄氨基嘌呤"
+      ],
+      "category": "调节剂",
+      "chemical_class": "嘌呤类",
+      "problems": "促进细胞分裂、促侧芽萌发、保绿防衰",
+      "usage": "叶面喷雾",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "6-BA",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "草甘膦",
+      "aliases": [
+        "农达"
+      ],
+      "category": "除草剂",
+      "chemical_class": "有机磷类",
+      "problems": "灭生性除草，非耕地/果园行间除草",
+      "usage": "定向喷雾",
+      "precautions": "不可与任何肥料混配；严禁喷到作物绿色部位",
+      "brands": [
+        {
+          "name": "农达",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_herbicide": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "草铵膦",
+      "aliases": [
+        "保试达"
+      ],
+      "category": "除草剂",
+      "chemical_class": "膦酸类",
+      "problems": "灭生性除草（非传导性，速效）",
+      "usage": "定向喷雾",
+      "precautions": "不可与肥料混配；严禁喷到作物",
+      "brands": [
+        {
+          "name": "保试达",
+          "company": "拜耳"
+        }
+      ],
+      "flags": {
+        "is_herbicide": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "精喹禾灵",
+      "aliases": [],
+      "category": "除草剂",
+      "chemical_class": "芳氧苯氧丙酸酯类",
+      "problems": "防除禾本科杂草（阔叶作物田）",
+      "usage": "叶面喷雾",
+      "precautions": "不可与肥料混配",
+      "brands": [
+        {
+          "name": "精喹禾灵",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_herbicide": true
+      }
+    },
+    {
+      "component": "氰氟草酯",
+      "aliases": [],
+      "category": "除草剂",
+      "chemical_class": "芳氧苯氧丙酸酯类",
+      "problems": "稻田防除稗草等禾本科杂草",
+      "usage": "叶面喷雾",
+      "precautions": "不可与肥料混配",
+      "brands": [
+        {
+          "name": "氰氟草酯",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_herbicide": true
+      }
+    },
+    {
+      "component": "灭草松",
+      "aliases": [
+        "排草丹"
+      ],
+      "category": "除草剂",
+      "chemical_class": "苯并噻二嗪酮类",
+      "problems": "防除阔叶杂草和莎草",
+      "usage": "叶面喷雾",
+      "precautions": "不可与肥料混配",
+      "brands": [
+        {
+          "name": "排草丹",
+          "company": "巴斯夫"
+        }
+      ],
+      "flags": {
+        "is_herbicide": true
+      }
+    },
+    {
+      "component": "有机硅助剂",
+      "aliases": [
+        "硅力",
+        "丝润",
+        "有机硅"
+      ],
+      "category": "助剂",
+      "chemical_class": "有机硅表面活性剂",
+      "problems": "展着、渗透增效，提高药液覆盖和吸收",
+      "usage": "混配时按说明少量加入",
+      "precautions": "过量使用可能导致药害；不可与强酸强碱混用",
+      "brands": [
+        {
+          "name": "有机硅助剂",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {}
+    },
+    {
+      "component": "矿物油",
+      "aliases": [
+        "喷洒油",
+        "农用矿物油"
+      ],
+      "category": "助剂",
+      "chemical_class": "矿物油",
+      "problems": "物理窒息杀虫杀螨、增效展着",
+      "usage": "150-300倍叶面喷雾",
+      "precautions": "不可与硫制剂混用；高温强光下慎用易烧叶；不可与乳化性差的农药混用",
+      "brands": [
+        {
+          "name": "农用矿物油",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {}
+    },
+    {
+      "component": "植物油助剂",
+      "aliases": [
+        "植物油",
+        "甲基化植物油"
+      ],
+      "category": "助剂",
+      "chemical_class": "植物油类",
+      "problems": "展着增效，对草甘膦等增效明显",
+      "usage": "混配时按说明加入",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "植物油助剂",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {}
+    },
+    {
+      "component": "硝酸钙",
+      "aliases": [
+        "钙硝"
+      ],
+      "category": "肥料",
+      "chemical_class": "硝态氮钙肥",
+      "problems": "补钙补氮，防裂果、防脐腐病",
+      "usage": "叶面喷雾或冲施",
+      "precautions": "含钙，与含磷酸根的产品需间隔2-3天使用",
+      "brands": [
+        {
+          "name": "硝酸钙",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "has_calcium": true
+      }
+    },
+    {
+      "component": "磷酸二氢钾",
+      "aliases": [
+        "磷二钾",
+        "MKP"
+      ],
+      "category": "肥料",
+      "chemical_class": "磷钾复合肥",
+      "problems": "补磷补钾，促花促果、膨果着色、抗逆",
+      "usage": "叶面喷雾或冲施",
+      "precautions": "含磷酸根，与含钙产品需间隔2-3天使用",
+      "brands": [
+        {
+          "name": "磷酸二氢钾",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "has_phosphorus": true,
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "尿素",
+      "aliases": [],
+      "category": "肥料",
+      "chemical_class": "酰胺态氮肥",
+      "problems": "补氮，叶面追氮常用",
+      "usage": "0.3%-0.5%叶面喷雾",
+      "precautions": "缩二脲含量高时叶喷易烧叶",
+      "brands": [
+        {
+          "name": "尿素",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {}
+    },
+    {
+      "component": "硫酸镁",
+      "aliases": [
+        "泻盐"
+      ],
+      "category": "肥料",
+      "chemical_class": "中量元素肥",
+      "problems": "补镁，防缺镁黄叶",
+      "usage": "叶面喷雾或冲施",
+      "precautions": "—",
+      "brands": [
+        {
+          "name": "硫酸镁",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {}
+    },
+    {
+      "component": "硫酸亚铁",
+      "aliases": [
+        "绿矾"
+      ],
+      "category": "肥料",
+      "chemical_class": "微量元素肥",
+      "problems": "补铁，防缺铁黄化",
+      "usage": "叶面喷雾或灌根",
+      "precautions": "酸性，易氧化，现配现用；不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "硫酸亚铁",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    },
+    {
+      "component": "糖醇钙",
+      "aliases": [
+        "螯合钙",
+        "有机钙"
+      ],
+      "category": "肥料",
+      "chemical_class": "螯合钙肥",
+      "problems": "高效补钙，移动性好",
+      "usage": "叶面喷雾",
+      "precautions": "含钙，与含磷酸根产品需间隔使用",
+      "brands": [
+        {
+          "name": "糖醇钙",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "has_calcium": true
+      }
+    },
+    {
+      "component": "腐植酸钾",
+      "aliases": [
+        "黄腐酸钾"
+      ],
+      "category": "肥料",
+      "chemical_class": "腐殖酸类",
+      "problems": "改土促根、螯合养分",
+      "usage": "冲施或叶面喷雾",
+      "precautions": "腐殖酸与高浓度钙肥混合可能产生絮凝",
+      "brands": [
+        {
+          "name": "腐植酸钾",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_humic_acid": true
+      }
+    },
+    {
+      "component": "氨基酸水溶肥",
+      "aliases": [],
+      "category": "肥料",
+      "chemical_class": "氨基酸类",
+      "problems": "补氨基酸，促长抗逆",
+      "usage": "叶面喷雾或冲施",
+      "precautions": "酸性，不可与碱性农药混用",
+      "brands": [
+        {
+          "name": "氨基酸水溶肥",
+          "company": "国内多家"
+        }
+      ],
+      "flags": {
+        "is_acidic": true
+      }
+    }
+  ],
+  "pesticide_extras": {
+    "毒氟磷": {
+      "ph": "7.62（中性）",
+      "contraindications": "【作物限制】登记作物：水稻、烟草、番茄、玉米、西瓜、百香果等；发病前或初期施药效果最佳\n【混配限制】不能与碱性物质混用；药液应随配随用，不能久存；遇酸和碱均逐渐分解"
+    },
+    "戊唑醇": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】瓜类苗期慎用，易产生药害；梨树某些品种敏感\n【混配限制】不可与碱性农药（石硫合剂、波尔多液、铜制剂）混用；不可与强酸性农药混用"
+    },
+    "丙环唑": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期、幼果期慎用；葡萄幼果期易产生药害；草莓花期慎用\n【混配限制】不可与碱性农药混用；不建议与有机磷杀虫剂混用"
+    },
+    "苯醚甲环唑": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；对某些梨品种敏感\n【混配限制】不可与铜制剂、碱性农药混用；与乳油类农药混用需降低浓度"
+    },
+    "三唑酮": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】瓜类苗期慎用\n【混配限制】不可与碱性农药混用"
+    },
+    "己唑醇": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；苹果某些品种早期慎用\n【混配限制】不可与碱性农药混用"
+    },
+    "烯唑醇": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】瓜类苗期禁用；对某些苹果品种有药害\n【混配限制】不可与碱性农药混用"
+    },
+    "氟硅唑": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；梨树盛花期慎用\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "咪鲜胺": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与强碱性农药混用"
+    },
+    "嘧菌酯": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】苹果某些品种（如嘎啦）敏感，慎用；葡萄幼果期注意浓度\n【混配限制】不可与乳油类农药、有机硅助剂混用（易药害）；不可与碱性农药混用"
+    },
+    "吡唑醚菌酯": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】苹果嘎啦品种禁用；葡萄幼果期降低浓度\n【混配限制】不可与乳油类农药混用；不可与碱性农药、铜制剂混用"
+    },
+    "肟菌酯": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】苹果某些品种敏感\n【混配限制】不可与碱性农药、铜制剂混用；不建议与乳油类混用"
+    },
+    "醚菌酯": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "啶氧菌酯": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "多菌灵": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用；长期单一使用易产生抗性"
+    },
+    "甲基硫菌灵": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "代森锰锌": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】幼嫩部位慎用，高温慎用\n【混配限制】不可与碱性农药、铜制剂混用；不可与乳油类混用"
+    },
+    "百菌清": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】梨树、桃树花期慎用；番茄幼果期慎用\n【混配限制】不可与碱性农药混用；不可与矿物油混用"
+    },
+    "福美双": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与铜制剂、碱性农药混用；不可与含铁肥料混用"
+    },
+    "霜脲氰": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "烯酰吗啉": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "腐霉利": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】茄科作物花期慎用\n【混配限制】不可与碱性农药混用；不可与有机磷农药混用"
+    },
+    "异菌脲": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、强酸性农药混用"
+    },
+    "嘧霉胺": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】番茄、茄子苗期慎用\n【混配限制】不可与碱性农药混用；高温下慎用"
+    },
+    "啶酰菌胺": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "氟吡菌胺": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "氟吡菌酰胺": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "双炔酰菌胺": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "嘧菌环胺": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "氰霜唑": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "三乙膦酸铝": {
+      "ph": "3.5-4.0（强酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用；强酸性，与多数肥料需间隔使用"
+    },
+    "波尔多液": {
+      "ph": "9.0-10.0（强碱性）",
+      "contraindications": "【作物限制】桃、李、杏等核果类敏感，慎用；梨幼果期慎用；葡萄部分品种敏感\n【混配限制】不可与酸性农药、酸性肥料混用；不可与代森类、有机磷农药混用；使用前后15天内不可用石硫合剂"
+    },
+    "石硫合剂": {
+      "ph": "11.0-13.0（强碱性）",
+      "contraindications": "【作物限制】桃、李、杏、葡萄等敏感作物禁用；高温32℃以上不宜使用；萌芽后慎用\n【混配限制】不可与任何酸性农药混用；与波尔多液间隔至少15天；不可与有机磷农药混用"
+    },
+    "氢氧化铜": {
+      "ph": "8.0-9.0（碱性）",
+      "contraindications": "【作物限制】桃、李、杏等核果类慎用；梨幼果期慎用\n【混配限制】不可与酸性农药、酸性肥料混用；不可与代森类混用"
+    },
+    "王铜": {
+      "ph": "8.0-9.0（碱性）",
+      "contraindications": "【作物限制】桃、李、杏等核果类慎用\n【混配限制】不可与酸性农药、肥料混用；不可与代森类混用"
+    },
+    "春雷霉素": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】大豆、藕敏感，慎用\n【混配限制】不可与碱性农药混用"
+    },
+    "中生菌素": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "井冈霉素": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "阿维菌素": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；桃树花期慎用；对蜜蜂高毒，花期慎用\n【混配限制】不可与碱性农药混用；对鱼高毒，水产区域禁用"
+    },
+    "甲氨基阿维菌素苯甲酸盐": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；对蜜蜂、鱼高毒\n【混配限制】不可与碱性农药混用"
+    },
+    "吡虫啉": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；对蜜蜂高毒，花期禁用\n【混配限制】不可与碱性农药混用"
+    },
+    "啶虫脒": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】瓜类苗期慎用；对蜜蜂高毒\n【混配限制】不可与碱性农药混用"
+    },
+    "噻虫嗪": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；对蜜蜂高毒\n【混配限制】不可与碱性农药混用"
+    },
+    "呋虫胺": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】无明显作物限制；对蜜蜂有毒\n【混配限制】不可与碱性农药混用"
+    },
+    "联苯菊酯": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类、番茄苗期慎用；对茶树安全\n【混配限制】不可与碱性农药混用；对鱼高毒"
+    },
+    "高效氯氟氰菊酯": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；对蜜蜂、鱼高毒\n【混配限制】不可与碱性农药混用"
+    },
+    "溴氰菊酯": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】瓜类、十字花科苗期慎用；对鱼高毒\n【混配限制】不可与碱性农药混用"
+    },
+    "氯虫苯甲酰胺": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】无明显作物限制；对家蚕高毒，桑园禁用\n【混配限制】不可与碱性农药混用"
+    },
+    "虫螨腈": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期慎用；十字花科蔬菜安全\n【混配限制】不可与碱性农药混用；对鱼有毒"
+    },
+    "茚虫威": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "螺虫乙酯": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "烯啶虫胺": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】瓜类苗期慎用；对蜜蜂有毒\n【混配限制】不可与碱性农药混用"
+    },
+    "噻嗪酮": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】瓜类苗期慎用；白菜苗期慎用\n【混配限制】不可与碱性农药混用"
+    },
+    "虫酰肼": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "苏云金杆菌": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】对家蚕高毒，桑园禁用\n【混配限制】不可与杀菌剂（尤其铜制剂）混用；不可与碱性农药混用"
+    },
+    "矿物油": {
+      "ph": "7.0（中性）",
+      "contraindications": "【作物限制】高温慎用；桃树萌芽后慎用\n【混配限制】不可与含硫农药混用；不可与乳油类混用；与百菌清间隔使用"
+    },
+    "哒螨灵": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期慎用\n【混配限制】不可与碱性农药混用"
+    },
+    "螺螨酯": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药、铜制剂混用"
+    },
+    "乙螨唑": {
+      "ph": "6.0-7.0（中性偏酸）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "联苯肼酯": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "炔螨特": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】瓜类苗期、幼果期慎用；柑橘嫩梢期慎用\n【混配限制】不可与碱性农药混用；高温下降低浓度"
+    },
+    "草甘膦": {
+      "ph": "4.0-5.0（强酸性）",
+      "contraindications": "【作物限制】接触绿色部位即杀，不可喷到作物上；只能定向喷雾\n【混配限制】不可与任何肥料、农药混用；不可与碱性农药混用"
+    },
+    "草铵膦": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】接触绿色部位即杀，需定向喷雾\n【混配限制】不建议与其他农药肥料混用"
+    },
+    "赤霉酸": {
+      "ph": "3.0-4.0（强酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用；不可与含钙肥料混用（会沉淀失效）"
+    },
+    "苄氨基嘌呤": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "乙烯利": {
+      "ph": "2.5-3.0（强酸性）",
+      "contraindications": "【作物限制】瓜类苗期禁用；弱小植株慎用\n【混配限制】不可与碱性农药混用；强酸性，与多数肥料需间隔使用"
+    },
+    "多效唑": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】弱小植株慎用；残留期长，下茬作物注意\n【混配限制】不可与碱性农药混用"
+    },
+    "矮壮素": {
+      "ph": "4.5-5.5（酸性）",
+      "contraindications": "【作物限制】弱小植株慎用\n【混配限制】不可与碱性农药混用"
+    },
+    "甲哌鎓": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "芸苔素内酯": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用；不可与除草剂混用"
+    },
+    "S-诱抗素": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与碱性农药混用"
+    },
+    "氯吡脲": {
+      "ph": "6.0-7.0（中性）",
+      "contraindications": "【作物限制】瓜类需严格控制浓度；葡萄某些品种敏感\n【混配限制】不可与碱性农药混用"
+    },
+    "磷酸二氢钾": {
+      "ph": "4.5-4.8（酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与含钙肥料（硝酸钙、氯化钙）混用，会生成磷酸钙沉淀；不可与含锰、含锌微量元素肥料混用"
+    },
+    "硝酸钙": {
+      "ph": "5.5-6.5（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与含磷肥料（磷酸二氢钾）混用；不可与含硫酸根肥料混用"
+    },
+    "硼酸": {
+      "ph": "5.0-5.5（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】一般可混，但不可过量使用"
+    },
+    "硫酸锌": {
+      "ph": "5.0-5.5（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与含磷肥料混用（生成磷酸锌沉淀）"
+    },
+    "腐殖酸": {
+      "ph": "9.0-10.0（碱性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】不可与含钙肥料混用（产生絮凝沉淀）；不可与酸性农药混用"
+    },
+    "氨基酸": {
+      "ph": "5.0-6.0（弱酸性）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】一般可混，但不可与强碱性农药混用"
+    },
+    "尿素": {
+      "ph": "7.0-8.0（中性偏碱）",
+      "contraindications": "【作物限制】无明显作物限制\n【混配限制】一般可混，但高浓度时注意缩二脲危害"
+    }
+  }
+}
