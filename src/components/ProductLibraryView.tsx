@@ -22,7 +22,7 @@ export interface CatalogStats {
   skus: number;
   pesticides: number;
   products_with_legacy_images?: number;
-  source?: 'api' | 'snapshot';
+  source?: 'api' | 'snapshot' | 'legacy';
 }
 
 interface ProductSku {

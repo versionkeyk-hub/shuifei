@@ -289,6 +289,7 @@ export type NavTab =
   | 'community'
   | 'product_quiz'
   | 'product_library'
+  | 'legacy_pesticide'
   | 'local_import'
   | 'export_studio'
   | 'admin_settings'

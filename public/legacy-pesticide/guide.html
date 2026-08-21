@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>农药混配查询系统 - 使用指导</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f5f5; color: #333; line-height: 1.8; }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  h1 { color: #2E7D32; margin: 30px 0 10px; font-size: 26px; border-bottom: 3px solid #2E7D32; padding-bottom: 10px; }
+  h2 { color: #1B5E20; margin: 25px 0 10px; font-size: 20px; }
+  h3 { color: #388E3C; margin: 20px 0 8px; font-size: 16px; }
+  p { margin: 8px 0; }
+  .note { background: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; margin: 12px 0; border-radius: 4px; }
+  .warn { background: #FFEBEE; border-left: 4px solid #F44336; padding: 12px 16px; margin: 12px 0; border-radius: 4px; }
+  .ok { background: #E8F5E9; border-left: 4px solid #4CAF50; padding: 12px 16px; margin: 12px 0; border-radius: 4px; }
+  pre { background: #263238; color: #ECEFF1; padding: 16px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 10px 0; }
+  code { background: #E0E0E0; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #2E7D32; color: white; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  .step { background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .step-num { display: inline-block; width: 30px; height: 30px; background: #2E7D32; color: white; border-radius: 50%; text-align: center; line-height: 30px; margin-right: 8px; font-weight: bold; }
+  .back-link { display: inline-block; margin: 20px 0; color: #2E7D32; text-decoration: none; padding: 8px 16px; border: 1px solid #2E7D32; border-radius: 4px; }
+  .back-link:hover { background: #2E7D32; color: white; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>农药混配查询系统 - 使用指导</h1>
+<p>本文件详细说明如何添加/修改农药数据、如何使用管理后台、如何更新网站。</p>
+
+<div class="ok">
+<strong>快速入口：</strong><br>
+网站地址：<a href="https://inspiring-kheer-4311c8.netlify.app/">https://inspiring-kheer-4311c8.netlify.app/</a><br>
+管理后台：<a href="admin.html">admin.html</a>（用户名 admin，密码 nongyao2024）
+</div>
+
+<!-- ============================================================ -->
+<h1>一、两种添加数据的方式</h1>
+
+<p>你有两种方式添加新农药数据：</p>
+
+<table>
+<tr><th>方式</th><th>适合场景</th><th>操作难度</th><th>说明</th></tr>
+<tr><td><strong>方式A：管理后台</strong></td><td>添加少量农药（1-5条）</td><td>简单</td><td>网页操作，点击添加即可</td></tr>
+<tr><td><strong>方式B：直接编辑文件</strong></td><td>批量添加（10条以上）</td><td>中等</td><td>用文本编辑器打开JS文件，按格式添加</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h1>二、方式A：用管理后台添加</h1>
+
+<div class="step">
+<span class="step-num">1</span><strong>打开管理后台</strong>
+<p>在网站底部点击"管理后台"链接，或在浏览器地址栏输入：<code>你的网址/admin.html</code></p>
+</div>
+
+<div class="step">
+<span class="step-num">2</span><strong>登录</strong>
+<p>用户名：<code>admin</code>　　密码：<code>nongyao2024</code></p>
+<p>如果要改密码，登录后点"修改密码"。</p>
+</div>
+
+<div class="step">
+<span class="step-num">3</span><strong>添加农药</strong>
+<p>点"农药管理" → 点"添加新农药"按钮 → 填写表单 → 点保存。</p>
+<p>表单各字段说明见下方<a href="#format">数据格式说明</a>。</p>
+</div>
+
+<div class="step">
+<span class="step-num">4</span><strong>导出并更新网站</strong>
+<p>添加完所有新农药后，点"修改/导出数据"标签 → 选择"pesticides.js" → 可直接在文本框中编辑内容 → 点"下载当前文件"。</p>
+<p>下载的文件替换掉网站中的 <code>data/pesticides.js</code>，然后把整个 <code>pesticide-query-app</code> 文件夹拖拽到 Netlify 即可更新网站。</p>
+<p>也可以直接在"修改/导出数据"页面点"下载整个网站文件夹"按钮，一键打包下载全部文件。</p>
+</div>
+
+<div class="note">
+<strong>注意：</strong>管理后台的数据保存在浏览器localStorage中，换浏览器或清除缓存会丢失。所以添加完一定要点"导出数据"下载文件。
+</div>
+
+<!-- ============================================================ -->
+<h1>三、方式B：直接编辑文件添加</h1>
+
+<h2>3.1 打开数据文件</h2>
+<p>用任何文本编辑器（推荐 VS Code、Notepad++）打开：</p>
+<pre>pesticide-query-app/data/pesticides.js</pre>
+
+<h2>3.2 找到添加位置</h2>
+<p>在文件中找到最后一个条目的结尾（<code>},</code>），在它后面、<code>];</code> 前面添加新条目。</p>
+
+<h2 id="format">3.3 数据格式</h2>
+<p>每条农药数据的格式如下，照着抄就行：</p>
+
+<pre>
+{
+  component: "农药成分名",           <span style="color:#81C784;">// 必填，农药有效成分的中文名</span>
+  aliases: ["别名1", "别名2"],       <span style="color:#81C784;">// 选填，商品名、英文名、缩写等</span>
+  category: "杀菌剂",               <span style="color:#81C784;">// 必填，从下方类别中选一个</span>
+  chemical_class: "三唑类",          <span style="color:#81C784;">// 选填，化学分类</span>
+  problems: "防治什么病",           <span style="color:#81C784;">// 选填，防治对象和病害</span>
+  usage: "参考：1500倍喷雾",        <span style="color:#81C784;">// 选填，用法用量</span>
+  precautions: "注意事项",          <span style="color:#81C784;">// 选填，使用注意事项</span>
+  brands: [                         <span style="color:#81C784;">// 选填，商品名和厂家</span>
+    {name: "商品名", company: "厂家名"}
+  ],
+  related: ["相关成分1"],           <span style="color:#81C784;">// 选填，复配中各单剂名</span>
+  flags: {                          <span style="color:#81C784;">// 选填，属性标记</span>
+    is_fungicide: true              <span style="color:#81C784;">// 是杀菌剂</span>
+  }
+},
+</pre>
+
+<h2>3.4 category 可选值</h2>
+<table>
+<tr><th>值</th><th>说明</th></tr>
+<tr><td>杀菌剂</td><td>防治真菌、细菌病害</td></tr>
+<tr><td>杀虫剂</td><td>防治害虫</td></tr>
+<tr><td>除草剂</td><td>防除杂草</td></tr>
+<tr><td>杀螨剂</td><td>防治螨类</td></tr>
+<tr><td>杀线虫剂</td><td>防治线虫</td></tr>
+<tr><td>杀鼠剂</td><td>防治鼠类</td></tr>
+<tr><td>调节剂</td><td>植物生长调节剂</td></tr>
+<tr><td>卫生杀虫剂</td><td>卫生害虫防治</td></tr>
+<tr><td>杀软体动物剂</td><td>防治蜗牛蛞蝓等</td></tr>
+<tr><td>助剂</td><td>农药助剂</td></tr>
+<tr><td>肥料</td><td>肥料类</td></tr>
+</table>
+
+<h2>3.5 flags 可选标记</h2>
+<p>根据农药属性选择对应的标记，设为 <code>true</code> 即可：</p>
+<table>
+<tr><th>标记名</th><th>含义</th><th>混配影响</th></tr>
+<tr><td>is_copper</td><td>含铜制剂</td><td>不可与酸性农药、肥料混用</td></tr>
+<tr><td>is_fungicide</td><td>杀菌剂</td><td>不可与微生物菌剂混用</td></tr>
+<tr><td>is_insecticide</td><td>杀虫剂</td><td>—</td></tr>
+<tr><td>is_herbicide</td><td>除草剂</td><td>不可与其他类别混用</td></tr>
+<tr><td>is_acaricide</td><td>杀螨剂</td><td>—</td></tr>
+<tr><td>is_nematicide</td><td>杀线虫剂</td><td>—</td></tr>
+<tr><td>is_rodenticide</td><td>杀鼠剂</td><td>不可与其他类别混用</td></tr>
+<tr><td>is_pgr</td><td>植物生长调节剂</td><td>—</td></tr>
+<tr><td>is_public_health_insecticide</td><td>卫生杀虫剂</td><td>—</td></tr>
+<tr><td>is_molluscicide</td><td>杀软体动物剂</td><td>—</td></tr>
+<tr><td>is_microbial</td><td>微生物制剂</td><td>不可与杀菌剂混用</td></tr>
+<tr><td>is_strong_base</td><td>强碱性</td><td>不可与酸性农药混用</td></tr>
+<tr><td>is_strong_acid</td><td>强酸性</td><td>不可与碱性农药混用</td></tr>
+<tr><td>is_basic</td><td>偏碱性</td><td>慎与酸性混用</td></tr>
+<tr><td>is_acidic</td><td>偏酸性</td><td>慎与碱性混用</td></tr>
+<tr><td>is_heavy_metal</td><td>含重金属</td><td>慎与其他重金属混用</td></tr>
+<tr><td>is_calcium</td><td>含钙</td><td>不可与含磷混用</td></tr>
+<tr><td>is_phosphorus</td><td>含磷</td><td>不可与含钙混用</td></tr>
+<tr><td>is_humic_acid</td><td>含腐殖酸</td><td>—</td></tr>
+</table>
+
+<h2>3.6 完整示例</h2>
+<p>假设要添加一个新农药"氟啶虫酰胺"：</p>
+<pre>
+  {
+    component: "氟啶虫酰胺",
+    aliases: ["Aria", "Gravita"],
+    category: "杀虫剂",
+    chemical_class: "吡啶酰胺类",
+    problems: "防治蚜虫、飞虱、蓟马等刺吸式口器害虫",
+    usage: "参考：2000-3000倍叶面喷雾（具体以产品标签为准）",
+    precautions: "对家蚕有毒，桑园附近慎用",
+    brands: [
+      {name: "Aria", company: "日本石原"},
+      {name: "氟啶虫酰胺", company: "国内多家"}
+    ],
+    related: [],
+    flags: {is_insecticide: true}
+  },
+</pre>
+
+<div class="warn">
+<strong>重要提醒：</strong>
+<ol>
+<li>每条数据结尾要有逗号 <code>,</code></li>
+<li>最后一条例外——在 <code>];</code> 前面的那条不要加逗号</li>
+<li>中文引号和英文引号不要混用，统一用英文引号</li>
+<li><code>component</code> 是主键，不能重复</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h1>四、如何更新到线上网站</h1>
+
+<div class="ok">
+<strong>简单来说：改完文件 → 把整个 pesticide-query-app 文件夹拖到 Netlify → 完成。</strong>
+</div>
+
+<p>你的网站部署在 Netlify（地址：<code>https://inspiring-kheer-4311c8.netlify.app/</code>），更新方式就是拖拽上传。</p>
+
+<div class="note">
+<strong>关于 Gitee：</strong>Gitee 仓库（gitee.com/huiminhaotian/pesticide-query）只是代码备份，<strong>和 Netlify 没有自动连接</strong>。你不需要管 Gitee，平时只用 Netlify 拖拽更新就行。Gitee 的作用是万一需要找回历史版本时有个备份。
+</div>
+
+<div class="step">
+<span class="step-num">1</span><strong>修改文件</strong>
+<p>在 <code>data/pesticides.js</code> 中添加/修改数据（或用管理后台导出新文件替换）。</p>
+</div>
+
+<div class="step">
+<span class="step-num">2</span><strong>拖拽到 Netlify 更新</strong>
+<ol>
+<li>登录 <a href="https://app.netlify.com" target="_blank">Netlify</a></li>
+<li>进入你的站点（inspiring-kheer-4311c8）</li>
+<li>点 "Deploys" → 拖拽区域 "Drag and drop your site output folder here"</li>
+<li>把整个 <code>pesticide-query-app</code> 文件夹拖进去</li>
+<li>等待几秒，部署完成</li>
+</ol>
+<p><strong>或者：</strong>在管理后台点"修改/导出数据" → 点"下载整个网站文件夹"按钮，下载 zip 解压后拖到 Netlify。</p>
+</div>
+
+<div class="step">
+<span class="step-num">3</span><strong>验证</strong>
+<p>访问 <code>https://inspiring-kheer-4311c8.netlify.app/</code>，按 Ctrl+F5 强制刷新。</p>
+</div>
+
+<!-- ============================================================ -->
+<h1>五、公司产品数据</h1>
+
+<p>公司产品数据在 <code>data/products.js</code>，格式类似：</p>
+<pre>
+{
+  name: "傲净",
+  category: "微生物菌剂",
+  active_ingredients: "解磷菌、固氮菌",
+  functions: "解磷固氮、改良土壤",
+  usage: "冲施/滴灌",
+  precautions: "不可与杀菌剂混用",
+  flags: {is_microbial: true}
+},
+</pre>
+
+<p>添加方式和农药数据完全一样，照着已有格式加就行。</p>
+
+<!-- ============================================================ -->
+<h1>六、文件结构说明</h1>
+
+<table>
+<tr><th>文件</th><th>作用</th><th>你需要改吗</th></tr>
+<tr><td><code>index.html</code></td><td>网站主页</td><td>一般不用改</td></tr>
+<tr><td><code>admin.html</code></td><td>管理后台</td><td>不用改</td></tr>
+<tr><td><code>style.css</code></td><td>样式文件</td><td>不用改</td></tr>
+<tr><td><code>app.js</code></td><td>搜索和混配逻辑</td><td>不用改</td></tr>
+<tr><td><strong><code>data/pesticides.js</code></strong></td><td><strong>农药数据库</strong></td><td><strong>添加农药时改这个</strong></td></tr>
+<tr><td><strong><code>data/products.js</code></strong></td><td><strong>公司产品数据</strong></td><td><strong>添加产品时改这个</strong></td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h1>七、常见问题</h1>
+
+<h3>Q: 添加数据后网站没变化？</h3>
+<p>A: 确认已把整个 <code>pesticide-query-app</code> 文件夹拖拽到 Netlify，等待几秒后刷新浏览器（Ctrl+F5 强制刷新）。</p>
+
+<h3>Q: 网页打不开或报错？</h3>
+<p>A: 检查 pesticides.js 文件格式：每条数据有没有少逗号、有没有引号不匹配。可以用浏览器打开 index.html，按 F12 看 Console 有没有报错。</p>
+
+<h3>Q: 搜索不到新加的农药？</h3>
+<p>A: 搜索会匹配 component、aliases、brands、related 四个字段。确认你添加的农药名称没有错别字。也可以试试用别名搜索。</p>
+
+<h3>Q: 管理后台数据丢了？</h3>
+<p>A: 管理后台数据存在浏览器 localStorage 中，清缓存会丢。务必在添加完数据后点"导出数据"下载文件。</p>
+
+<h3>Q: 想修改管理后台密码？</h3>
+<p>A: 登录后点"修改密码"，输入旧密码和新密码即可。密码存在浏览器中，换浏览器需要重新输入默认密码 nongyao2024。</p>
+
+<a href="index.html" class="back-link">← 返回网站首页</a>
+
+</div>
+</body>
+</html>

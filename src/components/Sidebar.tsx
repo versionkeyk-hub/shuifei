@@ -89,12 +89,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       visible: true,
     },
     {
-      id: 'product_library' as NavTab,
-      label: getSiteText('nav_product_library_label', settings?.siteTexts, settings.navTitles?.product_library || '农药混配与产品资料库'),
+      id: 'legacy_pesticide' as NavTab,
+      label: getSiteText('nav_product_library_label', settings?.siteTexts, settings.navTitles?.product_library || '原版农药混配与产品资料库'),
       icon: Database,
       badge: String(totalProductCatalogCount) + ' 品 / ' + String(totalPesticideIngredients) + ' 药',
       badgeColor: 'bg-indigo-500 text-white font-bold',
-      desc: '产品规格报价、成分用法与农药混配规则',
+      desc: '原版布局、产品资料、农药库与混配管理后台',
       visible: true,
     },
     {

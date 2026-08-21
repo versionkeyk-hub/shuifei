@@ -256,11 +256,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-3xl font-black text-slate-900">{catalogStats?.products || fertilizerProductsCount}</span>
-            <span className="text-xs text-slate-500 font-semibold">品 · {catalogStats?.skus || 320} 条 SKU</span>
+            <span className="text-xs text-slate-500 font-semibold">品 · {catalogStats?.skus || 47} {catalogStats?.source === 'legacy' ? '个包装规格' : '条 SKU'}</span>
           </div>
           <div className="mt-2 text-xs text-purple-600 flex items-center gap-1 font-medium">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <EditableText textKey="stat_products_sub" defaultText={(catalogStats?.pesticides || 74) + ' 种农药有效成分与混配规则'} />
+            <EditableText textKey="stat_products_sub" defaultText={(catalogStats?.pesticides || 6706) + ' 条农药及混配资料'} />
           </div>
         </div>
       </div>

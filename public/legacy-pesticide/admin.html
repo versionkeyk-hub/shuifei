@@ -1,0 +1,3819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 - 农药混配查询</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ===== Admin 专用样式 ===== */
+    body { background: #f5f5f5; }
+
+    /* 登录页 */
+    .login-wrap {
+      max-width: 380px;
+      margin: 80px auto;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .login-header {
+      background: var(--brown);
+      color: var(--white);
+      padding: 24px;
+      text-align: center;
+    }
+    .login-header .logo-icon {
+      margin: 0 auto 10px;
+      width: 48px; height: 48px;
+      background: var(--green);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px;
+    }
+    .login-header h1 { font-size: 18px; font-weight: 600; }
+    .login-header p { font-size: 12px; color: #B0A89F; margin-top: 4px; }
+    .login-body { padding: 28px 24px; }
+    .login-body .form-group { margin-bottom: 16px; }
+    .login-body label { display: block; font-size: 13px; color: var(--gray); margin-bottom: 6px; }
+    .login-body input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--gray-light);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .login-body input:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .btn-login:hover { background: #1B5E20; }
+    .login-error {
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+
+    /* 管理后台布局 */
+    .admin-header {
+      background: var(--brown);
+      color: var(--white);
+      padding: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .admin-header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .admin-logo { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+    .admin-logo .logo-icon { background: var(--green); }
+    .admin-logo .logo-title { font-size: 16px; font-weight: 600; }
+    .admin-logo .logo-sub { font-size: 11px; color: #B0A89F; }
+    .admin-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+    .admin-nav button {
+      padding: 8px 16px;
+      background: transparent;
+      color: #B0A89F;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .admin-nav button:hover { color: var(--white); }
+    .admin-nav button.active {
+      color: var(--white);
+      border-bottom-color: var(--green);
+    }
+    .admin-nav .nav-logout { color: #E57373; }
+    .admin-nav .nav-logout:hover { color: #EF5350; }
+
+    .admin-content {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    /* 工具栏 */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 9px 14px;
+      border: 1px solid var(--gray-light);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--white);
+    }
+    .toolbar .search-input:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+    }
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--green); color: var(--white); }
+    .btn-edit { background: #1565C0; color: var(--white); padding: 5px 12px; font-size: 12px; }
+    .btn-delete { background: var(--red); color: var(--white); padding: 5px 12px; font-size: 12px; }
+    .btn-download { background: var(--orange); color: var(--white); }
+
+    /* 表格 */
+    .table-wrap {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .table-scroll { overflow-x: auto; }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    table.data-table th {
+      background: #FAFAFA;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--gray);
+      border-bottom: 2px solid var(--gray-light);
+      white-space: nowrap;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    table.data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #F0F0F0;
+      vertical-align: top;
+    }
+    table.data-table tr:hover td { background: #F9FBF9; }
+    table.data-table tr:last-child td { border-bottom: none; }
+    .td-component { font-weight: 600; color: var(--brown); white-space: nowrap; }
+    .td-aliases { color: var(--gray); font-size: 12px; }
+    .td-category { white-space: nowrap; }
+    .td-actions { white-space: nowrap; display: flex; gap: 6px; }
+    .td-actions .btn { padding: 4px 10px; font-size: 12px; }
+    .empty-row {
+      text-align: center;
+      padding: 40px;
+      color: var(--gray);
+    }
+
+    /* 分页 */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .pagination button {
+      padding: 6px 12px;
+      border: 1px solid var(--gray-light);
+      background: var(--white);
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .pagination button:hover:not(:disabled) {
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .pagination button.active {
+      background: var(--green);
+      color: var(--white);
+      border-color: var(--green);
+    }
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .pagination .page-info {
+      font-size: 13px;
+      color: var(--gray);
+      margin: 0 8px;
+    }
+
+    /* 模态框 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 16px;
+      overflow-y: auto;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      margin-bottom: 30px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--gray-light);
+    }
+    .modal-header h3 { font-size: 16px; color: var(--brown); }
+    .modal-close {
+      width: 30px; height: 30px;
+      border: none;
+      background: var(--gray-bg);
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--gray);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: var(--red-bg); color: var(--red); }
+    .modal-body { padding: 20px 24px; max-height: 65vh; overflow-y: auto; }
+    .modal-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--gray-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* 表单 */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--gray);
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    .form-group input[type="text"],
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-light);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .form-group input[type="text"]:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+    }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-group .hint { font-size: 11px; color: var(--gray); margin-top: 3px; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .flags-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 6px 12px;
+      background: #FAFAFA;
+      border: 1px solid var(--gray-light);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .flags-group .flag-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .flags-group .flag-item input { cursor: pointer; }
+    .flags-section-title {
+      font-size: 12px;
+      color: var(--gray);
+      margin: 10px 0 6px;
+      font-weight: 600;
+    }
+
+    /* 规格与图片编辑 */
+    .dynamic-list { margin-top: 8px; }
+    .dynamic-item {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #FAFAFA;
+      border-radius: 6px;
+      border: 1px solid #EFEFEF;
+    }
+    .dynamic-item input[type="text"] {
+      flex: 1;
+      min-width: 80px;
+      padding: 6px 10px;
+      border: 1px solid var(--gray-light);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .dynamic-item .btn-remove {
+      background: var(--red);
+      color: #FFF;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-add-item {
+      background: #E8F5E9;
+      color: var(--green);
+      border: 1px dashed var(--green);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn-add-item:hover { background: #C8E6C9; }
+
+    /* 模板填写区域 */
+    .ai-template-box {
+      background: #F8FAFC;
+      border: 1px dashed #CBD5E1;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+    .ai-template-box .template-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .ai-template-box .template-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--brown);
+    }
+    .ai-template-box .template-subtitle {
+      font-size: 12px;
+      color: #64748B;
+      margin-top: 3px;
+      line-height: 1.5;
+    }
+    .ai-template-box .template-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .ai-template-box .btn-copy {
+      background: #E2E8F0;
+      color: #334155;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .ai-template-box .btn-copy:hover { background: #CBD5E1; }
+    .ai-template-box .paste-area {
+      width: 100%;
+      min-height: 120px;
+      padding: 10px 12px;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      line-height: 1.6;
+      background: var(--white);
+      resize: vertical;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .ai-template-box .paste-area:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(46,125,50,0.08);
+    }
+    .ai-template-box .btn-parse {
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.15s;
+    }
+    .ai-template-box .btn-parse:hover { background: #1B5E20; }
+
+    .spec-row { flex-wrap: wrap; }
+    .compat-row { flex-wrap: wrap; position: relative; }
+    .compat-suggest {
+      width: 100%;
+      margin-top: 4px;
+      padding: 6px 8px;
+      background: #F8F9FA;
+      border: 1px solid #E0E0E0;
+      border-radius: 4px;
+    }
+    .compat-row select {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-light);
+      border-radius: 6px;
+      font-size: 13px;
+      min-width: 80px;
+    }
+    .compat-row .compat-pesticide { min-width: 120px; }
+    .custom-row .custom-label { min-width: 100px; max-width: 150px; }
+    /* textarea自动高度 */
+    .form-group textarea {
+      width: 100%;
+      min-height: 36px;
+      padding: 8px 10px;
+      border: 1px solid var(--gray-light);
+      border-radius: 6px;
+      font-size: 13px;
+      resize: vertical;
+      overflow: hidden;
+      line-height: 1.6;
+      font-family: inherit;
+    }
+    .image-preview-thumb {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 4px;
+      border: 1px solid #DDD;
+      background: #FFF;
+      flex-shrink: 0;
+    }
+    .img-upload-zone {
+      border: 2px dashed var(--gray-light);
+      border-radius: 8px;
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+      background: #FAFAFA;
+    }
+    .img-upload-zone:hover,
+    .img-upload-zone.dragover {
+      border-color: var(--orange);
+      background: #FFF8F0;
+    }
+    .img-upload-hint {
+      font-size: 13px;
+      color: var(--gray);
+    }
+    .img-thumb-list .img-thumb-row {
+      align-items: center;
+    }
+    .img-thumb-list .image-preview-thumb {
+      width: 50px;
+      height: 50px;
+    }
+
+    /* 导出区域 */
+    .export-section {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    .export-section h3 { font-size: 16px; margin-bottom: 8px; }
+    .export-section .export-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .export-section .export-tab {
+      padding: 6px 16px;
+      border: 1px solid var(--gray-light);
+      background: var(--white);
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .export-section .export-tab.active {
+      background: var(--green);
+      color: var(--white);
+      border-color: var(--green);
+    }
+    .export-section .export-hint {
+      background: var(--green-bg);
+      border-left: 4px solid var(--green);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--green);
+      margin-bottom: 16px;
+    }
+    .export-section textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 14px;
+      border: 1px solid var(--gray-light);
+      border-radius: 8px;
+      font-family: "Consolas", "Monaco", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      resize: vertical;
+      background: #FAFAFA;
+    }
+    .export-actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .export-search-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .export-search-bar input {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-light);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .export-search-bar input:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+    .export-match-preview {
+      background: #FFFBE6;
+      border: 1px solid #FFE082;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #5D4037;
+      font-family: "Consolas", "Monaco", monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+    .export-match-preview .match-keyword {
+      background: #FFEB3B;
+      color: #000;
+      padding: 1px 2px;
+      border-radius: 2px;
+      font-weight: bold;
+    }
+    .export-section textarea::selection {
+      background: #FFEB3B;
+      color: #000;
+    }
+    .export-section textarea::-moz-selection {
+      background: #FFEB3B;
+      color: #000;
+    }
+
+    /* 修改密码 */
+    .password-section {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      max-width: 460px;
+    }
+    .password-section h3 { font-size: 16px; margin-bottom: 16px; }
+
+    /* 统计信息 */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      background: var(--white);
+      border-radius: 8px;
+      padding: 10px 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      font-size: 13px;
+    }
+    .stat-item .stat-num { font-size: 20px; font-weight: 700; color: var(--green); }
+    .stat-item .stat-label { color: var(--gray); margin-left: 6px; }
+
+    /* 确认对话框 */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1100;
+      justify-content: center;
+      align-items: center;
+    }
+    .confirm-overlay.show { display: flex; }
+    .confirm-box {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+    .confirm-box h4 { font-size: 16px; margin-bottom: 8px; }
+    .confirm-box p { font-size: 14px; color: var(--gray); margin-bottom: 20px; }
+    .confirm-box .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-cancel { background: var(--gray-bg); color: var(--gray); }
+    .btn-confirm-delete { background: var(--red); color: var(--white); }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .admin-header-inner { flex-direction: column; align-items: stretch; }
+      .admin-nav { justify-content: center; }
+      .form-row-2 { grid-template-columns: 1fr; }
+      .flags-group { grid-template-columns: 1fr 1fr; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar .search-input { width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .flags-group { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 登录界面 ===== -->
+<div id="loginView" class="login-wrap">
+  <div class="login-header">
+    <div class="logo-icon">HM</div>
+    <h1>管理后台</h1>
+    <p>农药混配查询 · 惠民皓天</p>
+  </div>
+  <div class="login-body">
+    <div class="form-group">
+      <label>用户名</label>
+      <input type="text" id="loginUser" placeholder="请输入用户名" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="loginPass" placeholder="请输入密码" autocomplete="off">
+    </div>
+    <button class="btn-login" onclick="handleLogin()">登 录</button>
+    <div id="loginError" class="login-error"></div>
+  </div>
+</div>
+
+<!-- ===== 管理后台 ===== -->
+<div id="adminView" style="display:none;">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div class="admin-logo">
+        <span class="logo-icon">HM</span>
+        <div class="logo-text">
+          <div class="logo-title">管理后台</div>
+          <div class="logo-sub">农药混配查询 · 惠民皓天</div>
+        </div>
+      </div>
+      <nav class="admin-nav">
+        <button class="active" data-tab="pesticide" onclick="switchTab('pesticide')">农药管理</button>
+        <button data-tab="product" onclick="switchTab('product')">产品管理</button>
+        <button data-tab="export" onclick="switchTab('export')">修改/导出数据</button>
+        <button data-tab="password" onclick="switchTab('password')">修改密码</button>
+        <button data-tab="users" onclick="switchTab('users')">用户管理</button>
+        <button class="nav-logout" onclick="handleLogout()">退出登录</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="admin-content">
+    <!-- 农药管理 -->
+    <div id="tab-pesticide">
+      <div class="stats-bar">
+        <div class="stat-item"><span class="stat-num" id="pesticideCount">0</span><span class="stat-label">条农药数据</span></div>
+      </div>
+      <div class="toolbar">
+        <input type="text" class="search-input" id="pesticideSearch" placeholder="搜索成分名、别名、品牌..." oninput="renderPesticideTable()">
+        <button class="btn btn-primary" onclick="openPesticideModal()">+ 添加新农药</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>成分名</th>
+                <th>别名</th>
+                <th>类别</th>
+                <th>化学分类</th>
+                <th>解决问题</th>
+                <th>品牌数</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="pesticideTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination" id="pesticidePagination"></div>
+    </div>
+
+    <!-- 产品管理 -->
+    <div id="tab-product" style="display:none;">
+      <div class="stats-bar">
+        <div class="stat-item"><span class="stat-num" id="productCount">0</span><span class="stat-label">条产品数据</span></div>
+      </div>
+      <div class="toolbar">
+        <input type="text" class="search-input" id="productSearch" placeholder="搜索产品名、类别..." oninput="renderProductTable()">
+        <button class="btn btn-primary" onclick="openProductModal()">+ 添加新产品</button>
+        <button class="btn btn-cancel" onclick="resetProductData()" style="margin-left:auto;">重置为原始数据</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>产品名</th>
+                <th>类别</th>
+                <th>生产厂家</th>
+                <th>描述</th>
+                <th>用法</th>
+                <th>价格区间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination" id="productPagination"></div>
+    </div>
+
+    <!-- 修改/导出数据 -->
+    <div id="tab-export" style="display:none;">
+      <div class="export-section">
+        <h3>修改/导出数据</h3>
+        <div style="margin-bottom:10px;">
+          <button class="btn btn-download" onclick="syncAllToCloud()">同步全部静态数据到云端</button>
+          <span style="font-size:12px;color:var(--gray);margin-left:8px;">首次迁移或重置后使用</span>
+        </div>
+        <div class="export-tabs">
+          <button class="export-tab active" id="exportTabPesticide" onclick="switchExportTab('pesticide')">pesticides.js</button>
+          <button class="export-tab" id="exportTabProduct" onclick="switchExportTab('product')">products.js</button>
+        </div>
+        <div class="export-hint">
+          可在下方直接编辑内容。使用搜索框查找/替换文本。修改后点"下载文件"保存，或点"下载整个网站文件夹"打包下载全部文件。
+        </div>
+        <div class="export-search-bar">
+          <input type="text" id="exportSearchInput" placeholder="查找内容..." onkeydown="if(event.key==='Enter'){event.preventDefault();highlightExportSearch();}">
+          <button class="btn btn-secondary" onclick="highlightExportSearch()" style="font-size:13px;padding:4px 12px;">查找</button>
+          <button class="btn btn-secondary" onclick="findPrev()" style="font-size:13px;padding:4px 12px;">上一个</button>
+          <button class="btn btn-secondary" onclick="findNext()" style="font-size:13px;padding:4px 12px;">下一个</button>
+          <input type="text" id="exportReplaceInput" placeholder="替换为..." style="width:160px;" onkeydown="if(event.key==='Enter'){event.preventDefault();replaceCurrent();}">
+          <button class="btn btn-secondary" onclick="replaceCurrent()" style="font-size:13px;padding:4px 12px;">替换</button>
+          <button class="btn btn-secondary" onclick="replaceAllExport()" style="font-size:13px;padding:4px 12px;">全部替换</button>
+          <span id="exportSearchCount" style="font-size:12px;color:var(--gray);"></span>
+        </div>
+        <div id="exportMatchPreview" class="export-match-preview" style="display:none;"></div>
+        <textarea id="exportContent" spellcheck="false" style="font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.5;"></textarea>
+        <div class="export-actions">
+          <button class="btn btn-download" onclick="downloadExport()">下载当前文件</button>
+          <button class="btn btn-primary" onclick="downloadFullSite(event)" style="background:var(--orange);">下载整个网站文件夹</button>
+          <button class="btn btn-cancel" onclick="copyExport()">复制到剪贴板</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 修改密码 -->
+    <div id="tab-password" style="display:none;">
+      <div class="password-section">
+        <h3>修改密码</h3>
+        <div class="form-group">
+          <label>当前密码</label>
+          <input type="password" id="oldPassword" placeholder="请输入当前密码">
+        </div>
+        <div class="form-group">
+          <label>新密码</label>
+          <input type="password" id="newPassword" placeholder="请输入新密码">
+        </div>
+        <div class="form-group">
+          <label>确认新密码</label>
+          <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+        </div>
+        <div id="passwordMsg" style="font-size:13px;min-height:18px;margin-bottom:12px;"></div>
+        <button class="btn btn-primary" onclick="changePassword()">确认修改</button>
+      </div>
+    </div>
+
+    <!-- 用户管理 -->
+    <div id="tab-users" style="display:none;">
+      <div class="notice-box" style="background:#FFF8E1;border:1px solid #FFCC80;color:#E65100;padding:10px 14px;border-radius:6px;margin-bottom:16px;font-size:13px;">
+        提示：用户数据保存在当前浏览器当前网址下。如果用户在其他网址（或不同浏览器）注册，此处不会显示。请确保用户注册和后台管理使用同一个访问地址。
+      </div>
+      <div class="stats-bar">
+        <div class="stat-item"><span class="stat-num" id="pendingUserCount">0</span><span class="stat-label">待审核</span></div>
+        <div class="stat-item"><span class="stat-num" id="approvedUserCount">0</span><span class="stat-label">已通过</span></div>
+        <div class="stat-item"><span class="stat-num" id="totalUserCount">0</span><span class="stat-label">总用户数</span></div>
+      </div>
+      <h3 style="margin:16px 0 8px;">待审核用户</h3>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>用户类别</th>
+                <th>注册时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="pendingUsersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <h3 style="margin:24px 0 8px;">全部用户</h3>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>用户类别</th>
+                <th>状态</th>
+                <th>注册时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="allUsersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 模态框（添加/编辑） ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">添加</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modalSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 确认对话框 ===== -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h4 id="confirmTitle">确认删除</h4>
+    <p id="confirmText">确定要删除吗？</p>
+    <div class="confirm-actions">
+      <button class="btn btn-cancel" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-confirm-delete" id="confirmOkBtn">确定删除</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>惠民皓天 · 农小蛙特肥 | 管理后台 | <a href='/' style='color:var(--gray);'>返回前台</a></div>
+</footer>
+
+<script src="data/products.js"></script>
+<script src="data/pesticides.js"></script>
+<script src="data/pesticide_extras.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script src="db.js"></script>
+<script>
+// ============================================================
+// 管理后台核心逻辑
+// ============================================================
+
+// ---- 配置 ----
+var DEFAULT_USER = 'admin';
+var DEFAULT_PASS_B64 = btoa('nongyao2024'); // bm9uZ3lhbzIwMjQ=
+var LS_KEY_PESTICIDES = 'admin_pesticides';
+var LS_KEY_PRODUCTS = 'admin_products';
+var LS_KEY_PASSWORD = 'admin_password';
+var SESSION_KEY = 'admin_logged_in';
+var PAGE_SIZE = 50;
+var IMAGE_STORE = 'product_images'; // IndexedDB store name for images
+
+// 农药类别选项
+var PESTICIDE_CATEGORIES = [
+  '杀菌剂', '杀虫剂', '除草剂', '杀螨剂', '杀线虫剂', '杀鼠剂',
+  '调节剂', '卫生杀虫剂', '杀软体动物剂', '助剂', '肥料'
+];
+
+// 农药 flags 定义（分组）
+var PESTICIDE_FLAG_GROUPS = [
+  {
+    title: '农药类型',
+    flags: [
+      ['is_fungicide', '杀菌剂'],
+      ['is_insecticide', '杀虫剂'],
+      ['is_herbicide', '除草剂'],
+      ['is_acaricide', '杀螨剂'],
+      ['is_nematicide', '杀线虫剂'],
+      ['is_rodenticide', '杀鼠剂'],
+      ['is_pgr', '调节剂'],
+      ['is_public_health_insecticide', '卫生杀虫剂'],
+      ['is_molluscicide', '杀软体动物剂']
+    ]
+  },
+  {
+    title: '特殊属性',
+    flags: [
+      ['is_copper', '铜制剂'],
+      ['is_inorganic_copper', '无机铜'],
+      ['is_organic_copper', '有机铜'],
+      ['is_microbial', '微生物'],
+      ['is_heavy_metal', '重金属']
+    ]
+  },
+  {
+    title: '酸碱性',
+    flags: [
+      ['is_strong_base', '强碱'],
+      ['is_strong_acid', '强酸'],
+      ['is_basic', '碱性'],
+      ['is_acidic', '酸性']
+    ]
+  },
+  {
+    title: '肥料成分',
+    flags: [
+      ['is_calcium', '含钙'],
+      ['is_phosphorus', '含磷'],
+      ['is_humic_acid', '腐殖酸']
+    ]
+  },
+  {
+    title: '混配标记',
+    flags: [
+      ['no_alkali_mix', '不可与碱性混用'],
+      ['suggest_alone', '建议单用']
+    ]
+  }
+];
+
+// 产品 flags 定义
+var PRODUCT_FLAGS = [
+  ['is_microbial', '微生物菌剂'],
+  ['is_calcium', '含钙'],
+  ['is_phosphorus', '含磷'],
+  ['is_acidic', '酸性'],
+  ['is_humic_acid', '腐殖酸'],
+  ['is_high_cost_foliar', '高端叶面肥'],
+  ['is_root_fertilizer', '根际肥']
+];
+
+// ---- IndexedDB 图片存储 ----
+var imageStore = localforage.createInstance({
+  name: 'PesticideQuery',
+  storeName: IMAGE_STORE
+});
+
+// 保存图片到 IndexedDB，返回路径
+function saveImageToStore(path, dataUri) {
+  return imageStore.setItem(path, dataUri);
+}
+
+// 从 IndexedDB 读取图片
+function getImageFromStore(path) {
+  return imageStore.getItem(path);
+}
+
+// 从 IndexedDB 删除图片
+function removeImageFromStore(path) {
+  return imageStore.removeItem(path);
+}
+
+// ---- 数据加载与保存 ----
+function loadData(key, fallback) {
+  var stored = localStorage.getItem(key);
+  if (stored) {
+    try { return JSON.parse(stored); }
+    catch(e) { return fallback; }
+  }
+  return fallback;
+}
+
+function saveData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+function safeSaveData(key, data) {
+  // 先备份当前数据，防止保存失败时丢失
+  var oldVal = localStorage.getItem(key);
+  if (oldVal) {
+    try { localStorage.setItem(key + '_backup', oldVal); } catch(e) {}
+  }
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return { ok: true };
+  } catch(e) {
+    // 保存失败，尝试恢复旧数据
+    if (oldVal) {
+      try { localStorage.setItem(key, oldVal); } catch(e2) {}
+    }
+    return { ok: false, error: e };
+  }
+}
+
+function getPesticides() {
+  return loadData(LS_KEY_PESTICIDES, PESTICIDES);
+}
+
+function getProducts() {
+  // 直接使用全局变量（由 db.js 从云端加载），不再依赖 localStorage
+  return COMPANY_PRODUCTS;
+}
+
+function getPassword() {
+  return localStorage.getItem(LS_KEY_PASSWORD) || DEFAULT_PASS_B64;
+}
+
+// ---- 登录/登出 ----
+function checkLogin() {
+  if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+    showAdmin();
+  }
+}
+
+function handleLogin() {
+  var user = document.getElementById('loginUser').value.trim();
+  var pass = document.getElementById('loginPass').value;
+  var errEl = document.getElementById('loginError');
+
+  if (!user || !pass) {
+    errEl.textContent = '请输入用户名和密码';
+    return;
+  }
+
+  var storedPass = getPassword();
+  if (user === DEFAULT_USER && btoa(pass) === storedPass) {
+    sessionStorage.setItem(SESSION_KEY, 'true');
+    showAdmin();
+  } else {
+    errEl.textContent = '用户名或密码错误';
+  }
+}
+
+function handleLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+async function showAdmin() {
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('adminView').style.display = 'block';
+
+  // 等待云端数据加载完成
+  if (typeof DB !== 'undefined') {
+    await DB.load();
+  }
+
+  checkProductIntegrity();
+  renderPesticideTable();
+  renderProductTable();
+  updateStats();
+  // 初始化用户管理统计
+  renderUserTables();
+  // 异步迁移旧版base64图片到IndexedDB，避免localStorage爆满
+  migrateProductImages().then(function(modified) {
+    if (modified) {
+      // 迁移后再次清除 base64 并保存
+      var products = sanitizeProducts(getProducts());
+      var result = safeSaveData(LS_KEY_PRODUCTS, products);
+      if (result.ok) {
+        renderProductTable();
+        updateStats();
+      }
+    }
+  }).catch(function(err) {
+    console.error('图片迁移失败', err);
+  });
+}
+
+// 将 products 数据中的 base64 图片迁移到 IndexedDB，products 中只保留路径
+function migrateProductImages() {
+  var products = getProducts();
+  var modified = false;
+  var promises = [];
+  products.forEach(function(p) {
+    if (!p.images || p.images.length === 0) return;
+    p.images.forEach(function(img, idx) {
+      if (img && img.indexOf('data:') === 0) {
+        var pid = slugify(p.name || p.id || 'product');
+        var ext = img.indexOf('image/png') !== -1 ? 'png' : 'jpg';
+        var path = 'images/products/' + pid + '_' + (idx + 1) + '_' + Date.now() + '.' + ext;
+        p.images[idx] = path;
+        modified = true;
+        promises.push(saveImageToStore(path, img));
+      }
+    });
+  });
+  return Promise.all(promises).then(function() {
+    return modified;
+  });
+}
+
+// 清除产品数据中残留的 base64 图片（防止 localStorage 爆满）
+function sanitizeProducts(products) {
+  var changed = false;
+  products.forEach(function(p) {
+    if (p.images) {
+      p.images = p.images.filter(function(img) {
+        if (img && img.indexOf('data:') === 0) { changed = true; return false; }
+        return true;
+      });
+    }
+    if (p.specifications) {
+      p.specifications.forEach(function(s) {
+        if (s.image && s.image.indexOf('data:') === 0) { s.image = ''; changed = true; }
+      });
+    }
+  });
+  if (changed) {
+    console.warn('[安全] 已清除产品数据中残留的 base64 图片，图片数据应保存在 IndexedDB 中');
+  }
+  return products;
+}
+
+// 数据完整性检查：如果 localStorage 中产品数远少于原始数据，发出警告
+function checkProductIntegrity() {
+  var stored = localStorage.getItem(LS_KEY_PRODUCTS);
+  if (!stored) return; // 没有覆盖数据，用的就是原始文件，没问题
+  try {
+    var data = JSON.parse(stored);
+    if (data.length < COMPANY_PRODUCTS.length / 2) {
+      console.warn('[警告] localStorage 中产品数据不完整：' + data.length + ' 个，原始数据有 ' + COMPANY_PRODUCTS.length + ' 个。建议点击"重置为原始数据"按钮恢复。');
+    }
+  } catch(e) {}
+}
+
+// 登录页回车提交
+document.addEventListener('DOMContentLoaded', function() {
+  checkLogin();
+  document.getElementById('loginPass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') handleLogin();
+  });
+  document.getElementById('loginUser').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('loginPass').focus();
+  });
+});
+
+// ---- Tab 切换 ----
+function switchTab(tab) {
+  var tabs = ['pesticide', 'product', 'export', 'password', 'users'];
+  tabs.forEach(function(t) {
+    document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.admin-nav button[data-tab]').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+  });
+  if (tab === 'export') {
+    switchExportTab('pesticide');
+  }
+  if (tab === 'users') {
+    renderUserTables();
+  }
+}
+
+// ---- 用户管理 ----
+var USER_TYPE_LABELS = { staff: '农小蛙', farmer: '农户', dealer: '经销商' };
+var USER_STATUS_LABELS = { pending: '待审核', approved: '已通过', rejected: '已拒绝' };
+
+function renderUserTables() {
+  var pendingBody = document.getElementById('pendingUsersTableBody');
+  var allBody = document.getElementById('allUsersTableBody');
+  if (pendingBody) pendingBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">加载中...</td></tr>';
+  if (allBody) allBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">加载中...</td></tr>';
+
+  getAllUsers().then(function(users) {
+    var pending = users.filter(function(u) { return u.status === 'pending'; });
+
+    document.getElementById('pendingUserCount').textContent = pending.length;
+    document.getElementById('approvedUserCount').textContent = users.filter(function(u) { return u.status === 'approved'; }).length;
+    document.getElementById('totalUserCount').textContent = users.length;
+
+    var pendingHtml = '';
+    if (pending.length === 0) {
+      pendingHtml = '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">暂无待审核用户</td></tr>';
+    } else {
+      pending.forEach(function(u) {
+        pendingHtml += '<tr>' +
+          '<td>' + escapeHtmlAdmin(u.name) + '</td>' +
+          '<td>' + (USER_TYPE_LABELS[u.type] || u.type) + '</td>' +
+          '<td>' + formatDate(u.created_at) + '</td>' +
+          '<td>' +
+            '<button class="btn btn-primary" style="padding:4px 12px;font-size:12px;margin-right:6px;" onclick="adminApproveUser(\'' + u.id + '\')">通过</button>' +
+            '<button class="btn btn-cancel" style="padding:4px 12px;font-size:12px;" onclick="adminRejectUser(\'' + u.id + '\')">拒绝</button>' +
+          '</td>' +
+        '</tr>';
+      });
+    }
+    document.getElementById('pendingUsersTableBody').innerHTML = pendingHtml;
+
+    var allHtml = '';
+    if (users.length === 0) {
+      allHtml = '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">暂无注册用户</td></tr>';
+    } else {
+      users.forEach(function(u) {
+        var statusColor = u.status === 'approved' ? '#2E7D32' : (u.status === 'pending' ? '#F57F17' : '#C62828');
+        allHtml += '<tr>' +
+          '<td>' + escapeHtmlAdmin(u.name) + '</td>' +
+          '<td>' + (USER_TYPE_LABELS[u.type] || u.type) + '</td>' +
+          '<td style="color:' + statusColor + ';">' + (USER_STATUS_LABELS[u.status] || u.status) + '</td>' +
+          '<td>' + formatDate(u.created_at) + '</td>' +
+          '<td>' +
+            (u.status === 'pending' ? '<button class="btn btn-primary" style="padding:4px 12px;font-size:12px;margin-right:6px;" onclick="adminApproveUser(\'' + u.id + '\')">通过</button>' : '') +
+            '<button class="btn btn-cancel" style="padding:4px 12px;font-size:12px;" onclick="adminDeleteUser(\'' + u.id + '\',\'' + escapeHtmlAdmin(u.name).replace(/'/g, "\\'") + '\')">删除</button>' +
+          '</td>' +
+        '</tr>';
+      });
+    }
+    document.getElementById('allUsersTableBody').innerHTML = allHtml;
+  }).catch(function(err) {
+    console.error('加载用户列表失败', err);
+    if (pendingBody) pendingBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#C62828;padding:20px;">加载失败，请检查网络和Supabase配置</td></tr>';
+    if (allBody) allBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#C62828;padding:20px;">加载失败</td></tr>';
+  });
+}
+
+function adminApproveUser(id) {
+  approveUser(id).then(function(ok) {
+    if (ok) { renderUserTables(); }
+    else { alert('操作失败，请重试'); }
+  });
+}
+
+function adminRejectUser(id) {
+  showConfirm('拒绝用户', '确定拒绝该用户的注册申请吗？', function() {
+    rejectUser(id).then(function(ok) {
+      if (ok) { renderUserTables(); }
+      else { alert('操作失败，请重试'); }
+    });
+  });
+}
+
+function adminDeleteUser(id, name) {
+  showConfirm('删除用户', '确定删除用户「' + name + '」吗？此操作不可撤销。', function() {
+    deleteUser(id).then(function(ok) {
+      if (ok) { renderUserTables(); }
+      else { alert('操作失败，请重试'); }
+    });
+  });
+}
+
+function escapeHtmlAdmin(text) {
+  if (!text) return '';
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    var d = new Date(iso);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  } catch(e) { return iso; }
+}
+
+// ---- 统计 ----
+function updateStats() {
+  document.getElementById('pesticideCount').textContent = getPesticides().length;
+  document.getElementById('productCount').textContent = getProducts().length;
+}
+
+// ============================================================
+// 农药管理
+// ============================================================
+
+var pesticideCurrentPage = 1;
+
+function renderPesticideTable() {
+  var data = getPesticides();
+  var q = document.getElementById('pesticideSearch').value.trim().toLowerCase();
+
+  var filtered = data.filter(function(p) {
+    if (!q) return true;
+    if (p.component && p.component.toLowerCase().indexOf(q) >= 0) return true;
+    if (p.aliases) {
+      for (var i = 0; i < p.aliases.length; i++) {
+        if (p.aliases[i].toLowerCase().indexOf(q) >= 0) return true;
+      }
+    }
+    if (p.brands) {
+      for (var i = 0; i < p.brands.length; i++) {
+        if (p.brands[i].name.toLowerCase().indexOf(q) >= 0) return true;
+      }
+    }
+    if (p.chemical_class && p.chemical_class.toLowerCase().indexOf(q) >= 0) return true;
+    return false;
+  });
+
+  var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (pesticideCurrentPage > totalPages) pesticideCurrentPage = totalPages;
+
+  var start = (pesticideCurrentPage - 1) * PAGE_SIZE;
+  var pageData = filtered.slice(start, start + PAGE_SIZE);
+
+  var tbody = document.getElementById('pesticideTableBody');
+  if (pageData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">暂无数据</td></tr>';
+  } else {
+    tbody.innerHTML = pageData.map(function(p, idx) {
+      var realIdx = data.indexOf(p);
+      return '<tr>' +
+        '<td class="td-component">' + escapeHtml(p.component || '') + '</td>' +
+        '<td class="td-aliases">' + escapeHtml((p.aliases || []).join('、')) + '</td>' +
+        '<td class="td-category">' + escapeHtml(p.category || '') + '</td>' +
+        '<td>' + escapeHtml(p.chemical_class || '') + '</td>' +
+        '<td style="max-width:300px;">' + escapeHtml(truncate(p.problems || '', 40)) + '</td>' +
+        '<td>' + (p.brands ? p.brands.length : 0) + '</td>' +
+        '<td class="td-actions">' +
+          '<button class="btn btn-edit" onclick="openPesticideModal(' + realIdx + ')">编辑</button>' +
+          '<button class="btn btn-delete" onclick="deletePesticide(' + realIdx + ')">删除</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  renderPagination('pesticidePagination', filtered.length, pesticideCurrentPage, totalPages, function(page) {
+    pesticideCurrentPage = page;
+    renderPesticideTable();
+  });
+}
+
+// 构建产品下拉选项（用于混配联动）
+function buildProductOptions(selectedId) {
+  var products = (typeof COMPANY_PRODUCTS !== 'undefined') ? COMPANY_PRODUCTS : [];
+  var html = '<option value="">-- 选择产品 --</option>';
+  products.forEach(function(p) {
+    var pid = p.id || p.name;
+    var sel = (pid === selectedId) ? ' selected' : '';
+    html += '<option value="' + escapeAttr(pid) + '"' + sel + '>' + escapeHtml(p.name) + '</option>';
+  });
+  return html;
+}
+
+// 添加混配联动条目（forbidden/caution）
+function addCompatLinkItem(type) {
+  var listId = type === 'forbidden' ? 'f_compat_forbidden_list' : 'f_compat_caution_list';
+  var list = document.getElementById(listId);
+  if (!list) return;
+  var div = document.createElement('div');
+  div.className = 'dynamic-item compat-link-row';
+  div.innerHTML = '<select class="compat-link-product" style="flex:1;">' + buildProductOptions('') + '</select>' +
+    '<input type="text" class="compat-link-reason" placeholder="' + (type === 'forbidden' ? '禁混原因' : '谨慎原因') + '" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(div);
+}
+
+// ============================================================
+// 模板填写：模板复制 + 粘贴识别（纯前端正则解析，无AI调用）
+// ============================================================
+
+// 通用复制到剪贴板
+function copyTextToClipboard(text, successMsg) {
+  successMsg = successMsg || '已复制';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast(successMsg);
+    }).catch(function() {
+      fallbackCopyText(text, successMsg);
+    });
+  } else {
+    fallbackCopyText(text, successMsg);
+  }
+}
+function fallbackCopyText(text, successMsg) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast(successMsg);
+  } catch(e) {
+    alert('复制失败，请手动复制');
+  }
+  document.body.removeChild(ta);
+}
+
+// 通用模板解析：按 "字段名：值" 提取，支持多行值
+function parseTemplateToFields(text, fieldNames) {
+  var lines = text.split(/\r?\n/);
+  var result = {};
+  var currentKey = null;
+  lines.forEach(function(line) {
+    var m = line.match(/^(.+?)[：:](.*)$/);
+    if (m) {
+      var key = m[1].replace(/[（(].*?[)）]/g, '').trim();
+      var value = m[2].trim();
+      var matched = null;
+      for (var i = 0; i < fieldNames.length; i++) {
+        var fk = fieldNames[i];
+        if (key === fk || key.indexOf(fk) === 0) {
+          matched = fk;
+          break;
+        }
+      }
+      if (matched) {
+        currentKey = matched;
+        result[matched] = value;
+      } else if (currentKey) {
+        result[currentKey] += '\n' + line;
+      }
+    } else if (currentKey && line.trim() !== '') {
+      result[currentKey] += '\n' + line;
+    }
+  });
+  return result;
+}
+
+// 按产品名查找产品
+function findProductByName(name) {
+  if (typeof COMPANY_PRODUCTS === 'undefined') return null;
+  for (var i = 0; i < COMPANY_PRODUCTS.length; i++) {
+    if (COMPANY_PRODUCTS[i].name === name) return COMPANY_PRODUCTS[i];
+  }
+  return null;
+}
+
+// 按产品ID或名称查找产品ID
+function resolveProductId(nameOrId) {
+  if (!nameOrId) return '';
+  var p = findProductByName(nameOrId);
+  if (p) return p.id;
+  // 如果输入的是ID且存在
+  for (var i = 0; i < COMPANY_PRODUCTS.length; i++) {
+    if (COMPANY_PRODUCTS[i].id === nameOrId) return nameOrId;
+  }
+  return nameOrId;
+}
+
+// ---- 农药模板 ----
+var PESTICIDE_TEMPLATE_FIELDS = [
+  '成分名', '类别', '别名', '化学分类', '解决问题', '常见用法', '注意事项',
+  '品牌商品', '关联成分', 'pH值', '使用禁忌', '禁混产品', '谨慎混配产品'
+];
+
+function getPesticideTemplate() {
+  var lines = [];
+  lines.push('======== 农药信息模板 ========');
+  lines.push('说明：复制本模板去问任意AI，按要求填好后贴回后台，点“识别并填入”即可自动填充。');
+  lines.push('');
+  lines.push('成分名：（必填，农药有效成分，如：氢氧化铜）');
+  lines.push('类别：（必填，只允许填以下之一：' + PESTICIDE_CATEGORIES.join(' / ') + '）');
+  lines.push('别名：（可选，多个别名用逗号分隔，如：可杀得，杀细菌铜）');
+  lines.push('化学分类：（可选，如：无机铜制剂 / 有机铜制剂 / 苯并咪唑类）');
+  lines.push('解决问题：（可选，防治对象，可换行）');
+  lines.push('常见用法：（可选，参考：500-1000倍叶面喷雾）');
+  lines.push('注意事项：（可选，使用注意）');
+  lines.push('品牌商品（每行一个，格式：品牌名|公司名，如：可杀得三千|科迪华）：');
+  lines.push('关联成分（逗号分隔，如：氧化亚铜，噻菌铜）：');
+  lines.push('pH值：（可选，如：6.5 / 4.0 / 11.0）');
+  lines.push('使用禁忌：（可选，影响混配判断，如：不可与碱性物质混用）');
+  lines.push('');
+  lines.push('标记属性（每项只能填“是”或“否”，填“是”表示勾选）：');
+  PESTICIDE_FLAG_GROUPS.forEach(function(g) {
+    lines.push('【' + g.title + '】');
+    g.flags.forEach(function(f) {
+      lines.push(f[1] + '：否');
+    });
+  });
+  lines.push('');
+  lines.push('禁混产品（每行一个产品名，如：晒安心）：');
+  lines.push('谨慎混配产品（每行一个产品名，如：傲靓）：');
+  return lines.join('\n');
+}
+
+function copyPesticideTemplate() {
+  copyTextToClipboard(getPesticideTemplate(), '农药模板已复制');
+}
+
+function parseFlagsFromTemplate(text) {
+  var flags = {};
+  var flagMap = {};
+  PESTICIDE_FLAG_GROUPS.forEach(function(g) {
+    g.flags.forEach(function(f) {
+      flagMap[f[1]] = f[0];
+    });
+  });
+  var lines = text.split(/\r?\n/);
+  lines.forEach(function(line) {
+    var m = line.match(/^(.+?)[：:](.*)$/);
+    if (m) {
+      var key = m[1].replace(/[（(].*?[)）]/g, '').trim();
+      var value = m[2].trim();
+      if (flagMap[key] && /是|√|✓|true|yes|有|勾选|选中/.test(value)) {
+        flags[flagMap[key]] = true;
+      }
+    }
+  });
+  return flags;
+}
+
+function applyPesticideFlags(flags) {
+  PESTICIDE_FLAG_GROUPS.forEach(function(g) {
+    g.flags.forEach(function(f) {
+      var el = document.getElementById('flag_' + f[0]);
+      if (el) el.checked = !!flags[f[0]];
+    });
+  });
+}
+
+function addCompatLinkItemWithValue(listId, productId, reason, status) {
+  var list = document.getElementById(listId);
+  if (!list) return;
+  var row = document.createElement('div');
+  row.className = 'dynamic-item compat-link-row';
+  var placeholder = status === 'forbidden' ? '禁混原因' : '谨慎原因';
+  row.innerHTML = '<select class="compat-link-product" style="flex:1;">' + buildProductOptions(productId || '') + '</select>' +
+    '<input type="text" class="compat-link-reason" value="' + escapeAttr(reason || '') + '" placeholder="' + placeholder + '" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(row);
+}
+
+function parsePesticideTemplateAndFill() {
+  var text = document.getElementById('ai_paste_area').value;
+  if (!text.trim()) {
+    alert('请先粘贴 AI 返回的内容');
+    return;
+  }
+  var fields = parseTemplateToFields(text, PESTICIDE_TEMPLATE_FIELDS);
+
+  // 基本字段
+  if (fields['成分名']) setInputValue('f_component', fields['成分名']);
+  if (fields['类别']) setSelectByText('f_category', fields['类别']);
+  if (fields['别名']) setInputValue('f_aliases', fields['别名']);
+  if (fields['化学分类']) setInputValue('f_chemical_class', fields['化学分类']);
+  if (fields['解决问题']) setTextareaValue('f_problems', fields['解决问题']);
+  if (fields['常见用法']) setTextareaValue('f_usage', fields['常见用法']);
+  if (fields['注意事项']) setTextareaValue('f_precautions', fields['注意事项']);
+  if (fields['品牌商品']) setTextareaValue('f_brands', fields['品牌商品']);
+  if (fields['关联成分']) setInputValue('f_related', fields['关联成分']);
+  if (fields['pH值']) setInputValue('f_ph', fields['pH值']);
+  if (fields['使用禁忌']) setTextareaValue('f_contraindications', fields['使用禁忌']);
+
+  // flags
+  applyPesticideFlags(parseFlagsFromTemplate(text));
+
+  // 禁混/谨慎产品
+  if (fields['禁混产品']) {
+    document.getElementById('f_compat_forbidden_list').innerHTML = '';
+    fields['禁混产品'].split(/\r?\n/).forEach(function(line) {
+      var name = line.replace(/^[-•*\s]+/, '').trim();
+      if (!name) return;
+      addCompatLinkItemWithValue('f_compat_forbidden_list', resolveProductId(name), '', 'forbidden');
+    });
+  }
+  if (fields['谨慎混配产品']) {
+    document.getElementById('f_compat_caution_list').innerHTML = '';
+    fields['谨慎混配产品'].split(/\r?\n/).forEach(function(line) {
+      var name = line.replace(/^[-•*\s]+/, '').trim();
+      if (!name) return;
+      addCompatLinkItemWithValue('f_compat_caution_list', resolveProductId(name), '', 'caution');
+    });
+  }
+
+  // 自动调整高度
+  document.querySelectorAll('#modalBody textarea').forEach(function(ta) {
+    autoResize(ta);
+  });
+  showToast('已识别并填入，请检查后再保存');
+}
+
+// 通用表单填充辅助
+function setInputValue(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.value = value;
+}
+function setTextareaValue(id, value) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.value = value;
+    if (typeof autoResize === 'function') autoResize(el);
+  }
+}
+function setSelectByText(id, text) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  for (var i = 0; i < el.options.length; i++) {
+    if (el.options[i].text === text || el.options[i].value === text) {
+      el.selectedIndex = i;
+      break;
+    }
+  }
+}
+
+// ---- 农药 添加/编辑 模态框 ----
+function openPesticideModal(idx) {
+  var data = getPesticides();
+  var isEdit = typeof idx === 'number';
+  var p = isEdit ? data[idx] : {
+    component: '', aliases: [], category: '杀菌剂', chemical_class: '',
+    problems: '', usage: '', precautions: '', brands: [], related: [], flags: {}
+  };
+
+  document.getElementById('modalTitle').textContent = isEdit ? '编辑农药' : '添加新农药';
+  document.getElementById('modalSaveBtn').onclick = function() { savePesticide(idx); };
+  // 重置保存按钮状态（防止上次保存失败后按钮仍处于 disabled）
+  var saveBtn = document.getElementById('modalSaveBtn');
+  if (saveBtn) { saveBtn.textContent = '保存'; saveBtn.disabled = false; }
+
+  // 构建表单
+  var html = '';
+  html += '<div class="ai-template-box">';
+  html += '<div class="template-header">';
+  html += '<div><div class="template-title">模板填写</div><div class="template-subtitle">复制模板去问别的AI，把结果贴回来自动填入</div></div>';
+  html += '<div class="template-actions"><button type="button" class="btn-copy" onclick="copyPesticideTemplate()">复制模板</button></div>';
+  html += '</div>';
+  html += '<textarea id="ai_paste_area" class="paste-area" placeholder="把别的AI返回的内容粘贴到这里..."></textarea>';
+  html += '<button type="button" class="btn-parse" onclick="parsePesticideTemplateAndFill()">识别并填入</button>';
+  html += '</div>';
+
+  html += '<div class="form-row-2">';
+  html += '<div class="form-group"><label>成分名 *</label><input type="text" id="f_component" value="' + escapeAttr(p.component) + '" placeholder="如：氢氧化铜"></div>';
+  html += '<div class="form-group"><label>类别 *</label><select id="f_category">' +
+    PESTICIDE_CATEGORIES.map(function(c) {
+      return '<option value="' + c + '"' + (p.category === c ? ' selected' : '') + '>' + c + '</option>';
+    }).join('') +
+    '</select></div>';
+  html += '</div>';
+
+  html += '<div class="form-group"><label>别名（逗号分隔）</label><input type="text" id="f_aliases" value="' + escapeAttr((p.aliases || []).join('，')) + '" placeholder="如：可杀得，杀细菌铜"></div>';
+  html += '<div class="form-group"><label>化学分类</label><input type="text" id="f_chemical_class" value="' + escapeAttr(p.chemical_class || '') + '" placeholder="如：无机铜制剂"></div>';
+  html += '<div class="form-group"><label>解决问题</label><textarea id="f_problems" placeholder="防治什么病害">' + escapeHtml(p.problems || '') + '</textarea></div>';
+  html += '<div class="form-group"><label>常见用法</label><textarea id="f_usage" placeholder="参考：500-1000倍叶面喷雾">' + escapeHtml(p.usage || '') + '</textarea></div>';
+  html += '<div class="form-group"><label>注意事项</label><textarea id="f_precautions" placeholder="使用注意">' + escapeHtml(p.precautions || '') + '</textarea></div>';
+  html += '<div class="form-group"><label>品牌商品（每行一个，格式：品牌名|公司名）</label><textarea id="f_brands" placeholder="可杀得三千|科迪华&#10;冠菌铜|国内多家" style="min-height:80px;">' + escapeHtml((p.brands || []).map(function(b) { return b.name + '|' + b.company; }).join('\n')) + '</textarea><div class="hint">每行一个，用 | 分隔品牌名和公司名</div></div>';
+  html += '<div class="form-group"><label>关联成分（逗号分隔）</label><input type="text" id="f_related" value="' + escapeAttr((p.related || []).join('，')) + '" placeholder="如：氧化亚铜，噻菌铜"></div>';
+
+  // pH值和使用禁忌（从 PESTICIDE_EXTRAS 合并）
+  var extra = (typeof PESTICIDE_EXTRAS !== 'undefined' && p.component && PESTICIDE_EXTRAS[p.component]) ? PESTICIDE_EXTRAS[p.component] : null;
+  var phValue = extra ? (extra.ph || '') : '';
+  var contraValue = extra ? (extra.contraindications || '') : '';
+  // flags 合并：农药本体 flags + PESTICIDE_EXTRAS flags（云端优先）
+  var mergedFlags = {};
+  if (p.flags) Object.keys(p.flags).forEach(function(k) { mergedFlags[k] = p.flags[k]; });
+  if (extra && extra.flags) Object.keys(extra.flags).forEach(function(k) { if (extra.flags[k]) mergedFlags[k] = true; });
+
+  html += '<div class="form-group"><label>pH值</label><input type="text" id="f_ph" value="' + escapeAttr(phValue) + '" placeholder="如：6.0-7.0"></div>';
+  html += '<div class="form-group"><label>使用禁忌</label><textarea id="f_contraindications" placeholder="使用禁忌（影响混配判断）" oninput="autoResize(this)">' + escapeHtml(contraValue) + '</textarea></div>';
+
+  // flags
+  html += '<div class="form-group"><label>标记属性（复选框）</label>';
+  PESTICIDE_FLAG_GROUPS.forEach(function(group) {
+    html += '<div class="flags-section-title">' + group.title + '</div>';
+    html += '<div class="flags-group">';
+    group.flags.forEach(function(f) {
+      var key = f[0], label = f[1];
+      var checked = mergedFlags[key] ? ' checked' : '';
+      html += '<label class="flag-item"><input type="checkbox" id="flag_' + key + '"' + checked + '> ' + label + '</label>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // 混配联动：禁混产品列表 + 谨慎混配产品列表
+  var compatForbidden = [];
+  var compatCaution = [];
+  if (typeof COMPATIBILITY !== 'undefined' && p.component) {
+    COMPATIBILITY.forEach(function(c) {
+      if (c.pesticide_component === p.component) {
+        if (c.status === 'forbidden') compatForbidden.push(c);
+        else if (c.status === 'caution') compatCaution.push(c);
+      }
+    });
+  }
+
+  html += '<div class="form-group"><label>禁混产品列表</label>';
+  html += '<div style="font-size:12px;color:var(--gray);margin-bottom:6px;">选择与该农药不能混配的产品</div>';
+  html += '<div id="f_compat_forbidden_list" class="dynamic-list">';
+  compatForbidden.forEach(function(c) {
+    html += '<div class="dynamic-item compat-link-row">' +
+      '<select class="compat-link-product" style="flex:1;">' + buildProductOptions(c.product_id) + '</select>' +
+      '<input type="text" class="compat-link-reason" value="' + escapeAttr(c.reason || '') + '" placeholder="禁混原因" style="flex:1;">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '</div>';
+  });
+  html += '</div><button type="button" class="btn-add-item" onclick="addCompatLinkItem(\'forbidden\')">+ 添加禁混产品</button></div>';
+
+  html += '<div class="form-group"><label>谨慎混配产品列表</label>';
+  html += '<div style="font-size:12px;color:var(--gray);margin-bottom:6px;">选择与该农药需谨慎混配的产品</div>';
+  html += '<div id="f_compat_caution_list" class="dynamic-list">';
+  compatCaution.forEach(function(c) {
+    html += '<div class="dynamic-item compat-link-row">' +
+      '<select class="compat-link-product" style="flex:1;">' + buildProductOptions(c.product_id) + '</select>' +
+      '<input type="text" class="compat-link-reason" value="' + escapeAttr(c.reason || '') + '" placeholder="谨慎原因" style="flex:1;">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '</div>';
+  });
+  html += '</div><button type="button" class="btn-add-item" onclick="addCompatLinkItem(\'caution\')">+ 添加谨慎混配产品</button></div>';
+
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('show');
+
+  // 自动调整所有textarea高度
+  document.querySelectorAll('#modalBody textarea').forEach(function(ta) {
+    autoResize(ta);
+  });
+}
+
+function savePesticide(idx) {
+  var component = document.getElementById('f_component').value.trim();
+  if (!component) {
+    alert('请输入成分名');
+    return;
+  }
+
+  var aliases = document.getElementById('f_aliases').value
+    .split(/[,，]/).map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+
+  var brandsText = document.getElementById('f_brands').value;
+  var brands = brandsText.split('\n').map(function(line) {
+    line = line.trim();
+    if (!line) return null;
+    var parts = line.split('|');
+    return { name: parts[0].trim(), company: (parts[1] || '').trim() };
+  }).filter(function(b) { return b && b.name; });
+
+  var related = document.getElementById('f_related').value
+    .split(/[,，]/).map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+
+  var flags = {};
+  PESTICIDE_FLAG_GROUPS.forEach(function(group) {
+    group.flags.forEach(function(f) {
+      var key = f[0];
+      var el = document.getElementById('flag_' + key);
+      flags[key] = el ? el.checked : false;
+    });
+  });
+
+  // pH 和使用禁忌
+  var ph = document.getElementById('f_ph').value.trim();
+  var contraindications = document.getElementById('f_contraindications').value.trim();
+
+  var pesticide = {
+    component: component,
+    aliases: aliases,
+    category: document.getElementById('f_category').value,
+    chemical_class: document.getElementById('f_chemical_class').value.trim(),
+    problems: document.getElementById('f_problems').value.trim(),
+    usage: document.getElementById('f_usage').value.trim(),
+    precautions: document.getElementById('f_precautions').value.trim(),
+    brands: brands,
+    related: related,
+    flags: flags
+  };
+
+  var data = getPesticides();
+  if (typeof idx === 'number') {
+    data[idx] = pesticide;
+  } else {
+    data.push(pesticide);
+  }
+  var result = safeSaveData(LS_KEY_PESTICIDES, data);
+  if (!result.ok) {
+    alert('保存失败：' + ((result.error && result.error.message) ? result.error.message : '未知错误'));
+    return;
+  }
+
+  // 收集混配联动数据
+  var compatEntries = [];
+  ['forbidden', 'caution'].forEach(function(type) {
+    var listId = type === 'forbidden' ? 'f_compat_forbidden_list' : 'f_compat_caution_list';
+    var list = document.getElementById(listId);
+    if (list) {
+      list.querySelectorAll('.dynamic-item').forEach(function(row) {
+        var productId = row.querySelector('.compat-link-product').value;
+        var reason = row.querySelector('.compat-link-reason').value.trim();
+        if (productId) {
+          var productName = '';
+          COMPANY_PRODUCTS.forEach(function(p) {
+            if ((p.id || p.name) === productId) productName = p.name;
+          });
+          compatEntries.push({
+            pesticide_component: component,
+            product_id: productId,
+            product_name: productName,
+            status: type,
+            reason: reason
+          });
+        }
+      });
+    }
+  });
+
+  // 保存到云端：农药覆盖 + 扩展信息 + 混配关系
+  if (typeof DB !== 'undefined') {
+    var saveBtn = document.getElementById('modalSaveBtn');
+    if (saveBtn) { saveBtn.textContent = '保存中...'; saveBtn.disabled = true; }
+
+    (async function() {
+      try {
+        // 1. 保存农药覆盖数据
+        await DB.savePesticideOverride(pesticide);
+        // 2. 保存扩展信息（pH/禁忌/flags）
+        await DB.savePesticideExtra(component, ph, contraindications, flags);
+        // 3. 删除旧混配关系，保存新的
+        await DB.deleteCompatibilityByPesticide(component);
+        for (var i = 0; i < compatEntries.length; i++) {
+          await DB.saveCompatibility(compatEntries[i]);
+        }
+        closeModal();
+        renderPesticideTable();
+        updateStats();
+        showToast('已保存到云端');
+      } catch(err) {
+        console.error('云端保存失败:', err.message);
+        showToast('本地已保存，云端保存失败：' + err.message);
+        if (saveBtn) { saveBtn.textContent = '保存'; saveBtn.disabled = false; }
+      }
+    })();
+  } else {
+    closeModal();
+    renderPesticideTable();
+    updateStats();
+  }
+}
+
+function deletePesticide(idx) {
+  var data = getPesticides();
+  var p = data[idx];
+  if (!p) return;
+  showConfirm('确认删除', '确定要删除农药「' + p.component + '」吗？此操作不可撤销。', function() {
+    data.splice(idx, 1);
+    saveData(LS_KEY_PESTICIDES, data);
+    // 同时从云端删除覆盖
+    if (typeof DB !== 'undefined' && p.component) {
+      DB.deletePesticideOverride(p.component).catch(function(err) {
+        console.error('云端删除失败:', err.message);
+      });
+    }
+    renderPesticideTable();
+    updateStats();
+  });
+}
+
+// ---- 产品模板 ----
+var PRODUCT_TEMPLATE_FIELDS = [
+  '产品名', '类别', '生产厂家', '销售商', '原产地',
+  '登记证号', '执行标准', '进口合同号', '报关单号', '备案号', '产品等级', '有效菌种', '认证',
+  '产品简介', '产品优势', '成分信息', '功能', '适用作物', '用法用量', '价格区间', '规格',
+  '混配规则', '禁混成分', '谨慎混配成分', '自定义字段'
+];
+
+function getProductTemplate() {
+  var lines = [];
+  lines.push('======== 产品信息模板 ========');
+  lines.push('说明：复制本模板去问任意AI，按要求填好后贴回后台，点“识别并填入”即可自动填充。');
+  lines.push('');
+  lines.push('产品名：（必填，如：傲净）');
+  lines.push('类别：（必填，如：微生物菌剂 / 水溶肥 / 叶面肥 / 有机肥 / 中量元素肥）');
+  lines.push('生产厂家：（实际生产企业）');
+  lines.push('销售商：（经销商/代理商）');
+  lines.push('原产地：（独立字段）');
+  lines.push('登记证号：（如肥料登记证号，没有则留空）');
+  lines.push('执行标准：（如 GB20287-2006）');
+  lines.push('进口合同号：（没有则留空）');
+  lines.push('报关单号：（没有则留空）');
+  lines.push('备案号：（没有则留空）');
+  lines.push('产品等级：（没有则留空）');
+  lines.push('有效菌种：（没有则留空）');
+  lines.push('认证：（如有机认证、绿色认证等，没有则留空）');
+  lines.push('产品简介：（产品概述）');
+  lines.push('产品优势：（多行也可）');
+  lines.push('成分信息：（主要成分列表）');
+  lines.push('功能：（产品功效）');
+  lines.push('适用作物：（如：果树、蔬菜、大田作物）');
+  lines.push('用法用量：（使用说明）');
+  lines.push('价格区间：（如：80-120元/桶）');
+  lines.push('规格（每行一个，格式：规格名|净含量|剂型|配方|图片路径）：');
+  lines.push('  示例：5L桶装|5升|水剂|海藻酸配方|images/products/ajing_5L.jpg');
+  lines.push('');
+  lines.push('混配特征（影响自动混配判断）：');
+  lines.push('pH值：（如：6.5 / 3.92 / 11.0）');
+  lines.push('铜含量级别（只允许填：none / low / medium / high）：');
+  lines.push('含铜：（填“是”或“否”）');
+  lines.push('含钙：（填“是”或“否”）');
+  lines.push('含腐殖酸：（填“是”或“否”）');
+  lines.push('含氨基酸：（填“是”或“否”）');
+  lines.push('含微生物：（填“是”或“否”）');
+  lines.push('含磷：（填“是”或“否”）');
+  lines.push('含硅：（填“是”或“否”）');
+  lines.push('碱性：（填“是”或“否”）');
+  lines.push('酸性：（填“是”或“否”）');
+  lines.push('');
+  lines.push('混配规则（每行一个，格式：农药名称|状态|原因，状态只允许：可混 / 慎混 / 禁混）：');
+  lines.push('  示例：代森锰锌|禁混|与铜制剂反应沉淀');
+  lines.push('');
+  lines.push('禁混成分（每行一个成分名，如：氯溴异氰尿酸）：');
+  lines.push('谨慎混配成分（每行一个成分名，如：氨基酸）：');
+  lines.push('');
+  lines.push('自定义字段（每行一个，格式：标签|值，如：执行标准|NY1106-2010）：');
+  return lines.join('\n');
+}
+
+function copyProductTemplate() {
+  copyTextToClipboard(getProductTemplate(), '产品模板已复制');
+}
+
+var PRODUCT_FLAG_MAP = {
+  '含铜': 'has_copper', '含钙': 'has_calcium', '含腐殖酸': 'has_humic_acid',
+  '含氨基酸': 'has_amino_acid', '含微生物': 'has_microbe', '含磷': 'has_phosphorus',
+  '含硅': 'has_silicon', '碱性': 'is_alkaline', '酸性': 'is_acidic'
+};
+
+function parseProductFlagsFromTemplate(text) {
+  var flags = {};
+  var lines = text.split(/\r?\n/);
+  lines.forEach(function(line) {
+    var m = line.match(/^(.+?)[：:](.*)$/);
+    if (m) {
+      var key = m[1].replace(/[（(].*?[)）]/g, '').trim();
+      var value = m[2].trim();
+      if (PRODUCT_FLAG_MAP[key] && /是|√|✓|true|yes|有|勾选|选中/.test(value)) {
+        flags[PRODUCT_FLAG_MAP[key]] = true;
+      }
+    }
+  });
+  return flags;
+}
+
+function applyProductFlags(flags) {
+  Object.keys(PRODUCT_FLAG_MAP).forEach(function(label) {
+    var key = PRODUCT_FLAG_MAP[label];
+    var el = document.getElementById('pf_mp_' + key);
+    if (el) el.checked = !!flags[key];
+  });
+}
+
+function addSpecItemWithValues(values) {
+  var list = document.getElementById('pf_specs_list');
+  if (!list) return;
+  var parts = (values || '').split('|');
+  var row = document.createElement('div');
+  row.className = 'dynamic-item spec-row';
+  row.innerHTML = '<input type="text" class="spec-name" value="' + escapeAttr(parts[0] || '') + '" placeholder="规格名">' +
+    '<input type="text" class="spec-capacity" value="' + escapeAttr(parts[1] || '') + '" placeholder="净含量">' +
+    '<input type="text" class="spec-form" value="' + escapeAttr(parts[2] || '') + '" placeholder="剂型">' +
+    '<input type="text" class="spec-formula" value="' + escapeAttr(parts[3] || '') + '" placeholder="配方">' +
+    '<input type="text" class="spec-image" value="' + escapeAttr(parts[4] || '') + '" placeholder="图片路径">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(row);
+}
+
+function addCompatRuleItem(pesticide, status, reason) {
+  var list = document.getElementById('pf_compat_list');
+  if (!list) return;
+  var row = document.createElement('div');
+  row.className = 'dynamic-item compat-row';
+  row.innerHTML = '<input type="text" class="compat-pesticide" value="' + escapeAttr(pesticide || '') + '" placeholder="农药名称" oninput="searchCompatPesticide(this)">' +
+    '<select class="compat-status">' +
+    '<option value="mixable"' + (status === 'mixable' ? ' selected' : '') + '>可混</option>' +
+    '<option value="caution"' + (status === 'caution' ? ' selected' : '') + '>慎混</option>' +
+    '<option value="forbidden"' + (status === 'forbidden' ? ' selected' : '') + '>禁混</option>' +
+    '</select>' +
+    '<input type="text" class="compat-reason" value="' + escapeAttr(reason || '') + '" placeholder="理由" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+    '<div class="compat-suggest" style="display:none;"></div>';
+  list.appendChild(row);
+}
+
+function addCompatProdItemWithValue(type, component, reason) {
+  var listId = type === 'forbidden' ? 'pf_compat_forbidden_list' : 'pf_compat_caution_list';
+  var list = document.getElementById(listId);
+  if (!list) return;
+  var placeholder = type === 'forbidden' ? '禁混原因' : '谨慎原因';
+  var row = document.createElement('div');
+  row.className = 'dynamic-item compat-prod-row';
+  row.innerHTML = '<input type="text" class="compat-prod-component" value="' + escapeAttr(component || '') + '" placeholder="农药成分名" style="flex:1;">' +
+    '<input type="text" class="compat-prod-reason" value="' + escapeAttr(reason || '') + '" placeholder="' + placeholder + '" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(row);
+}
+
+function addCustomFieldItemWithValues(label, value) {
+  var list = document.getElementById('pf_custom_list');
+  if (!list) return;
+  var row = document.createElement('div');
+  row.className = 'dynamic-item custom-row';
+  row.innerHTML = '<input type="text" class="custom-label" value="' + escapeAttr(label || '') + '" placeholder="字段名">' +
+    '<input type="text" class="custom-value" value="' + escapeAttr(value || '') + '" placeholder="字段值" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(row);
+}
+
+function parseProductTemplateAndFill() {
+  var text = document.getElementById('ai_product_paste_area').value;
+  if (!text.trim()) {
+    alert('请先粘贴 AI 返回的内容');
+    return;
+  }
+  var fields = parseTemplateToFields(text, PRODUCT_TEMPLATE_FIELDS);
+
+  // 基本字段
+  if (fields['产品名']) setInputValue('pf_name', fields['产品名']);
+  if (fields['类别']) setInputValue('pf_category', fields['类别']);
+  if (fields['生产厂家']) setInputValue('pf_manufacturer', fields['生产厂家']);
+  if (fields['销售商']) setInputValue('pf_seller', fields['销售商']);
+  if (fields['原产地']) setInputValue('pf_origin', fields['原产地']);
+  if (fields['登记证号']) setInputValue('pf_reg_fertilizer', fields['登记证号']);
+  if (fields['执行标准']) setInputValue('pf_reg_standard', fields['执行标准']);
+  if (fields['进口合同号']) setInputValue('pf_reg_import', fields['进口合同号']);
+  if (fields['报关单号']) setInputValue('pf_reg_customs', fields['报关单号']);
+  if (fields['备案号']) setInputValue('pf_reg_record', fields['备案号']);
+  if (fields['产品等级']) setInputValue('pf_reg_grade', fields['产品等级']);
+  if (fields['有效菌种']) setInputValue('pf_reg_bacteria', fields['有效菌种']);
+  if (fields['认证']) setInputValue('pf_reg_cert', fields['认证']);
+  if (fields['产品简介']) setTextareaValue('pf_intro', fields['产品简介']);
+  if (fields['产品优势']) setTextareaValue('pf_advantages', fields['产品优势']);
+  if (fields['成分信息']) setTextareaValue('pf_ingredients', fields['成分信息']);
+  if (fields['功能']) setTextareaValue('pf_functions', fields['功能']);
+  if (fields['适用作物']) setInputValue('pf_crops', fields['适用作物']);
+  if (fields['用法用量']) setInputValue('pf_usage', fields['用法用量']);
+  if (fields['价格区间']) setInputValue('pf_price', fields['价格区间']);
+
+  // 规格
+  if (fields['规格']) {
+    document.getElementById('pf_specs_list').innerHTML = '';
+    fields['规格'].split(/\r?\n/).forEach(function(line) {
+      var v = line.replace(/^[-•*\s]+/, '').trim();
+      if (!v) return;
+      addSpecItemWithValues(v);
+    });
+  }
+
+  // 混配特征
+  if (fields['pH值']) setInputValue('pf_mp_ph', fields['pH值']);
+  // 也支持"混配特征"块中的pH
+  if (!fields['pH值'] && fields['混配特征']) {
+    var m = fields['混配特征'].match(/pH[值]?[：:]\s*([^\n]+)/i);
+    if (m) setInputValue('pf_mp_ph', m[1].trim());
+    var cm = fields['混配特征'].match(/铜含量级别[（(]?[^）)]*[)）]?[：:]\s*([^\n]+)/i);
+    if (cm) setInputValue('pf_mp_copper_level', cm[1].trim());
+  }
+  if (fields['铜含量级别']) setInputValue('pf_mp_copper_level', fields['铜含量级别']);
+  applyProductFlags(parseProductFlagsFromTemplate(text));
+
+  // 混配规则
+  if (fields['混配规则']) {
+    document.getElementById('pf_compat_list').innerHTML = '';
+    fields['混配规则'].split(/\r?\n/).forEach(function(line) {
+      var v = line.replace(/^[-•*\s]+/, '').trim();
+      if (!v) return;
+      var parts = v.split('|');
+      var status = 'mixable';
+      if (parts[1]) {
+        var s = parts[1].trim();
+        if (/慎|谨慎|caution/.test(s)) status = 'caution';
+        else if (/禁|禁止|forbidden/.test(s)) status = 'forbidden';
+        else if (/可混|mixable/.test(s)) status = 'mixable';
+      }
+      addCompatRuleItem(parts[0] || '', status, parts[2] || '');
+    });
+  }
+
+  // 禁混/谨慎成分
+  if (fields['禁混成分']) {
+    document.getElementById('pf_compat_forbidden_list').innerHTML = '';
+    fields['禁混成分'].split(/\r?\n/).forEach(function(line) {
+      var v = line.replace(/^[-•*\s]+/, '').trim();
+      if (!v) return;
+      addCompatProdItemWithValue('forbidden', v, '');
+    });
+  }
+  if (fields['谨慎混配成分']) {
+    document.getElementById('pf_compat_caution_list').innerHTML = '';
+    fields['谨慎混配成分'].split(/\r?\n/).forEach(function(line) {
+      var v = line.replace(/^[-•*\s]+/, '').trim();
+      if (!v) return;
+      addCompatProdItemWithValue('caution', v, '');
+    });
+  }
+
+  // 自定义字段
+  if (fields['自定义字段']) {
+    document.getElementById('pf_custom_list').innerHTML = '';
+    fields['自定义字段'].split(/\r?\n/).forEach(function(line) {
+      var v = line.replace(/^[-•*\s]+/, '').trim();
+      if (!v) return;
+      var parts = v.split('|');
+      addCustomFieldItemWithValues(parts[0] || '', parts[1] || '');
+    });
+  }
+
+  // 自动调整高度
+  document.querySelectorAll('#modalBody textarea').forEach(function(ta) {
+    autoResize(ta);
+  });
+  showToast('已识别并填入，请检查后再保存');
+}
+
+// ============================================================
+// 产品管理
+// ============================================================
+
+var productCurrentPage = 1;
+
+function renderProductTable() {
+  var data = getProducts();
+  var q = document.getElementById('productSearch').value.trim().toLowerCase();
+
+  var filtered = data.filter(function(p) {
+    if (!q) return true;
+    if (p.name && p.name.toLowerCase().indexOf(q) >= 0) return true;
+    if (p.category && p.category.toLowerCase().indexOf(q) >= 0) return true;
+    if (p.description && p.description.toLowerCase().indexOf(q) >= 0) return true;
+    return false;
+  });
+
+  var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (productCurrentPage > totalPages) productCurrentPage = totalPages;
+
+  var start = (productCurrentPage - 1) * PAGE_SIZE;
+  var pageData = filtered.slice(start, start + PAGE_SIZE);
+
+  var tbody = document.getElementById('productTableBody');
+  if (pageData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">暂无数据</td></tr>';
+  } else {
+    tbody.innerHTML = pageData.map(function(p) {
+      var realIdx = data.indexOf(p);
+      var hasImg = (p.images && p.images.length > 0) ? '<span style="color:var(--green);font-size:11px;">●</span> ' : '';
+      return '<tr>' +
+        '<td class="td-component">' + hasImg + escapeHtml(p.name || '') + '</td>' +
+        '<td class="td-category">' + escapeHtml(p.category || '') + '</td>' +
+        '<td style="max-width:200px;">' + escapeHtml(truncate(p.manufacturer || p.seller || '', 20)) + '</td>' +
+        '<td style="max-width:240px;">' + escapeHtml(truncate(p.intro || p.description || '', 35)) + '</td>' +
+        '<td>' + escapeHtml(truncate(p.usage || '', 20)) + '</td>' +
+        '<td>' + escapeHtml(p.price_range || '') + '</td>' +
+        '<td class="td-actions">' +
+          '<button class="btn btn-edit" onclick="openProductModal(' + realIdx + ')">编辑</button>' +
+          '<button class="btn btn-delete" onclick="deleteProduct(' + realIdx + ')">删除</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  renderPagination('productPagination', filtered.length, productCurrentPage, totalPages, function(page) {
+    productCurrentPage = page;
+    renderProductTable();
+  });
+}
+
+// ---- 产品 添加/编辑 模态框 ----
+function openProductModal(idx) {
+  var data = getProducts();
+  var isEdit = typeof idx === 'number';
+  var p = isEdit ? data[idx] : {
+    name: '', category: '', intro: '', description: '', advantages: '', ingredients: '', functions: '', applicable_crops: '',
+    usage: '', price_range: '', manufacturer: '', seller: '', origin: '', registrations: {}, specifications: [], images: [],
+    mix_profile: {}, pesticide_compat: [], custom_fields: []
+  };
+
+  // 同步迁移当前产品base64图片到IndexedDB（路径立即生效，IndexedDB写入异步）
+  if (p.images) {
+    p.images.forEach(function(img, idx) {
+      if (img && img.indexOf('data:') === 0) {
+        var pid = slugify(p.name || p.id || 'product');
+        var ext = img.indexOf('image/png') !== -1 ? 'png' : 'jpg';
+        var path = 'images/products/' + pid + '_' + (idx + 1) + '_' + Date.now() + '.' + ext;
+        saveImageToStore(path, img).catch(function(){});
+        p.images[idx] = path;
+      }
+    });
+  }
+
+  var mp = p.mix_profile || {};
+  var reg = p.registrations || {};
+  var specs = p.specifications || [];
+  var images = p.images || [];
+  var compat = p.pesticide_compat || [];
+  var customFields = p.custom_fields || [];
+
+  document.getElementById('modalTitle').textContent = isEdit ? '编辑产品' : '添加新产品';
+  document.getElementById('modalSaveBtn').onclick = function() { saveProduct(idx); };
+  // 重置保存按钮状态（防止上次保存失败后按钮仍处于 disabled）
+  var saveBtn = document.getElementById('modalSaveBtn');
+  if (saveBtn) { saveBtn.textContent = '保存'; saveBtn.disabled = false; }
+
+  var html = '';
+  html += '<div class="ai-template-box">';
+  html += '<div class="template-header">';
+  html += '<div><div class="template-title">模板填写</div><div class="template-subtitle">复制模板去问别的AI，把结果贴回来自动填入</div></div>';
+  html += '<div class="template-actions"><button type="button" class="btn-copy" onclick="copyProductTemplate()">复制模板</button></div>';
+  html += '</div>';
+  html += '<textarea id="ai_product_paste_area" class="paste-area" placeholder="把别的AI返回的内容粘贴到这里..."></textarea>';
+  html += '<button type="button" class="btn-parse" onclick="parseProductTemplateAndFill()">识别并填入</button>';
+  html += '</div>';
+
+  html += '<div class="form-row-2">';
+  html += '<div class="form-group"><label>产品名 *</label><input type="text" id="pf_name" value="' + escapeAttr(p.name) + '" placeholder="如：傲净"></div>';
+  html += '<div class="form-group"><label>类别</label><input type="text" id="pf_category" value="' + escapeAttr(p.category || '') + '" placeholder="如：微生物菌剂"></div>';
+  html += '</div>';
+
+  html += '<div class="form-row-2">';
+  html += '<div class="form-group"><label>生产厂家</label><input type="text" id="pf_manufacturer" value="' + escapeAttr(p.manufacturer || '') + '" placeholder="生产企业"></div>';
+  html += '<div class="form-group"><label>销售商</label><input type="text" id="pf_seller" value="' + escapeAttr(p.seller || '') + '" placeholder="经销商/代理商"></div>';
+  html += '</div>';
+  html += '<div class="form-group"><label>原产地</label><input type="text" id="pf_origin" value="' + escapeAttr(p.origin || '') + '" placeholder="如：韩国、西班牙"></div>';
+
+  html += '<div class="form-group"><label>登记信息</label>';
+  html += '<div class="form-row-2">';
+  html += '<input type="text" id="pf_reg_fertilizer" value="' + escapeAttr(reg.fertilizer_registration || '') + '" placeholder="登记证号">';
+  html += '<input type="text" id="pf_reg_standard" value="' + escapeAttr(reg.execution_standard || '') + '" placeholder="执行标准">';
+  html += '</div>';
+  html += '<div class="form-row-2" style="margin-top:8px;">';
+  html += '<input type="text" id="pf_reg_import" value="' + escapeAttr(reg.import_contract || '') + '" placeholder="进口合同号">';
+  html += '<input type="text" id="pf_reg_customs" value="' + escapeAttr(reg.customs_declaration || '') + '" placeholder="报关单号">';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="form-row-2" style="margin-top:8px;">';
+  html += '<input type="text" id="pf_reg_record" value="' + escapeAttr(reg.record_number || '') + '" placeholder="备案号">';
+  html += '<input type="text" id="pf_reg_grade" value="' + escapeAttr(reg.product_grade || '') + '" placeholder="产品等级">';
+  html += '</div>';
+  html += '<div class="form-row-2" style="margin-top:8px;">';
+  html += '<input type="text" id="pf_reg_bacteria" value="' + escapeAttr(reg.effective_bacteria || '') + '" placeholder="有效菌种">';
+  html += '<input type="text" id="pf_reg_cert" value="' + escapeAttr(reg.certification || '') + '" placeholder="认证">';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="form-group"><label>产品简介</label><textarea id="pf_intro" placeholder="产品简要介绍（不是成分列表）" oninput="autoResize(this)">' + escapeHtml(p.intro || '') + '</textarea></div>';
+  html += '<div class="form-group"><label>产品优势</label><textarea id="pf_advantages" placeholder="产品核心优势卖点" oninput="autoResize(this)">' + escapeHtml(p.advantages || '') + '</textarea></div>';
+  html += '<div class="form-group"><label>成分信息</label><textarea id="pf_ingredients" placeholder="主要成分" oninput="autoResize(this)">' + escapeHtml(p.ingredients || '') + '</textarea></div>';
+  html += '<div class="form-group"><label>功能</label><textarea id="pf_functions" placeholder="产品功能" oninput="autoResize(this)">' + escapeHtml(p.functions || '') + '</textarea></div>';
+  html += '<div class="form-group"><label>适用作物</label><input type="text" id="pf_crops" value="' + escapeAttr(p.applicable_crops || '') + '" placeholder="如：果树、蔬菜"></div>';
+  html += '<div class="form-group"><label>用法</label><input type="text" id="pf_usage" value="' + escapeAttr(p.usage || '') + '" placeholder="如：冲施/滴灌 + 叶面喷施"></div>';
+  html += '<div class="form-group"><label>价格区间</label><input type="text" id="pf_price" value="' + escapeAttr(p.price_range || '') + '" placeholder="如：29.9-44.9元"></div>';
+
+  // 规格列表
+  html += '<div class="form-group"><label>包装规格</label><div id="pf_specs_list" class="dynamic-list">';
+  specs.forEach(function(s, i) {
+    html += '<div class="dynamic-item spec-row">' +
+      '<input type="text" class="spec-name" value="' + escapeAttr(s.name || '') + '" placeholder="规格名">' +
+      '<input type="text" class="spec-capacity" value="' + escapeAttr(s.capacity || '') + '" placeholder="净含量">' +
+      '<input type="text" class="spec-form" value="' + escapeAttr(s.form || '') + '" placeholder="剂型">' +
+      '<input type="text" class="spec-formula" value="' + escapeAttr(s.formula || '') + '" placeholder="配方">' +
+      '<input type="text" class="spec-image" value="' + escapeAttr(s.image || '') + '" placeholder="图片路径">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '</div>';
+  });
+  html += '</div><button type="button" class="btn-add-item" onclick="addSpecItem()">+ 添加规格</button></div>';
+
+  // 图片列表
+  html += '<div class="form-group"><label>产品图片</label>';
+  html += '<div class="img-upload-zone" id="pf_img_dropzone" tabindex="0">';
+  html += '<div class="img-upload-hint">点击选择图片、拖拽图片到此处、或在此区域按 Ctrl+V 粘贴</div>';
+  html += '<input type="file" id="pf_img_fileinput" accept="image/*" multiple style="display:none;" onchange="handleImageFileSelect(this)">';
+  html += '</div>';
+  html += '<div id="pf_images_list" class="dynamic-list img-thumb-list">';
+  images.forEach(function(img, i) {
+    var isDataUri = img.indexOf('data:') === 0;
+    var displayName = isDataUri ? ('images/products/uploaded_' + (i + 1) + '.jpg') : img;
+    var thumbSrc = isDataUri ? img : img;
+    html += '<div class="dynamic-item img-thumb-row" data-is-data="' + (isDataUri ? '1' : '0') + '" data-img-path="' + escapeAttr(displayName) + '">' +
+      '<img src="' + escapeAttr(thumbSrc) + '" class="image-preview-thumb" onerror="loadStoredImage(this, \'' + escapeAttr(displayName) + '\')" data-path="' + escapeAttr(displayName) + '">' +
+      (isDataUri ? '<input type="hidden" class="image-data" value="' + img.replace(/"/g, '&quot;') + '">' : '') +
+      '<input type="text" class="image-path" value="' + escapeAttr(displayName) + '" placeholder="图片路径或上传后自动填充" style="flex:1;font-size:11px;"' + (isDataUri ? ' readonly' : ' onchange="updateImagePreview(this)"') + '>' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '</div>';
+  });
+  html += '</div></div>';
+
+  // 混配性（自定义）
+  html += '<div class="form-group"><label>混配性（自定义农药混配规则）</label>';
+  html += '<div style="font-size:12px;color:var(--gray);margin-bottom:6px;">输入农药名后，下方会弹出匹配的农药列表，选择后自动同步所有含该名称的农药</div>';
+  html += '<div id="pf_compat_list" class="dynamic-list">';
+  compat.forEach(function(c) {
+    html += '<div class="dynamic-item compat-row">' +
+      '<input type="text" class="compat-pesticide" value="' + escapeAttr(c.pesticide || '') + '" placeholder="农药名称" oninput="searchCompatPesticide(this)">' +
+      '<select class="compat-status">' +
+        '<option value="mixable"' + (c.status === 'mixable' ? ' selected' : '') + '>可混</option>' +
+        '<option value="caution"' + (c.status === 'caution' ? ' selected' : '') + '>慎混</option>' +
+        '<option value="forbidden"' + (c.status === 'forbidden' ? ' selected' : '') + '>禁混</option>' +
+      '</select>' +
+      '<input type="text" class="compat-reason" value="' + escapeAttr(c.reason || '') + '" placeholder="理由" style="flex:1;">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '<div class="compat-suggest" style="display:none;"></div>' +
+      '</div>';
+  });
+  html += '</div><button type="button" class="btn-add-item" onclick="addCompatItem()">+ 添加混配规则</button></div>';
+
+  // 混配联动：禁混成分列表 + 谨慎混配成分列表（与农药侧自动联动）
+  var prodId = p.id || p.name;
+  var compatForbComp = [];
+  var compatCauComp = [];
+  if (typeof COMPATIBILITY !== 'undefined') {
+    COMPATIBILITY.forEach(function(c) {
+      if (c.product_id === prodId) {
+        if (c.status === 'forbidden') compatForbComp.push(c);
+        else if (c.status === 'caution') compatCauComp.push(c);
+      }
+    });
+  }
+
+  html += '<div class="form-group"><label>禁混成分列表</label>';
+  html += '<div style="font-size:12px;color:var(--gray);margin-bottom:6px;">输入与该产品不能混配的农药成分名（与农药侧自动联动）</div>';
+  html += '<div id="pf_compat_forbidden_list" class="dynamic-list">';
+  compatForbComp.forEach(function(c) {
+    html += '<div class="dynamic-item compat-prod-row">' +
+      '<input type="text" class="compat-prod-component" value="' + escapeAttr(c.pesticide_component || '') + '" placeholder="农药成分名" style="flex:1;">' +
+      '<input type="text" class="compat-prod-reason" value="' + escapeAttr(c.reason || '') + '" placeholder="禁混原因" style="flex:1;">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '</div>';
+  });
+  html += '</div><button type="button" class="btn-add-item" onclick="addCompatProdItem(\'forbidden\')">+ 添加禁混成分</button></div>';
+
+  html += '<div class="form-group"><label>谨慎混配成分列表</label>';
+  html += '<div style="font-size:12px;color:var(--gray);margin-bottom:6px;">输入与该产品需谨慎混配的农药成分名</div>';
+  html += '<div id="pf_compat_caution_list" class="dynamic-list">';
+  compatCauComp.forEach(function(c) {
+    html += '<div class="dynamic-item compat-prod-row">' +
+      '<input type="text" class="compat-prod-component" value="' + escapeAttr(c.pesticide_component || '') + '" placeholder="农药成分名" style="flex:1;">' +
+      '<input type="text" class="compat-prod-reason" value="' + escapeAttr(c.reason || '') + '" placeholder="谨慎原因" style="flex:1;">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '</div>';
+  });
+  html += '</div><button type="button" class="btn-add-item" onclick="addCompatProdItem(\'caution\')">+ 添加谨慎混配成分</button></div>';
+
+  // 自定义字段
+  html += '<div class="form-group"><label>自定义字段</label><div id="pf_custom_list" class="dynamic-list">';
+  customFields.forEach(function(cf) {
+    html += '<div class="dynamic-item custom-row">' +
+      '<input type="text" class="custom-label" value="' + escapeAttr(cf.label || '') + '" placeholder="字段名">' +
+      '<input type="text" class="custom-value" value="' + escapeAttr(cf.value || '') + '" placeholder="字段值" style="flex:1;">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+      '</div>';
+  });
+  html += '</div><button type="button" class="btn-add-item" onclick="addCustomFieldItem()">+ 添加自定义字段</button></div>';
+
+  // 粘贴文字自动识别
+  html += '<div class="form-group"><label>粘贴文字自动识别填入</label>';
+  html += '<textarea id="pf_paste_area" placeholder="粘贴产品标签或说明文字，点击下方按钮自动识别填入各字段" style="width:100%;min-height:80px;"></textarea>';
+  html += '<button type="button" class="btn btn-secondary" onclick="autoCategorize()" style="margin-top:6px;">自动识别填入</button>';
+  html += '</div>';
+
+  // mix_profile
+  html += '<div class="form-group"><label>混配特征 (mix_profile)</label>';
+  html += '<div class="form-row-2">';
+  html += '<div><label style="font-weight:normal;font-size:12px;">pH</label><input type="text" id="pf_mp_ph" value="' + escapeAttr(mp.ph || '') + '"></div>';
+  html += '<div><label style="font-weight:normal;font-size:12px;">铜含量级别</label><input type="text" id="pf_mp_copper_level" value="' + escapeAttr(mp.copper_level || '') + '" placeholder="none/low/medium/high"></div>';
+  html += '</div>';
+  html += '<div class="flags-group" style="margin-top:8px;">';
+  [
+    ['has_copper', '含铜'], ['has_calcium', '含钙'], ['has_humic_acid', '含腐殖酸'],
+    ['has_amino_acid', '含氨基酸'], ['has_microbe', '含微生物'], ['has_phosphorus', '含磷'],
+    ['has_silicon', '含硅'], ['is_alkaline', '碱性'], ['is_acidic', '酸性']
+  ].forEach(function(item) {
+    var key = item[0], label = item[1];
+    var checked = mp[key] ? ' checked' : '';
+    html += '<label class="flag-item"><input type="checkbox" id="pf_mp_' + key + '"' + checked + '> ' + label + '</label>';
+  });
+  html += '</div></div>';
+
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('show');
+
+  // 自动调整所有textarea高度
+  document.querySelectorAll('#modalBody textarea').forEach(function(ta) {
+    autoResize(ta);
+  });
+
+  // 初始化图片上传区域
+  setupImageUploadZone();
+}
+
+function addSpecItem() {
+  var list = document.getElementById('pf_specs_list');
+  var div = document.createElement('div');
+  div.className = 'dynamic-item spec-row';
+  div.innerHTML = '<input type="text" class="spec-name" placeholder="规格名">' +
+    '<input type="text" class="spec-capacity" placeholder="净含量">' +
+    '<input type="text" class="spec-form" placeholder="剂型">' +
+    '<input type="text" class="spec-formula" placeholder="配方">' +
+    '<input type="text" class="spec-image" placeholder="图片路径">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(div);
+}
+
+function addImageItem() {
+  var list = document.getElementById('pf_images_list');
+  var div = document.createElement('div');
+  div.className = 'dynamic-item img-thumb-row';
+  div.setAttribute('data-is-data', '0');
+  div.innerHTML = '<img src="" class="image-preview-thumb" style="opacity:0.2;">' +
+    '<input type="text" class="image-path" placeholder="图片路径，如 images/products/xxx.png" style="flex:1;font-size:11px;" onchange="updateImagePreview(this)">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(div);
+}
+
+function updateImagePreview(input) {
+  var thumb = input.parentElement.querySelector('.image-preview-thumb');
+  if (thumb && input.value.trim()) {
+    thumb.src = input.value.trim();
+    thumb.style.opacity = '1';
+  }
+}
+
+// ---- 图片上传：文件选择/拖拽/粘贴 ----
+function setupImageUploadZone() {
+  var zone = document.getElementById('pf_img_dropzone');
+  var fileInput = document.getElementById('pf_img_fileinput');
+  if (!zone) return;
+
+  // 点击触发文件选择
+  zone.addEventListener('click', function(e) {
+    if (e.target.tagName !== 'INPUT') fileInput.click();
+  });
+
+  // 拖拽
+  zone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    zone.classList.add('dragover');
+  });
+  zone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    zone.classList.remove('dragover');
+  });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    zone.classList.remove('dragover');
+    var files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleImageFiles(files);
+    }
+  });
+
+  // 粘贴
+  zone.addEventListener('paste', function(e) {
+    var items = e.clipboardData.items;
+    var imageFiles = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        var f = items[i].getAsFile();
+        if (f) imageFiles.push(f);
+      }
+    }
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      handleImageFiles(imageFiles);
+    }
+  });
+}
+
+function handleImageFileSelect(input) {
+  if (input.files && input.files.length > 0) {
+    handleImageFiles(input.files);
+    input.value = '';
+  }
+}
+
+function handleImageFiles(files) {
+  var productId = document.getElementById('pf_name') ? slugify(document.getElementById('pf_name').value || 'product') : 'product';
+  var processed = 0;
+  var total = files.length;
+
+  for (var i = 0; i < files.length; i++) {
+    (function(file, index) {
+      compressImage(file, function(dataUri) {
+        var list = document.getElementById('pf_images_list');
+        var div = document.createElement('div');
+        div.className = 'dynamic-item img-thumb-row';
+        div.setAttribute('data-is-data', '1');
+        var seq = list.children.length + 1;
+        var ext = dataUri.indexOf('image/png') !== -1 ? 'png' : 'jpg';
+        var autoName = 'images/products/' + productId + '_' + seq + '.' + ext;
+        // 避免重名
+        while (Array.from(list.children).some(function(row) {
+          return row.querySelector('.image-path') && row.querySelector('.image-path').value === autoName;
+        })) {
+          seq++;
+          autoName = 'images/products/' + productId + '_' + seq + '.' + ext;
+        }
+        // 存入 IndexedDB
+        saveImageToStore(autoName, dataUri).catch(function(err) {
+          console.error('保存图片到IndexedDB失败', err);
+          alert('图片保存失败：' + (err && err.message ? err.message : '未知错误'));
+        });
+        div.setAttribute('data-img-path', autoName);
+        div.innerHTML = '<img src="' + dataUri + '" class="image-preview-thumb">' +
+          '<input type="text" class="image-path" value="' + autoName + '" placeholder="图片名称（导出时自动生成为文件）" style="flex:1;font-size:11px;" readonly>' +
+          '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+        list.appendChild(div);
+        processed++;
+        if (processed >= total) {
+          // 全部处理完
+        }
+      });
+    })(files[i], i);
+  }
+}
+
+function compressImage(file, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var maxW = 800;
+      var maxH = 800;
+      var w = img.width;
+      var h = img.height;
+      if (w > maxW) { h = h * maxW / w; w = maxW; }
+      if (h > maxH) { w = w * maxH / h; h = maxH; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      // 如果原图是PNG且有透明通道，保持PNG，否则用JPEG压缩
+      var isPng = file.type === 'image/png';
+      var dataUri;
+      if (isPng) {
+        dataUri = canvas.toDataURL('image/png');
+      } else {
+        dataUri = canvas.toDataURL('image/jpeg', 0.85);
+      }
+      callback(dataUri);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function slugify(text) {
+  return text.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '').toLowerCase() || 'product';
+}
+
+function removeDynamicItem(btn) {
+  var row = btn.parentElement;
+  // 如果删除的是 IndexedDB 中存储的图片，同步删除
+  if (row.getAttribute('data-is-data') === '1') {
+    var pathInput = row.querySelector('.image-path');
+    if (pathInput && pathInput.value) {
+      removeImageFromStore(pathInput.value).catch(function(){});
+    }
+  }
+  row.remove();
+}
+
+function loadStoredImage(img, path) {
+  if (!path) return;
+  getImageFromStore(path).then(function(dataUri) {
+    if (dataUri) {
+      img.src = dataUri;
+      img.style.opacity = '1';
+    } else {
+      img.style.opacity = '0.2';
+    }
+  }).catch(function() {
+    img.style.opacity = '0.2';
+  });
+}
+
+function addCompatItem() {
+  var list = document.getElementById('pf_compat_list');
+  var div = document.createElement('div');
+  div.className = 'dynamic-item compat-row';
+  div.style.flexWrap = 'wrap';
+  div.innerHTML = '<input type="text" class="compat-pesticide" placeholder="农药名称" oninput="searchCompatPesticide(this)">' +
+    '<select class="compat-status">' +
+    '<option value="mixable">可混</option>' +
+    '<option value="caution">慎混</option>' +
+    '<option value="forbidden">禁混</option>' +
+    '</select>' +
+    '<input type="text" class="compat-reason" placeholder="理由" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>' +
+    '<div class="compat-suggest" style="display:none;width:100%;"></div>';
+  list.appendChild(div);
+  div.querySelector('.compat-pesticide').focus();
+}
+
+// 添加产品端混配联动条目（forbidden/caution，输入成分名）
+function addCompatProdItem(type) {
+  var listId = type === 'forbidden' ? 'pf_compat_forbidden_list' : 'pf_compat_caution_list';
+  var list = document.getElementById(listId);
+  if (!list) return;
+  var div = document.createElement('div');
+  div.className = 'dynamic-item compat-prod-row';
+  div.innerHTML = '<input type="text" class="compat-prod-component" placeholder="农药成分名" style="flex:1;">' +
+    '<input type="text" class="compat-prod-reason" placeholder="' + (type === 'forbidden' ? '禁混原因' : '谨慎原因') + '" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(div);
+  div.querySelector('.compat-prod-component').focus();
+}
+
+// 混配性农药搜索：输入农药名时弹出匹配列表
+function searchCompatPesticide(input) {
+  var keyword = input.value.trim();
+  var suggestDiv = input.parentElement.querySelector('.compat-suggest');
+
+  if (!keyword || keyword.length < 1) {
+    suggestDiv.style.display = 'none';
+    return;
+  }
+
+  // 在农药数据库中搜索所有匹配的农药
+  var matches = [];
+  var kw = keyword.toLowerCase();
+  for (var i = 0; i < PESTICIDES.length; i++) {
+    var p = PESTICIDES[i];
+    var componentName = (p.component || '').toLowerCase();
+    var aliasMatch = false;
+    if (p.aliases) {
+      for (var j = 0; j < p.aliases.length; j++) {
+        if (p.aliases[j].toLowerCase().indexOf(kw) >= 0) { aliasMatch = true; break; }
+      }
+    }
+    if (componentName.indexOf(kw) >= 0 || aliasMatch) {
+      matches.push(p.component);
+    }
+  }
+
+  // 去重
+  var unique = [];
+  matches.forEach(function(m) { if (unique.indexOf(m) < 0) unique.push(m); });
+
+  if (unique.length === 0) {
+    suggestDiv.style.display = 'none';
+    return;
+  }
+
+  var html = '<div style="font-size:12px;color:var(--gray);padding:4px 0;">找到 ' + unique.length + ' 个匹配农药，点击下方按钮全部添加：</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:4px;max-height:120px;overflow-y:auto;padding:4px;background:#FAFAFA;border-radius:4px;">';
+  unique.forEach(function(name) {
+    html += '<span style="font-size:12px;background:#FFF;border:1px solid #E0E0E0;border-radius:3px;padding:2px 6px;cursor:default;">' + escapeHtml(name) + '</span>';
+  });
+  html += '</div>';
+  html += '<button type="button" class="btn btn-secondary" style="margin-top:4px;font-size:12px;padding:4px 12px;" onclick="applyCompatBatch(this, ' + JSON.stringify(unique).replace(/"/g, '&quot;') + ')">全部添加为相同规则</button>';
+
+  suggestDiv.innerHTML = html;
+  suggestDiv.style.display = 'block';
+}
+
+// 批量添加混配规则：将所有匹配农药添加为相同状态
+function applyCompatBatch(btn, pesticideNames) {
+  var compatRow = btn.closest('.compat-row');
+  var statusSelect = compatRow.querySelector('.compat-status');
+  var reasonInput = compatRow.querySelector('.compat-reason');
+  var status = statusSelect.value;
+  var reason = reasonInput.value.trim();
+  var list = document.getElementById('pf_compat_list');
+
+  // 第一条用当前行（已有农药名改为第一个）
+  var firstName = pesticideNames[0];
+  compatRow.querySelector('.compat-pesticide').value = firstName;
+
+  // 其余的创建新行
+  for (var i = 1; i < pesticideNames.length; i++) {
+    var div = document.createElement('div');
+    div.className = 'dynamic-item compat-row';
+    div.style.flexWrap = 'wrap';
+    div.innerHTML = '<input type="text" class="compat-pesticide" value="' + escapeAttr(pesticideNames[i]) + '" placeholder="农药名称" oninput="searchCompatPesticide(this)">' +
+      '<select class="compat-status">' +
+      '<option value="mixable"' + (status === 'mixable' ? ' selected' : '') + '>可混</option>' +
+      '<option value="caution"' + (status === 'caution' ? ' selected' : '') + '>慎混</option>' +
+      '<option value="forbidden"' + (status === 'forbidden' ? ' selected' : '') + '>禁混</option>' +
+      '</select>' +
+      '<input type="text" class="compat-reason" value="' + escapeAttr(reason) + '" placeholder="理由" style="flex:1;">' +
+      '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+    list.appendChild(div);
+  }
+
+  // 隐藏建议框
+  compatRow.querySelector('.compat-suggest').style.display = 'none';
+}
+
+function addCustomFieldItem() {
+  var list = document.getElementById('pf_custom_list');
+  var div = document.createElement('div');
+  div.className = 'dynamic-item custom-row';
+  div.innerHTML = '<input type="text" class="custom-label" placeholder="字段名">' +
+    '<input type="text" class="custom-value" placeholder="字段值" style="flex:1;">' +
+    '<button type="button" class="btn-remove" onclick="removeDynamicItem(this)">删除</button>';
+  list.appendChild(div);
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function autoCategorize() {
+  var text = document.getElementById('pf_paste_area').value.trim();
+  if (!text) { alert('请先粘贴文字'); return; }
+
+  var lines = text.split(/\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+  var filled = [];
+
+  lines.forEach(function(line) {
+    // 识别"产品名称"或"名称"
+    if (/产品名称|名称[:：]/.test(line) && !document.getElementById('pf_name').value) {
+      var val = line.replace(/^.*?[:：]\s*/, '');
+      document.getElementById('pf_name').value = val;
+      filled.push('产品名称: ' + val);
+    }
+    // 识别"肥料类型"或"产品类型"
+    if (/肥料类型|产品类型|类型[:：]/.test(line)) {
+      var catVal = line.replace(/^.*?[:：]\s*/, '').replace(/（.*?）/g, '').trim();
+      if (catVal) {
+        document.getElementById('pf_category').value = catVal;
+        filled.push('类别: ' + catVal);
+      }
+    }
+    // 识别"生产厂家"或"生产企业"或"生产商"
+    if (/生产厂家|生产企业|生产商[:：]/.test(line)) {
+      var mfrVal = line.replace(/^.*?[:：]\s*/, '').replace(/\(.*?\)/g, '').replace(/（.*?）/g, '').trim();
+      if (mfrVal) {
+        document.getElementById('pf_manufacturer').value = mfrVal;
+        filled.push('生产厂家: ' + mfrVal);
+      }
+    }
+    // 识别"经销商"或"销售商"或"代理商"或"代理企业"
+    if (/经销商|销售商|代理商|代理企业|销售企业[:：]/.test(line)) {
+      var sellerVal = line.replace(/^.*?[:：]\s*/, '').replace(/\(.*?\)/g, '').replace(/（.*?）/g, '').trim();
+      if (sellerVal) {
+        document.getElementById('pf_seller').value = sellerVal;
+        filled.push('销售商: ' + sellerVal);
+      }
+    }
+    // 识别"原产地"
+    if (/原产地[:：]/.test(line)) {
+      var originVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (originVal) {
+        document.getElementById('pf_origin').value = originVal;
+        filled.push('原产地: ' + originVal);
+      }
+    }
+    // 识别"登记证号"
+    if (/登记证号|登记证[:：]/.test(line)) {
+      var regVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (regVal) {
+        document.getElementById('pf_reg_fertilizer').value = regVal;
+        filled.push('登记证号: ' + regVal);
+      }
+    }
+    // 识别"备案号"
+    if (/备案号[:：]/.test(line)) {
+      var recVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (recVal) {
+        document.getElementById('pf_reg_record').value = recVal;
+        filled.push('备案号: ' + recVal);
+      }
+    }
+    // 识别"执行标准"
+    if (/执行标准[:：]/.test(line)) {
+      var stdVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (stdVal) {
+        document.getElementById('pf_reg_standard').value = stdVal;
+        filled.push('执行标准: ' + stdVal);
+      }
+    }
+    // 识别"进口合同号"
+    if (/进口合同号|进口合同[:：]/.test(line)) {
+      var impVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (impVal) {
+        document.getElementById('pf_reg_import').value = impVal;
+        filled.push('进口合同号: ' + impVal);
+      }
+    }
+    // 识别"报关单号"
+    if (/报关单号|报关单[:：]/.test(line)) {
+      var cusVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (cusVal) {
+        document.getElementById('pf_reg_customs').value = cusVal;
+        filled.push('报关单号: ' + cusVal);
+      }
+    }
+    // 识别"包装规格"或"净含量"
+    if (/包装规格|净含量[:：]/.test(line)) {
+      var specVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      // 如果规格列表为空，自动添加
+      var specList = document.getElementById('pf_specs_list');
+      if (specList && specList.children.length === 0 && specVal) {
+        addSpecItem();
+        var lastSpec = specList.children[specList.children.length - 1];
+        lastSpec.querySelector('.spec-name').value = specVal;
+        lastSpec.querySelector('.spec-capacity').value = specVal;
+        filled.push('包装规格: ' + specVal);
+      }
+    }
+    // 识别"有效活菌数"或"有效菌种"
+    if (/有效菌种名称|有效菌种[:：]/.test(line)) {
+      var bacVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (bacVal) {
+        document.getElementById('pf_reg_bacteria').value = bacVal;
+        filled.push('有效菌种: ' + bacVal);
+      }
+    }
+    // 识别"产品等级"
+    if (/产品等级[:：]/.test(line)) {
+      var gradeVal = line.replace(/^.*?[:：]\s*/, '').trim();
+      if (gradeVal) {
+        document.getElementById('pf_reg_grade').value = gradeVal;
+        filled.push('产品等级: ' + gradeVal);
+      }
+    }
+  });
+
+  // 如果没有识别到结构化字段，把整段文字放入简介
+  if (filled.length === 0) {
+    var introEl = document.getElementById('pf_intro');
+    if (!introEl.value) {
+      introEl.value = text.substring(0, 500);
+      autoResize(introEl);
+      filled.push('产品简介: 自动填入（未识别到结构化字段）');
+    }
+  }
+
+  alert('自动识别完成，已填入 ' + filled.length + ' 个字段：\n' + filled.join('\n'));
+}
+
+async function saveProduct(idx) {
+  var name = document.getElementById('pf_name').value.trim();
+  if (!name) {
+    alert('请输入产品名');
+    return;
+  }
+
+  // 收集规格
+  var specs = [];
+  var specRows = document.querySelectorAll('#pf_specs_list .dynamic-item');
+  specRows.forEach(function(row) {
+    var s = {
+      name: row.querySelector('.spec-name').value.trim(),
+      capacity: row.querySelector('.spec-capacity').value.trim(),
+      form: row.querySelector('.spec-form').value.trim(),
+      formula: row.querySelector('.spec-formula').value.trim(),
+      image: row.querySelector('.spec-image').value.trim()
+    };
+    if (s.name || s.capacity || s.form || s.formula || s.image) specs.push(s);
+  });
+
+  // 收集图片（只保存路径；base64数据在IndexedDB中）
+  var images = [];
+  var imageRows = document.querySelectorAll('#pf_images_list .dynamic-item');
+  imageRows.forEach(function(row) {
+    var pathInput = row.querySelector('.image-path');
+    if (pathInput && pathInput.value.trim()) {
+      images.push(pathInput.value.trim());
+    }
+  });
+
+  // 收集 mix_profile
+  var mp = {};
+  var ph = document.getElementById('pf_mp_ph').value.trim();
+  if (ph) mp.ph = ph;
+  var copperLevel = document.getElementById('pf_mp_copper_level').value.trim();
+  if (copperLevel) mp.copper_level = copperLevel;
+  ['has_copper', 'has_calcium', 'has_humic_acid', 'has_amino_acid', 'has_microbe', 'has_phosphorus', 'has_silicon', 'is_alkaline', 'is_acidic'].forEach(function(key) {
+    var el = document.getElementById('pf_mp_' + key);
+    if (el) mp[key] = el.checked;
+  });
+
+  // 收集登记信息（不含原产地）
+  var reg = {};
+  var fertilizer = document.getElementById('pf_reg_fertilizer').value.trim();
+  var standard = document.getElementById('pf_reg_standard').value.trim();
+  var importContract = document.getElementById('pf_reg_import').value.trim();
+  var customs = document.getElementById('pf_reg_customs').value.trim();
+  if (fertilizer) reg.fertilizer_registration = fertilizer;
+  if (standard) reg.execution_standard = standard;
+  if (importContract) reg.import_contract = importContract;
+  if (customs) reg.customs_declaration = customs;
+  var record = document.getElementById('pf_reg_record').value.trim();
+  var grade = document.getElementById('pf_reg_grade').value.trim();
+  var bacteria = document.getElementById('pf_reg_bacteria').value.trim();
+  var cert = document.getElementById('pf_reg_cert').value.trim();
+  if (record) reg.record_number = record;
+  if (grade) reg.product_grade = grade;
+  if (bacteria) reg.effective_bacteria = bacteria;
+  if (cert) reg.certification = cert;
+
+  // 收集混配性
+  var compatList = [];
+  var compatRows = document.querySelectorAll('#pf_compat_list .dynamic-item');
+  compatRows.forEach(function(row) {
+    var c = {
+      pesticide: row.querySelector('.compat-pesticide').value.trim(),
+      status: row.querySelector('.compat-status').value,
+      reason: row.querySelector('.compat-reason').value.trim()
+    };
+    if (c.pesticide) compatList.push(c);
+  });
+
+  // 收集混配联动数据（禁混成分 + 谨慎混配成分）
+  var compatLinkEntries = [];
+  ['forbidden', 'caution'].forEach(function(type) {
+    var listId = type === 'forbidden' ? 'pf_compat_forbidden_list' : 'pf_compat_caution_list';
+    var list = document.getElementById(listId);
+    if (list) {
+      list.querySelectorAll('.dynamic-item').forEach(function(row) {
+        var comp = row.querySelector('.compat-prod-component').value.trim();
+        var reason = row.querySelector('.compat-prod-reason').value.trim();
+        if (comp) {
+          compatLinkEntries.push({
+            pesticide_component: comp,
+            product_id: '',
+            product_name: name,
+            status: type,
+            reason: reason
+          });
+        }
+      });
+    }
+  });
+
+  // 收集自定义字段
+  var customFieldsList = [];
+  var customRows = document.querySelectorAll('#pf_custom_list .dynamic-item');
+  customRows.forEach(function(row) {
+    var cf = {
+      label: row.querySelector('.custom-label').value.trim(),
+      value: row.querySelector('.custom-value').value.trim()
+    };
+    if (cf.label) customFieldsList.push(cf);
+  });
+
+  var product = {
+    name: name,
+    category: document.getElementById('pf_category').value.trim(),
+    intro: document.getElementById('pf_intro').value.trim(),
+    advantages: document.getElementById('pf_advantages').value.trim(),
+    description: '',
+    ingredients: document.getElementById('pf_ingredients').value.trim(),
+    functions: document.getElementById('pf_functions').value.trim(),
+    applicable_crops: document.getElementById('pf_crops').value.trim(),
+    usage: document.getElementById('pf_usage').value.trim(),
+    price_range: document.getElementById('pf_price').value.trim(),
+    manufacturer: document.getElementById('pf_manufacturer').value.trim(),
+    seller: document.getElementById('pf_seller').value.trim(),
+    origin: document.getElementById('pf_origin').value.trim(),
+    registrations: reg,
+    specifications: specs,
+    images: images,
+    mix_profile: mp,
+    pesticide_compat: compatList,
+    custom_fields: customFieldsList
+  };
+
+  var data = getProducts();
+  if (typeof idx === 'number') {
+    if (data[idx].id) product.id = data[idx].id;
+    data[idx] = product;
+  } else {
+    product.id = 'custom_' + Date.now();
+    data.push(product);
+  }
+
+  // 安全措施：清除所有产品中残留的 base64 图片数据（base64 应存在 IndexedDB 中）
+  data = sanitizeProducts(data);
+
+  var result = safeSaveData(LS_KEY_PRODUCTS, data);
+
+  if (!result.ok) {
+    var msg = '保存失败：';
+    if (result.error && result.error.name === 'QuotaExceededError') {
+      msg += '浏览器本地存储已满。\n\n原因：之前的旧版把图片base64也存进了localStorage，导致容量耗尽。\n\n建议操作：\n1. 点击下方"导出当前products.js"按钮，把当前数据保存到文件；\n2. 清理浏览器 localStorage 或换浏览器；\n3. 刷新页面后重新导入编辑。';
+    } else {
+      msg += (result.error && result.error.message) ? result.error.message : '未知错误';
+    }
+    alert(msg);
+    return;
+  }
+
+  // 保存到云端
+  var saveBtn = document.querySelector('.modal-footer .btn-primary');
+  if (saveBtn) { saveBtn.textContent = '保存中...'; saveBtn.disabled = true; }
+
+  try {
+    if (typeof DB !== 'undefined' && product.id) {
+      await DB.saveProduct(product);
+      // 保存混配联动数据
+      await DB.deleteCompatibilityByProduct(product.id);
+      for (var ci = 0; ci < compatLinkEntries.length; ci++) {
+        compatLinkEntries[ci].product_id = product.id;
+        await DB.saveCompatibility(compatLinkEntries[ci]);
+      }
+    }
+    closeModal();
+    renderProductTable();
+    updateStats();
+  } catch(err) {
+    console.error('[DB] 云端保存失败:', err);
+    alert('云端保存失败: ' + err.message + '\n\n数据已保存到本地，刷新页面后重试。');
+    if (saveBtn) { saveBtn.textContent = '保存'; saveBtn.disabled = false; }
+  }
+}
+
+function deleteProduct(idx) {
+  var data = getProducts();
+  var p = data[idx];
+  if (!p) return;
+  showConfirm('确认删除', '确定要删除产品「' + p.name + '」吗？此操作不可撤销。', function() {
+    data.splice(idx, 1);
+    saveData(LS_KEY_PRODUCTS, data);
+    // 从云端删除
+    if (typeof DB !== 'undefined' && p.id) {
+      DB.deleteProduct(p.id).then(function() {
+        console.log('[DB] 产品已从云端删除: ' + p.name);
+      }).catch(function(err) {
+        console.error('[DB] 云端删除失败:', err);
+      });
+    }
+    renderProductTable();
+    updateStats();
+  });
+}
+
+// 重置产品数据为 data/products.js 原始数据（清除 localStorage 中的覆盖）
+function resetProductData() {
+  showConfirm(
+    '重置产品数据',
+    '此操作将清除浏览器中保存的产品修改，恢复为 data/products.js 文件中的原始 ' + COMPANY_PRODUCTS.length + ' 个产品。\n\n' +
+    '如果你之前在后台编辑过产品但还没导出保存到文件，那些修改会丢失。\n\n' +
+    '确定要重置吗？',
+    function() {
+      localStorage.removeItem(LS_KEY_PRODUCTS);
+      localStorage.removeItem(LS_KEY_PRODUCTS + '_backup');
+      renderProductTable();
+      updateStats();
+      alert('已重置为原始 ' + COMPANY_PRODUCTS.length + ' 个产品数据。');
+    }
+  );
+}
+
+// ============================================================
+// 导出数据
+// ============================================================
+
+var currentExportType = 'pesticide';
+
+function switchExportTab(type) {
+  currentExportType = type;
+  document.getElementById('exportTabPesticide').classList.toggle('active', type === 'pesticide');
+  document.getElementById('exportTabProduct').classList.toggle('active', type === 'product');
+  generateExport();
+}
+
+function generateExport() {
+  var content = '';
+  if (currentExportType === 'pesticide') {
+    content = generatePesticidesJS();
+  } else {
+    content = generateProductsJS();
+  }
+  document.getElementById('exportContent').value = content;
+}
+
+function generatePesticidesJS() {
+  var data = getPesticides();
+  var lines = [];
+  lines.push('// ============================================================');
+  lines.push('// 农药及肥料数据库');
+  lines.push('// 维护说明：照着已有条目格式增删改即可');
+  lines.push('//');
+  lines.push('// 重要提示：本库中所有"用法/稀释倍数"均为市面常见产品的参考范围，');
+  lines.push('// 不同厂家、不同剂型、不同含量的实际用量差异很大，');
+  lines.push('// 使用前务必以所购产品标签说明为准，首次混配请先小面积试用。');
+  lines.push('// ============================================================');
+  lines.push('');
+  lines.push('var PESTICIDES = [');
+  data.forEach(function(p, i) {
+    lines.push('  {');
+    lines.push('    component: ' + jsStr(p.component) + ',');
+    lines.push('    aliases: ' + jsArr(p.aliases) + ',');
+    lines.push('    category: ' + jsStr(p.category) + ',');
+    lines.push('    chemical_class: ' + jsStr(p.chemical_class) + ',');
+    lines.push('    problems: ' + jsStr(p.problems) + ',');
+    lines.push('    usage: ' + jsStr(p.usage) + ',');
+    lines.push('    precautions: ' + jsStr(p.precautions) + ',');
+    lines.push('    brands: ' + jsBrandArr(p.brands) + ',');
+    lines.push('    related: ' + jsArr(p.related) + ',');
+    lines.push('    flags: ' + jsFlags(p.flags));
+    lines.push('  }' + (i < data.length - 1 ? ',' : ''));
+  });
+  lines.push('];');
+  return lines.join('\n');
+}
+
+function generateProductsJS() {
+  var data = sanitizeProducts(getProducts());
+  var lines = [];
+  lines.push('// ============================================================');
+  lines.push('// 公司产品数据库（根据产品信息单页及产品标签更新）');
+  lines.push('// mix_profile: 混配特征；manufacturer: 生产厂家；seller: 销售商；');
+  lines.push('// origin: 原产地；registrations: 登记证号/执行标准等；');
+  lines.push('// intro: 产品简介；advantages: 产品优势；pesticide_compat: 自定义混配性；');
+  lines.push('// custom_fields: 自定义字段；specifications: 规格列表；images: 图片路径');
+  lines.push('// 修改此文件后保存，刷新浏览器即生效');
+  lines.push('// ============================================================');
+  lines.push('');
+  lines.push('var COMPANY_PRODUCTS = [');
+  data.forEach(function(p, i) {
+    lines.push('  {');
+    if (p.id) lines.push('    id: ' + jsStr(p.id) + ',');
+    lines.push('    name: ' + jsStr(p.name) + ',');
+    lines.push('    category: ' + jsStr(p.category) + ',');
+    if (p.intro) lines.push('    intro: ' + jsStr(p.intro) + ',');
+    if (p.advantages) lines.push('    advantages: ' + jsStr(p.advantages) + ',');
+    if (p.ingredients) lines.push('    ingredients: ' + jsStr(p.ingredients) + ',');
+    if (p.functions) lines.push('    functions: ' + jsStr(p.functions) + ',');
+    if (p.applicable_crops) lines.push('    applicable_crops: ' + jsStr(p.applicable_crops) + ',');
+    lines.push('    usage: ' + jsStr(p.usage) + ',');
+    if (p.price_range) lines.push('    price_range: ' + jsStr(p.price_range) + ',');
+    if (p.mix_profile && Object.keys(p.mix_profile).length > 0) {
+      lines.push('    mix_profile: ' + jsMixProfile(p.mix_profile) + ',');
+    }
+    if (p.manufacturer) lines.push('    manufacturer: ' + jsStr(p.manufacturer) + ',');
+    if (p.seller) lines.push('    seller: ' + jsStr(p.seller) + ',');
+    if (p.origin) lines.push('    origin: ' + jsStr(p.origin) + ',');
+    if (p.registrations && Object.keys(p.registrations).length > 0) {
+      lines.push('    registrations: ' + jsRegistrations(p.registrations) + ',');
+    }
+    if (p.pesticide_compat && p.pesticide_compat.length > 0) {
+      lines.push('    pesticide_compat: ' + jsPesticideCompat(p.pesticide_compat) + ',');
+    }
+    if (p.specifications && p.specifications.length > 0) {
+      lines.push('    specifications: ' + jsSpecifications(p.specifications) + ',');
+    }
+    if (p.images && p.images.length > 0) {
+      lines.push('    images: ' + jsArr(p.images) + ',');
+    }
+    if (p.custom_fields && p.custom_fields.length > 0) {
+      lines.push('    custom_fields: ' + jsCustomFields(p.custom_fields) + ',');
+    }
+    if (lines[lines.length - 1].slice(-1) === ',') {
+      lines[lines.length - 1] = lines[lines.length - 1].slice(0, -1);
+    }
+    lines.push('  }' + (i < data.length - 1 ? ',' : ''));
+  });
+  lines.push('];');
+  return lines.join('\n');
+}
+
+function jsRegistrations(reg) {
+  var parts = [];
+  if (reg.fertilizer_registration) parts.push('fertilizer_registration: ' + jsStr(reg.fertilizer_registration));
+  if (reg.execution_standard) parts.push('execution_standard: ' + jsStr(reg.execution_standard));
+  if (reg.import_contract) parts.push('import_contract: ' + jsStr(reg.import_contract));
+  if (reg.customs_declaration) parts.push('customs_declaration: ' + jsStr(reg.customs_declaration));
+  if (reg.record_number) parts.push('record_number: ' + jsStr(reg.record_number));
+  if (reg.product_grade) parts.push('product_grade: ' + jsStr(reg.product_grade));
+  if (reg.effective_bacteria) parts.push('effective_bacteria: ' + jsStr(reg.effective_bacteria));
+  if (reg.certification) parts.push('certification: ' + jsStr(reg.certification));
+  return '{ ' + parts.join(', ') + ' }';
+}
+
+function jsPesticideCompat(arr) {
+  return '[' + arr.map(function(c) {
+    var parts = [];
+    parts.push('pesticide: ' + jsStr(c.pesticide));
+    parts.push('status: ' + jsStr(c.status));
+    if (c.reason) parts.push('reason: ' + jsStr(c.reason));
+    return '{ ' + parts.join(', ') + ' }';
+  }).join(', ') + ']';
+}
+
+function jsCustomFields(arr) {
+  return '[' + arr.map(function(f) {
+    var parts = [];
+    parts.push('label: ' + jsStr(f.label));
+    parts.push('value: ' + jsStr(f.value));
+    return '{ ' + parts.join(', ') + ' }';
+  }).join(', ') + ']';
+}
+
+function jsSpecifications(specs) {
+  return '[' + specs.map(function(s) {
+    var parts = [];
+    if (s.name !== undefined) parts.push('name: ' + jsStr(s.name));
+    if (s.capacity !== undefined) parts.push('capacity: ' + jsStr(s.capacity));
+    if (s.form !== undefined) parts.push('form: ' + jsStr(s.form));
+    if (s.formula !== undefined) parts.push('formula: ' + jsStr(s.formula));
+    if (s.image !== undefined) parts.push('image: ' + jsStr(s.image));
+    return '{ ' + parts.join(', ') + ' }';
+  }).join(', ') + ']';
+}
+
+function jsMixProfile(mp) {
+  if (!mp) return '{}';
+  var parts = [];
+  if (mp.ph !== undefined && mp.ph !== null) parts.push('ph: ' + jsStr(mp.ph));
+  if (mp.has_copper !== undefined) parts.push('has_copper: ' + !!mp.has_copper);
+  if (mp.copper_level) parts.push('copper_level: "' + mp.copper_level + '"');
+  if (mp.has_calcium !== undefined) parts.push('has_calcium: ' + !!mp.has_calcium);
+  if (mp.has_humic_acid !== undefined) parts.push('has_humic_acid: ' + !!mp.has_humic_acid);
+  if (mp.has_amino_acid !== undefined) parts.push('has_amino_acid: ' + !!mp.has_amino_acid);
+  if (mp.has_microbe !== undefined) parts.push('has_microbe: ' + !!mp.has_microbe);
+  if (mp.has_phosphorus !== undefined) parts.push('has_phosphorus: ' + !!mp.has_phosphorus);
+  if (mp.has_silicon !== undefined) parts.push('has_silicon: ' + !!mp.has_silicon);
+  if (mp.is_alkaline !== undefined) parts.push('is_alkaline: ' + !!mp.is_alkaline);
+  if (mp.is_acidic !== undefined) parts.push('is_acidic: ' + !!mp.is_acidic);
+  return '{ ' + parts.join(', ') + ' }';
+}
+
+// JS 格式化辅助
+function jsStr(s) {
+  if (s == null) return '""';
+  return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n') + '"';
+}
+function jsArr(arr) {
+  if (!arr || arr.length === 0) return '[]';
+  return '[' + arr.map(function(s) { return jsStr(s); }).join(', ') + ']';
+}
+function jsBrandArr(arr) {
+  if (!arr || arr.length === 0) return '[]';
+  return '[' + arr.map(function(b) {
+    return '{name: ' + jsStr(b.name) + ', company: ' + jsStr(b.company) + '}';
+  }).join(', ') + ']';
+}
+function jsFlags(flags) {
+  if (!flags) return '{}';
+  var parts = Object.keys(flags).filter(function(k) { return flags[k]; });
+  if (parts.length === 0) return '{}';
+  return '{' + parts.map(function(k) { return k + ': true'; }).join(', ') + '}';
+}
+
+function downloadExport() {
+  var content = document.getElementById('exportContent').value;
+  var filename = currentExportType === 'pesticide' ? 'pesticides.js' : 'products.js';
+  var blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---- 查找/替换 ----
+var exportSearchPositions = [];
+var exportSearchCurrentIdx = 0;
+
+function highlightExportSearch() {
+  var keyword = document.getElementById('exportSearchInput').value.trim();
+  var textarea = document.getElementById('exportContent');
+  var countEl = document.getElementById('exportSearchCount');
+
+  if (!keyword) {
+    exportSearchPositions = [];
+    exportSearchCurrentIdx = 0;
+    countEl.textContent = '';
+    hideMatchPreview();
+    return;
+  }
+
+  var text = textarea.value;
+  exportSearchPositions = [];
+  var pos = 0;
+  while ((pos = text.indexOf(keyword, pos)) !== -1) {
+    exportSearchPositions.push(pos);
+    pos += keyword.length;
+  }
+
+  if (exportSearchPositions.length > 0) {
+    exportSearchCurrentIdx = 0;
+    jumpToExportMatch(0);
+  } else {
+    countEl.textContent = '未找到';
+    hideMatchPreview();
+  }
+}
+
+function findNext() {
+  if (exportSearchPositions.length === 0) {
+    highlightExportSearch();
+    return;
+  }
+  exportSearchCurrentIdx = (exportSearchCurrentIdx + 1) % exportSearchPositions.length;
+  jumpToExportMatch(exportSearchCurrentIdx);
+}
+
+function findPrev() {
+  if (exportSearchPositions.length === 0) {
+    highlightExportSearch();
+    return;
+  }
+  exportSearchCurrentIdx = (exportSearchCurrentIdx - 1 + exportSearchPositions.length) % exportSearchPositions.length;
+  jumpToExportMatch(exportSearchCurrentIdx);
+}
+
+function jumpToExportMatch(idx) {
+  var keyword = document.getElementById('exportSearchInput').value.trim();
+  if (!keyword || exportSearchPositions.length === 0) return;
+
+  var textarea = document.getElementById('exportContent');
+  var countEl = document.getElementById('exportSearchCount');
+  var pos = exportSearchPositions[idx];
+
+  textarea.focus();
+  textarea.setSelectionRange(pos, pos + keyword.length);
+
+  // 计算匹配位置所在行，并滚动到视野中央
+  var textBefore = textarea.value.substring(0, pos);
+  var lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 18;
+  var linesBefore = textBefore.split('\n').length;
+  var targetScroll = Math.max(0, (linesBefore - 8) * lineHeight);
+  textarea.scrollTop = targetScroll;
+
+  countEl.textContent = '第 ' + (idx + 1) + ' / 共 ' + exportSearchPositions.length + ' 处';
+  updateMatchPreview(pos, keyword);
+}
+
+function updateMatchPreview(pos, keyword) {
+  var preview = document.getElementById('exportMatchPreview');
+  var textarea = document.getElementById('exportContent');
+  var text = textarea.value;
+  var lineStart = text.lastIndexOf('\n', pos - 1) + 1;
+  var lineEnd = text.indexOf('\n', pos);
+  if (lineEnd === -1) lineEnd = text.length;
+
+  var before = text.substring(Math.max(lineStart, pos - 80), pos);
+  var after = text.substring(pos + keyword.length, Math.min(lineEnd, pos + keyword.length + 80));
+  preview.innerHTML = escapeHtml(before) + '<span class="match-keyword">' + escapeHtml(keyword) + '</span>' + escapeHtml(after);
+  preview.style.display = 'block';
+}
+
+function hideMatchPreview() {
+  var preview = document.getElementById('exportMatchPreview');
+  if (preview) preview.style.display = 'none';
+}
+
+function replaceCurrent() {
+  var keyword = document.getElementById('exportSearchInput').value.trim();
+  var replacement = document.getElementById('exportReplaceInput').value;
+  var textarea = document.getElementById('exportContent');
+  if (!keyword || exportSearchPositions.length === 0) return;
+
+  var pos = exportSearchPositions[exportSearchCurrentIdx];
+  var text = textarea.value;
+  var newText = text.substring(0, pos) + replacement + text.substring(pos + keyword.length);
+  textarea.value = newText;
+
+  // 替换后重新搜索，并停留在当前位置附近
+  var nextSearchPos = pos + replacement.length;
+  var textAfter = newText.substring(nextSearchPos);
+  exportSearchPositions = [];
+  var p = 0;
+  while ((p = textAfter.indexOf(keyword, p)) !== -1) {
+    exportSearchPositions.push(nextSearchPos + p);
+    p += keyword.length;
+  }
+  // 也要搜索替换位置之前的匹配
+  var textBefore = newText.substring(0, pos);
+  p = 0;
+  while ((p = textBefore.indexOf(keyword, p)) !== -1) {
+    exportSearchPositions.push(p);
+    p += keyword.length;
+  }
+  exportSearchPositions.sort(function(a, b) { return a - b; });
+
+  if (exportSearchPositions.length > 0) {
+    // 找到最接近原位置的下一个匹配
+    var target = pos + replacement.length;
+    var newIdx = 0;
+    for (var i = 0; i < exportSearchPositions.length; i++) {
+      if (exportSearchPositions[i] >= target) {
+        newIdx = i;
+        break;
+      }
+      newIdx = i;
+    }
+    exportSearchCurrentIdx = newIdx;
+    jumpToExportMatch(newIdx);
+  } else {
+    document.getElementById('exportSearchCount').textContent = '替换完成，无更多匹配';
+    hideMatchPreview();
+  }
+}
+
+function replaceAllExport() {
+  var keyword = document.getElementById('exportSearchInput').value.trim();
+  var replacement = document.getElementById('exportReplaceInput').value;
+  var textarea = document.getElementById('exportContent');
+  if (!keyword) return;
+
+  var text = textarea.value;
+  var newText = text.split(keyword).join(replacement);
+  var count = (text.split(keyword).length - 1);
+  textarea.value = newText;
+  document.getElementById('exportSearchCount').textContent = '已替换 ' + count + ' 处';
+  exportSearchPositions = [];
+  hideMatchPreview();
+}
+
+// ---- 下载整个网站文件夹（zip）----
+function downloadFullSite(event) {
+  var btn = event ? event.target : (document.querySelector('.btn-primary') || document.querySelector('.btn-download'));
+  var originalText = btn ? btn.textContent : '下载整个网站文件夹';
+  if (btn) {
+    btn.textContent = '正在打包...';
+    btn.disabled = true;
+  }
+
+  if (typeof JSZip === 'undefined') {
+    alert('JSZip库未加载，请检查网络连接');
+    if (btn) { btn.textContent = originalText; btn.disabled = false; }
+    return;
+  }
+
+  var zip = new JSZip();
+  var baseFolder = zip.folder('pesticide-query-app');
+
+  // 收集所有需要打包的图片路径
+  var products = sanitizeProducts(getProducts());
+  var imagePaths = [];
+  products.forEach(function(p) {
+    (p.images || []).forEach(function(img) {
+      if (img && img.indexOf('data:') !== 0 && imagePaths.indexOf(img) < 0) {
+        imagePaths.push(img);
+      }
+    });
+    (p.specifications || []).forEach(function(s) {
+      if (s.image && s.image.indexOf('data:') !== 0 && imagePaths.indexOf(s.image) < 0) {
+        imagePaths.push(s.image);
+      }
+    });
+  });
+
+  // 需要打包的文件列表
+  var files = [
+    { path: 'index.html', type: 'fetch' },
+    { path: 'admin.html', type: 'fetch' },
+    { path: 'guide.html', type: 'fetch' },
+    { path: 'style.css', type: 'fetch' },
+    { path: 'app.js', type: 'fetch' },
+    { path: 'data/pesticide_extras.js', type: 'fetch' },
+    { path: 'data/products.js', type: 'generated-product-zip' },
+    { path: 'data/pesticides.js', type: 'generated-pesticide' }
+  ];
+
+  // 添加已有的路径图片
+  imagePaths.forEach(function(imgPath) {
+    files.push({ path: imgPath, type: 'fetch-binary' });
+  });
+
+  var completed = 0;
+  var total = files.length;
+  var failedFiles = [];
+
+  function checkComplete() {
+    if (completed >= total) {
+      zip.generateAsync({ type: 'blob' }).then(function(content) {
+        var url = URL.createObjectURL(content);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'pesticide-query-app.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (btn) { btn.textContent = originalText; btn.disabled = false; }
+        if (failedFiles.length > 0) {
+          alert('zip已下载，但以下文件未能打包：\n' + failedFiles.join('\n') + '\n\n如果图片无法显示，请检查这些路径是否正确。');
+        }
+      }).catch(function(err) {
+        alert('打包失败：' + (err && err.message ? err.message : '未知错误'));
+        if (btn) { btn.textContent = originalText; btn.disabled = false; }
+      });
+    }
+  }
+
+  function fetchImageFromStore(path) {
+    return getImageFromStore(path).then(function(dataUri) {
+      if (!dataUri) {
+        failedFiles.push(path + '（IndexedDB中无数据）');
+        return null;
+      }
+      var base64 = dataUri.split(',')[1];
+      if (!base64) {
+        failedFiles.push(path + '（数据格式错误）');
+        return null;
+      }
+      return base64;
+    }).catch(function(err) {
+      failedFiles.push(path + '（读取失败：' + (err && err.message ? err.message : '未知错误') + '）');
+      return null;
+    });
+  }
+
+  files.forEach(function(f) {
+    if (f.type === 'generated-pesticide') {
+      baseFolder.file(f.path, generatePesticidesJS());
+      completed++;
+      checkComplete();
+    } else if (f.type === 'generated-product-zip') {
+      baseFolder.file(f.path, generateProductsJS());
+      completed++;
+      checkComplete();
+    } else if (f.type === 'fetch') {
+      fetch(f.path)
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+          baseFolder.file(f.path, text);
+          completed++;
+          checkComplete();
+        })
+        .catch(function(err) {
+          failedFiles.push(f.path + '（' + (err && err.message ? err.message : '下载失败') + '）');
+          completed++;
+          checkComplete();
+        });
+    } else if (f.type === 'fetch-binary') {
+      // 优先从 IndexedDB 读取图片（上传的图片都存在这里）
+      fetchImageFromStore(f.path).then(function(base64) {
+        if (base64) {
+          baseFolder.file(f.path, base64, { base64: true });
+          completed++;
+          checkComplete();
+        } else {
+          // IndexedDB 没有，尝试从网络/本地文件获取
+          fetch(f.path)
+            .then(function(res) { return res.blob(); })
+            .then(function(blob) {
+              baseFolder.file(f.path, blob);
+              completed++;
+              checkComplete();
+            })
+            .catch(function(err) {
+              failedFiles.push(f.path + '（' + (err && err.message ? err.message : '下载失败') + '）');
+              completed++;
+              checkComplete();
+            });
+        }
+      });
+    }
+  });
+}
+
+function copyExport() {
+  var textarea = document.getElementById('exportContent');
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    alert('已复制到剪贴板');
+  } catch(e) {
+    alert('复制失败，请手动选择并复制');
+  }
+}
+
+// ============================================================
+// 修改密码
+// ============================================================
+
+function changePassword() {
+  var oldPass = document.getElementById('oldPassword').value;
+  var newPass = document.getElementById('newPassword').value;
+  var confirmPass = document.getElementById('confirmPassword').value;
+  var msgEl = document.getElementById('passwordMsg');
+
+  if (!oldPass || !newPass || !confirmPass) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '请填写所有字段';
+    return;
+  }
+  if (btoa(oldPass) !== getPassword()) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '当前密码错误';
+    return;
+  }
+  if (newPass.length < 6) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '新密码至少6位';
+    return;
+  }
+  if (newPass !== confirmPass) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '两次输入的新密码不一致';
+    return;
+  }
+
+  localStorage.setItem(LS_KEY_PASSWORD, btoa(newPass));
+  msgEl.style.color = 'var(--green)';
+  msgEl.textContent = '密码修改成功，下次登录请使用新密码';
+  document.getElementById('oldPassword').value = '';
+  document.getElementById('newPassword').value = '';
+  document.getElementById('confirmPassword').value = '';
+}
+
+// ============================================================
+// 通用辅助函数
+// ============================================================
+
+function escapeHtml(text) {
+  if (!text) return '';
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function escapeAttr(text) {
+  if (!text) return '';
+  return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function truncate(text, max) {
+  if (!text) return '';
+  if (text.length <= max) return text;
+  return text.substring(0, max) + '...';
+}
+
+function renderPagination(containerId, total, current, totalPages, onPage) {
+  var container = document.getElementById(containerId);
+  if (totalPages <= 1) {
+    container.innerHTML = '<span class="page-info">共 ' + total + ' 条</span>';
+    return;
+  }
+
+  var html = '';
+  html += '<button onclick="void(0)"' + (current <= 1 ? ' disabled' : '') + ' data-page="' + (current - 1) + '">上一页</button>';
+
+  // 页码按钮
+  var startPage = Math.max(1, current - 2);
+  var endPage = Math.min(totalPages, current + 2);
+  if (startPage > 1) {
+    html += '<button data-page="1">1</button>';
+    if (startPage > 2) html += '<span class="page-info">...</span>';
+  }
+  for (var i = startPage; i <= endPage; i++) {
+    html += '<button class="' + (i === current ? 'active' : '') + '" data-page="' + i + '">' + i + '</button>';
+  }
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) html += '<span class="page-info">...</span>';
+    html += '<button data-page="' + totalPages + '">' + totalPages + '</button>';
+  }
+
+  html += '<button' + (current >= totalPages ? ' disabled' : '') + ' data-page="' + (current + 1) + '">下一页</button>';
+  html += '<span class="page-info">共 ' + total + ' 条 / ' + totalPages + ' 页</span>';
+
+  container.innerHTML = html;
+
+  // 绑定点击事件
+  container.querySelectorAll('button[data-page]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var page = parseInt(this.getAttribute('data-page'));
+      if (page >= 1 && page <= totalPages && page !== current) {
+        onPage(page);
+      }
+    });
+  });
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+// 点击遮罩关闭模态框
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ---- 确认对话框 ----
+var confirmCallback = null;
+function showConfirm(title, text, callback) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').textContent = text;
+  confirmCallback = callback;
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  confirmCallback = null;
+}
+document.getElementById('confirmOkBtn').addEventListener('click', function() {
+  if (confirmCallback) confirmCallback();
+  closeConfirm();
+});
+document.getElementById('confirmOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+// ESC 关闭
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeModal();
+    closeConfirm();
+  }
+});
+
+// 同步全部静态数据到云端（首次迁移用）
+function syncAllToCloud() {
+  showConfirm('同步全部到云端', '将把当前所有产品数据、农药扩展信息和农药数据上传到云端数据库。\n\n已注册用户不受影响。\n确定同步吗？', function() {
+    var pResult = null, eResult = null, oResult = null;
+    DB.uploadAllProducts(COMPANY_PRODUCTS).then(function(result) {
+      pResult = result;
+      // 合并 PESTICIDES 中的 flags 到 PESTICIDE_EXTRAS
+      PESTICIDES.forEach(function(p) {
+        if (p.flags && Object.keys(p.flags).length > 0) {
+          var extra = PESTICIDE_EXTRAS[p.component] || { ph: '', contraindications: '' };
+          if (!extra.flags) extra.flags = {};
+          Object.keys(p.flags).forEach(function(k) {
+            if (extra.flags[k] === undefined) extra.flags[k] = p.flags[k];
+          });
+          PESTICIDE_EXTRAS[p.component] = extra;
+        }
+      });
+      return DB.uploadAllExtras(PESTICIDE_EXTRAS);
+    }).then(function(result) {
+      eResult = result;
+      // 同步有自定义内容（precautions/usage/problems）的农药条目到覆盖表
+      var customPesticides = PESTICIDES.filter(function(p) {
+        return (p.precautions && p.precautions.trim()) ||
+               (p.usage && p.usage.trim()) ||
+               (p.problems && p.problems.trim());
+      });
+      return DB.uploadAllPesticideOverrides(customPesticides);
+    }).then(function(result) {
+      oResult = result;
+      alert('同步完成！\n产品: ' + pResult.ok + ' 成功 / ' + pResult.fail + ' 失败\n农药扩展: ' + eResult.ok + ' 成功 / ' + eResult.fail + ' 失败\n农药数据: ' + oResult.ok + ' 成功 / ' + oResult.fail + ' 失败');
+    }).catch(function(err) {
+      alert('同步失败: ' + err.message);
+    });
+  });
+}
+
+// Toast 提示
+function showToast(msg) {
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2E7D32;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.2);transition:opacity 0.3s;';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; }, 2200);
+  setTimeout(function() { if (toast.parentNode) toast.remove(); }, 2500);
+}
+</script>
+</body>
+</html>

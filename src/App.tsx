@@ -21,6 +21,7 @@ import { LocalImporterView } from './components/LocalImporterView';
 import { ExportStudioView } from './components/ExportStudioView';
 import { ProductQuizView } from './components/ProductQuizView';
 import { CatalogStats, ProductLibraryView } from './components/ProductLibraryView';
+import { LegacyPesticideView } from './components/LegacyPesticideView';
 import { AdminSettingsView } from './components/AdminSettingsView';
 import { UserApprovalView } from './components/UserApprovalView';
 import { CommunityView } from './components/CommunityView';
@@ -103,12 +104,12 @@ export const App: React.FC = () => {
   });
 
   // Navigation & View State
-  const [activeTab, setActiveTab] = useState<NavTab>(() => window.location.pathname === '/admin' ? 'product_library' : 'dashboard');
+  const [activeTab, setActiveTab] = useState<NavTab>(() => window.location.pathname === '/admin' ? 'legacy_pesticide' : 'dashboard');
   const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
   const [cropInitialTab, setCropInitialTab] = useState<'scheme' | 'pest'>('scheme');
   const [previousSourceTab, setPreviousSourceTab] = useState<NavTab>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [catalogStats, setCatalogStats] = useState<CatalogStats>({ products: 43, skus: 320, pesticides: 74, products_with_legacy_images: 15, source: 'snapshot' });
+  const [catalogStats, setCatalogStats] = useState<CatalogStats>({ products: 26, skus: 47, pesticides: 6706, products_with_legacy_images: 58, source: 'legacy' });
   const handleCatalogStatsChange = useCallback((nextStats: CatalogStats) => setCatalogStats(nextStats), []);
 
   // Modals state
@@ -404,7 +405,7 @@ export const App: React.FC = () => {
               }}
               onOpenProductQuiz={() => setActiveTab('product_quiz')}
               catalogStats={catalogStats}
-              onNavigateToProductLibrary={() => setActiveTab('product_library')}
+              onNavigateToProductLibrary={() => setActiveTab('legacy_pesticide')}
               onOpenQuickAI={() => setActiveTab('local_import')}
               onOpenNewScheme={() => {
                 setSelectedCropId(crops[0]?.id || null);
@@ -519,6 +520,10 @@ export const App: React.FC = () => {
               onStatsChange={handleCatalogStatsChange}
               onNavigateToCrops={() => setActiveTab('crops')}
             />
+          )}
+
+          {activeTab === 'legacy_pesticide' && (
+            <LegacyPesticideView initialMode={window.location.pathname === '/admin' ? 'admin' : 'front'} />
           )}
 
           {activeTab === 'local_import' && (
