@@ -535,7 +535,7 @@ export const App: React.FC = () => {
 
           {activeTab === 'pesticide_mixing' && <NativePesticideMixingView />}
 
-          {activeTab === 'product_catalog' && <NativeProductCatalogView />}
+          {activeTab === 'product_catalog' && <NativeProductCatalogView currentUser={currentUser} />}
 
           {activeTab === 'navigation_settings' && <NavigationSettingsView />}
 
