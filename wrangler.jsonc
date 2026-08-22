@@ -21,5 +21,8 @@
       "binding": "PRODUCT_ASSETS",
       "bucket_name": "hmht-agri-product-assets"
     }
-  ]
+  ],
+  "ai": {
+    "binding": "AI"
+  }
 }

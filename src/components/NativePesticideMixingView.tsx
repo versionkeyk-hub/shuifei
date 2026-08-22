@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, FlaskConical, Info, Search, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, Check, Clipboard, ExternalLink, FlaskConical, Info, Search, ShieldCheck } from 'lucide-react';
 import { AppUser } from '../types';
 
 type Pesticide = Record<string, any> & { component: string; category?: string };
@@ -8,14 +8,34 @@ type MixingResult = { product: Product; status: string; interval?: string; reaso
 
 function display(value: unknown): string {
   if (value === null || value === undefined || value === '') return '';
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
   if (Array.isArray(value)) return value.map(display).filter(Boolean).join('、');
-  return Object.entries(value as Record<string, unknown>).map(([key, item]) => key + '：' + display(item)).join('\n');
+  const labels: Record<string, string> = { chemical_class: '化学分类', category: '类别', problems: '解决问题', usage: '常见用法', precautions: '注意事项', contraindications: '使用禁忌', ph_diluted_250: 'pH（1:250倍稀释）', ph_general_use: '一般使用浓度 pH', ph_note: 'pH 说明', has_copper: '含铜', has_calcium: '含钙', has_phosphorus: '含磷' };
+  return Object.entries(value as Record<string, unknown>).map(([key, item]) => (labels[key] || key.replace(/_/g, ' ')) + '：' + display(item)).join('\n');
 }
 
 function tags(value: unknown): string[] {
   if (!Array.isArray(value)) return value ? [display(value)] : [];
   return value.map(display).filter(Boolean);
+}
+
+function mixingNotes(flags: unknown): string[] {
+  if (!flags || typeof flags !== 'object') return [];
+  const source = flags as Record<string, unknown>;
+  const notes: string[] = [];
+  if (source.is_copper || source.is_inorganic_copper || source.is_organic_copper) notes.push('含铜制剂：避免与强酸、强碱及其他铜制剂直接混配。');
+  if (source.is_fungicide) notes.push('杀菌剂：与微生物菌剂合用时建议错开 3—5 天。');
+  if (source.is_herbicide) notes.push('除草剂：不建议与肥料或其他农药随意混配，严格按标签使用。');
+  if (source.is_strong_acid) notes.push('强酸性：避免与碱性产品直接混配。');
+  if (source.is_strong_base) notes.push('强碱性：避免与酸性产品直接混配。');
+  if (source.no_alkali_mix) notes.push('标签提示：不得与碱性物质混用。');
+  return notes;
+}
+
+function cropRestrictions(value: unknown): string {
+  const text = display(value);
+  const match = text.match(/【作物限制】([\\s\\S]*?)(?=【混配限制】|$)/);
+  return match?.[1]?.trim() || text;
 }
 
 function statusClass(status: string): string {
@@ -46,10 +66,16 @@ export const NativePesticideMixingView: React.FC<{ currentUser?: AppUser | null 
   const [selected, setSelected] = useState('');
   const [results, setResults] = useState<MixingResult[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
+  const [multiSelected, setMultiSelected] = useState<string[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [category, setCategory] = useState('全部');
+  const [analysis, setAnalysis] = useState<{ prompt?: string; analysis?: unknown; message?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
+  const detailRef = useRef<HTMLDivElement>(null);
   const canEdit = ['super_admin', 'admin'].includes(currentUser?.role || '');
   const authHeaders = useMemo(() => {
     const token = sessionStorage.getItem('hmht_api_token') || '';
@@ -63,11 +89,13 @@ export const NativePesticideMixingView: React.FC<{ currentUser?: AppUser | null 
   };
 
   useEffect(() => { loadPesticides(); }, [authHeaders]);
+  useEffect(() => { fetch('/api/native/products?limit=200', { headers: authHeaders }).then((response) => response.json()).then((payload: { products?: Product[] }) => setCatalogProducts(payload.products || [])).catch(() => undefined); }, [authHeaders]);
 
+  const categories = useMemo(() => ['全部', ...Array.from(new Set(pesticides.map((item) => item.category || '未分类'))).sort()], [pesticides]);
   const searchResults = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return pesticides.filter((item) => !needle || display(item).toLowerCase().includes(needle)).slice(0, 120);
-  }, [pesticides, query]);
+    return pesticides.filter((item) => (category === '全部' || (item.category || '未分类') === category) && (!needle || display(item).toLowerCase().includes(needle))).slice(0, 160);
+  }, [pesticides, query, category]);
 
   const choose = async (component: string) => {
     setSelected(component);
@@ -87,6 +115,24 @@ export const NativePesticideMixingView: React.FC<{ currentUser?: AppUser | null 
   const componentTags = tags(pesticide?.related?.length ? pesticide.related : pesticide?.component);
   const flagTags = Object.entries(pesticide?.flags || {}).filter(([, value]) => Boolean(value)).map(([key]) => key);
   const brands = Array.isArray(pesticide?.brands) ? pesticide.brands : [];
+  const toggleMulti = (component: string) => setMultiSelected((current) => current.includes(component) ? current.filter((item) => item !== component) : [...current, component]);
+  const toggleProduct = (productId: string) => setSelectedProductIds((current) => current.includes(productId) ? current.filter((item) => item !== productId) : [...current, productId]);
+  useEffect(() => {
+    if (selectedProduct) detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [selectedProduct]);
+  const runAnalysis = async () => {
+    const pesticideNames = multiSelected.length ? multiSelected : selected ? [selected] : [];
+    const selectedProducts = catalogProducts.filter((product) => selectedProductIds.includes(product.id)).map((product) => ({ name: product.name, ingredients: product.ingredients || product.description || '成分资料未录入' }));
+    if (!pesticideNames.length || !selectedProducts.length) { setMessage('请至少选择一个农药和一个公司产品后再分析。'); return; }
+    const response = await fetch('/api/native/mixing/analyze', { method: 'POST', headers: { ...authHeaders, 'content-type': 'application/json' }, body: JSON.stringify({ pesticides: pesticideNames, products: selectedProducts }) });
+    const payload = await response.json() as { prompt?: string; analysis?: unknown; message?: string; error?: string };
+    if (!response.ok) { setMessage(payload.error || '分析请求失败'); return; }
+    setAnalysis(payload);
+  };
+  const copyAnalysisPrompt = async () => { if (analysis?.prompt) { await navigator.clipboard?.writeText(analysis.prompt); setMessage('混配分析提示词已复制。'); } };
+
+  const selectedProductNames = catalogProducts.filter((product) => selectedProductIds.includes(product.id)).map((product) => product.name);
+  const selectedPesticideNames = multiSelected.length ? multiSelected : selected ? [selected] : [];
 
   const savePesticide = async () => {
     if (!pesticide) return;
@@ -107,23 +153,25 @@ export const NativePesticideMixingView: React.FC<{ currentUser?: AppUser | null 
     <header className="rounded-3xl bg-gradient-to-r from-slate-950 via-emerald-950 to-teal-950 p-6 text-white shadow-lg md:p-8">
       <div className="flex items-center gap-2 text-xs font-bold text-emerald-200"><FlaskConical className="h-4 w-4" />原版农药资料与总站混配规则</div>
       <h1 className="mt-3 text-2xl font-black md:text-3xl">产品混配性查询</h1>
-      <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-300">完整展示农药成分、别名、类别、化学分类、pH、禁忌、品牌及原站混配结果。未知关系不再统一标记为“待核验”，而是按原站规则给出可混、需谨慎、需间隔、建议单用或禁混。</p>
+      <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-300">完整展示农药成分、别名、类别、化学分类、pH、禁忌、品牌及原站混配结果，并按规则给出可混（需小试）、需谨慎、需间隔、建议单用或禁混提示。</p>
     </header>
     <div className="grid gap-5 xl:grid-cols-[350px_minmax(0,1fr)]">
       <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <label className="relative block"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入成分、别名、品牌或类别" className="w-full rounded-xl border border-slate-300 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-emerald-500" /></label>
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">{categories.map((item) => <button type="button" key={item} onClick={() => setCategory(item)} className={'whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ' + (category === item ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600')}>{item}</button>)}</div>
         <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{pesticides.length.toLocaleString()} 条农药资料</span><span>显示 {searchResults.length} 条</span></div>
-        <div className="mt-3 max-h-[calc(100vh-290px)] space-y-2 overflow-auto pr-1">{searchResults.map((item) => <button type="button" key={item.component} onClick={() => choose(item.component)} className={'w-full rounded-2xl border p-3 text-left transition ' + (selected === item.component ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300')}><div className="font-bold text-slate-900">{item.component}</div><div className="mt-1 text-xs text-slate-500">{item.category || '未分类'}{item.chemical_class ? ' · ' + item.chemical_class : ''}</div></button>)}</div>
+        <div className="mt-3 max-h-[calc(100vh-290px)] space-y-2 overflow-auto pr-1">{searchResults.map((item) => <div key={item.component} className={'flex items-center gap-2 rounded-2xl border p-3 transition ' + (selected === item.component ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300')}><input type="checkbox" checked={multiSelected.includes(item.component)} onChange={() => toggleMulti(item.component)} className="h-4 w-4 accent-emerald-600" /><button type="button" onClick={() => choose(item.component)} className="min-w-0 flex-1 text-left"><div className="font-bold text-slate-900">{item.component}</div><div className="mt-1 text-xs text-slate-500">{item.category || '未分类'}{item.chemical_class ? ' · ' + item.chemical_class : ''}</div></button><a href={'https://www.bing.com/search?q=' + encodeURIComponent(item.component)} target="_blank" rel="noreferrer" className="rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-blue-600" title="搜一搜"><ExternalLink className="h-4 w-4" /></a></div>)}</div>
       </section>
       <section className="space-y-5" data-selected-pesticide={selected}>
+        {(selectedPesticideNames.length > 0 || selectedProductNames.length > 0) && <div className="sticky top-2 z-10 rounded-2xl border border-violet-200 bg-violet-50/95 p-3 shadow-sm backdrop-blur"><div className="flex flex-wrap items-center gap-2 text-xs font-bold text-violet-900"><span>当前组合：</span>{selectedPesticideNames.map((name) => <span key={'p-' + name} className="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-800">农药：{name}</span>)}{selectedProductNames.map((name) => <span key={'f-' + name} className="rounded-full bg-indigo-100 px-2.5 py-1 text-indigo-800">产品：{name}</span>)}<button type="button" onClick={() => { setMultiSelected([]); setSelectedProductIds([]); }} className="ml-auto rounded-lg border border-violet-200 bg-white px-2.5 py-1 text-violet-700">清空选择</button></div></div>}
         {pesticide ? <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
           <div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-2 text-xs font-bold text-emerald-700"><ShieldCheck className="h-4 w-4" />农药完整档案</div><h2 className="mt-2 text-2xl font-black text-slate-900">{pesticide.component}</h2><div className="mt-2 flex flex-wrap gap-2">{tags(pesticide.aliases).map((item) => <span key={item} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">别名：{item}</span>)}</div></div><div className="flex items-center gap-2"><span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800">{pesticide.category || '未分类'}</span>{canEdit && <button type="button" onClick={() => { setDraft(JSON.stringify(pesticide, null, 2)); setEditing(true); }} className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white">编辑完整档案</button>}</div></div>
           {editing && <div className="mt-5 rounded-2xl border border-indigo-200 bg-indigo-50 p-4"><div className="mb-2 text-xs font-black text-indigo-800">完整 JSON 编辑（别名、化学分类、禁忌、品牌、规则标签均可维护）</div><textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={18} className="w-full rounded-xl border border-indigo-200 bg-white p-3 font-mono text-xs leading-5 text-slate-800" /><div className="mt-3 flex justify-end gap-2"><button type="button" onClick={() => setEditing(false)} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold">取消</button><button type="button" onClick={savePesticide} className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white">保存档案</button></div></div>}
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3"><DetailBlock label="化学分类" value={pesticide.chemical_class} tone="border-indigo-100 bg-indigo-50/40" /><DetailBlock label="有效/复配成分" value={componentTags} tone="border-blue-100 bg-blue-50/40" /><DetailBlock label="pH（当前账号视图）" value={pesticide.extra?.ph} tone="border-amber-100 bg-amber-50/40" /><DetailBlock label="解决问题" value={pesticide.problems} /><DetailBlock label="常见用法" value={pesticide.usage} /><DetailBlock label="注意事项" value={pesticide.precautions} /><DetailBlock label="使用禁忌" value={pesticide.extra?.contraindications} tone="border-rose-100 bg-rose-50/40" /><DetailBlock label="关联成分" value={pesticide.related} /><DetailBlock label="数据库规则标签" value={flagTags} /></div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3"><DetailBlock label="化学分类" value={pesticide.chemical_class} tone="border-indigo-100 bg-indigo-50/40" /><DetailBlock label="有效/复配成分" value={componentTags} tone="border-blue-100 bg-blue-50/40" /><DetailBlock label="pH（1:250倍稀释）" value={pesticide.extra?.ph_diluted_250 ?? '暂无登记资料'} tone="border-amber-100 bg-amber-50/40" /><DetailBlock label="一般使用浓度 pH" value={pesticide.extra?.ph_general_use ?? '暂无登记资料'} tone="border-amber-100 bg-amber-50/40" /><DetailBlock label="解决问题" value={pesticide.problems} /><DetailBlock label="常见用法" value={pesticide.usage} /><DetailBlock label="注意事项" value={pesticide.precautions} /><DetailBlock label="禁用/限用作物" value={pesticide.extra?.forbidden_crops || pesticide.extra?.restricted_crops || pesticide.forbidden_crops || pesticide.restricted_crops || cropRestrictions(pesticide.extra?.contraindications)} tone="border-rose-100 bg-rose-50/40" /><DetailBlock label="使用禁忌" value={pesticide.extra?.contraindications} tone="border-rose-100 bg-rose-50/40" /><DetailBlock label="混配提醒" value={mixingNotes(pesticide.flags)} /><DetailBlock label="关联成分" value={pesticide.related} /></div>
           {brands.length > 0 && <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="text-xs font-black text-slate-500">品牌商品及厂家</div><div className="mt-2 grid gap-2 md:grid-cols-2">{brands.map((brand: any, index: number) => <div key={index} className="rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm"><span className="font-bold">{display(brand.name || brand)}</span>{brand.company && <span className="ml-2 text-xs text-slate-500">厂家：{brand.company}</span>}</div>)}</div></div>}
         </div> : <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-14 text-center text-sm text-slate-500"><Info className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3">从左侧选择一个农药成分，查看完整资料与混配结果。</p></div>}
-        {pesticide && <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7"><div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2 text-lg font-black text-slate-900"><AlertTriangle className="h-5 w-5 text-amber-500" />与总站产品的混配结果</div><p className="mt-1 text-xs text-slate-500">点击“产品属性”查看完整产品档案；公司人员显示 1:250 倍稀释技术视图，农户显示公开展示视图。</p></div>{loading && <span className="text-xs text-slate-500">计算中…</span>}</div><div className="mt-4 flex flex-wrap gap-2">{Object.entries(counts).map(([status, count]) => <span key={status} className={'rounded-full px-3 py-1.5 text-xs font-black ' + badgeClass(status)}>{status} {count}</span>)}</div><div className="mt-4 grid gap-3 md:grid-cols-2">{results.map((item) => <div key={item.product.id} className={'rounded-2xl border p-4 ' + statusClass(item.status)}><div className="flex items-start justify-between gap-2"><div><div className="font-bold">{item.product.name}</div><div className="mt-1 text-xs opacity-75">{item.product.category || '产品'} · pH {item.product.mix_profile?.ph || '—'}{item.product.mix_profile?.ph_display_note ? ' · ' + item.product.mix_profile.ph_display_note : ''}</div></div><span className={'shrink-0 rounded-full px-2 py-1 text-xs font-black ' + badgeClass(item.status)}>{item.status}</span></div><div className="mt-3 text-xs leading-5">{item.reason}{item.interval ? '（建议间隔 ' + item.interval + '）' : ''}</div><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => setSelectedProduct(item.product)} className="rounded-lg border border-current/20 bg-white/70 px-3 py-1.5 text-xs font-bold">产品属性</button>{canEdit && <RuleEditor productId={item.product.id} currentStatus={item.status} currentReason={item.reason} authHeaders={authHeaders} onSaved={() => choose(selected)} />}</div></div>)}</div></div>}
-        {selectedProduct && <div className="rounded-3xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm md:p-7"><div className="flex items-center justify-between gap-3"><div><div className="text-xs font-bold text-indigo-700">产品完整档案</div><h3 className="mt-1 text-xl font-black text-slate-900">{selectedProduct.name}</h3></div><button type="button" onClick={() => setSelectedProduct(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold">关闭</button></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3"><DetailBlock label="产品简介" value={selectedProduct.intro} /><DetailBlock label="主要成分" value={selectedProduct.ingredients} /><DetailBlock label="功能作用" value={selectedProduct.functions} /><DetailBlock label="使用方法" value={selectedProduct.usage} /><DetailBlock label="适用作物" value={selectedProduct.applicable_crops} /><DetailBlock label="混配特征" value={selectedProduct.mix_profile} /><DetailBlock label="价格参考" value={selectedProduct.price_range} /><DetailBlock label="厂家/销售商" value={[selectedProduct.manufacturer, selectedProduct.seller].filter(Boolean).join('\n')} /><DetailBlock label="规格" value={selectedProduct.specifications} /></div></div>}
+        {pesticide && <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7"><div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2 text-lg font-black text-slate-900"><AlertTriangle className="h-5 w-5 text-amber-500" />与总站产品的混配结果</div><p className="mt-1 text-xs text-slate-500">农药 pH 不区分账号；统一显示 1:250 倍稀释值和一般使用浓度参考值。</p></div>{loading && <span className="text-xs text-slate-500">计算中…</span>}</div><div className="mt-4 flex flex-wrap gap-2">{Object.entries(counts).map(([status, count]) => <span key={status} className={'rounded-full px-3 py-1.5 text-xs font-black ' + badgeClass(status)}>{status} {count}</span>)}</div><div className="mt-4 grid gap-3 md:grid-cols-2">{results.map((item) => <div key={item.product.id} className={'rounded-2xl border p-4 ' + statusClass(item.status)}><div className="flex items-start justify-between gap-2"><div><div className="font-bold">{item.product.name}</div><div className="mt-1 text-xs opacity-75">{item.product.category || '产品'} · pH {item.product.mix_profile?.ph || '—'}</div></div><span className={'shrink-0 rounded-full px-2 py-1 text-xs font-black ' + badgeClass(item.status)}>{item.status}</span></div><div className="mt-3 text-xs leading-5">{item.reason}{item.interval ? '（建议间隔 ' + item.interval + '）' : ''}</div><div className="mt-3 flex flex-wrap gap-2"><label className="rounded-lg border border-current/20 bg-white/70 px-3 py-1.5 text-xs font-bold"><input type="checkbox" checked={selectedProductIds.includes(item.product.id)} onChange={() => toggleProduct(item.product.id)} className="mr-1 accent-emerald-600" />加入组合分析</label><button type="button" onClick={() => setSelectedProduct(item.product)} className="rounded-lg border border-current/20 bg-white/70 px-3 py-1.5 text-xs font-bold">产品属性</button>{canEdit && <RuleEditor productId={item.product.id} currentStatus={item.status} currentReason={item.reason} authHeaders={authHeaders} onSaved={() => choose(selected)} />}</div></div>)}</div><div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-sm font-black text-violet-900">多选组合 · 一键分析</div><p className="mt-1 text-xs text-violet-700">已选农药 {multiSelected.length || (selected ? 1 : 0)} 个；请在结果卡片中勾选公司产品。</p></div><button type="button" onClick={runAnalysis} className="rounded-xl bg-violet-600 px-3 py-2 text-xs font-bold text-white">生成混配分析</button></div>{analysis && <div className="mt-3 space-y-2"><div className="rounded-xl bg-white p-3 text-xs leading-5 text-slate-700 whitespace-pre-wrap">{analysis.analysis ? display(analysis.analysis) : analysis.message}</div>{analysis.prompt && <div className="flex items-start gap-2"><pre className="flex-1 overflow-auto rounded-xl bg-white p-3 text-[11px] leading-5 text-slate-600">{analysis.prompt}</pre><button type="button" onClick={copyAnalysisPrompt} className="rounded-lg bg-white p-2 text-violet-700" title="复制提示词"><Clipboard className="h-4 w-4" /></button></div>}</div>}</div></div>}
+        {selectedProduct && <div ref={detailRef} className="rounded-3xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm md:p-7"><div className="flex items-center justify-between gap-3"><div><div className="text-xs font-bold text-indigo-700">产品资料</div><h3 className="mt-1 text-xl font-black text-slate-900">{selectedProduct.name}</h3></div><button type="button" onClick={() => setSelectedProduct(null)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold">关闭</button></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3"><DetailBlock label="产品简介" value={selectedProduct.intro} /><DetailBlock label="主要成分" value={selectedProduct.ingredients} /><DetailBlock label="功能作用" value={selectedProduct.functions} /><DetailBlock label="使用方法" value={selectedProduct.usage} /><DetailBlock label="适用作物" value={selectedProduct.applicable_crops} /><DetailBlock label="混配特征" value={selectedProduct.mix_profile} /><DetailBlock label="价格参考" value={selectedProduct.price_range} /><DetailBlock label="厂家/销售商" value={[selectedProduct.manufacturer, selectedProduct.seller].filter(Boolean).join('\n')} /><DetailBlock label="规格" value={selectedProduct.specifications} /></div></div>}
       </section>
     </div>
     {message && <div className="fixed bottom-5 right-5 z-30 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800 shadow-lg">{message}</div>}

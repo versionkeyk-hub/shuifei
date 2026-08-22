@@ -20,6 +20,8 @@ interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
   ADMIN_BOOTSTRAP_USERNAME?: string;
   ADMIN_BOOTSTRAP_PASSWORD?: string;
+  AI?: { run(model: string, input: unknown): Promise<unknown> };
+  AI_MODEL?: string;
 }
 
 interface UserRow {
@@ -290,7 +292,7 @@ async function getMixing(url: URL, env: Env): Promise<Response> {
     if ((flags.has_calcium && productFlags.is_phosphorus) || (flags.has_phosphorus && productFlags.is_calcium)) {
       return { product, status: '需间隔', interval: '2-3天', reason: '钙、磷同时混配可能产生沉淀，建议分开施用。' };
     }
-    return { product, status: '待核验', interval: '', reason: '基础规则未发现明确禁忌；请以产品标签、实际水质和小范围试验为准。' };
+    return { product, status: '可混（需小试）', interval: '', reason: '基础规则未发现明确拮抗；仍需按产品标签、实际水质并经过小范围试验确认。' };
   });
   return json({ component, results }, {}, publicApiHeaders);
 }
@@ -314,6 +316,14 @@ function mergePesticideExtras(component: string, related: unknown, extraMap: Map
   };
 }
 
+function pesticidePHView(extra: NativePayload | null): NativePayload | null {
+  if (!extra) return null;
+  const diluted = parsePH(extra.ph_diluted_250 ?? extra.ph);
+  if (diluted === null) return { ...extra, ph: null, ph_diluted_250: null, ph_general_use: null, ph_note: '暂无登记 pH 资料' };
+  const generalUse = roundPH(diluted + (7 - diluted) * 0.8);
+  return { ...extra, ph: diluted, ph_diluted_250: diluted, ph_general_use: generalUse, ph_note: '农药统一按登记/资料中的 1:250 倍稀释 pH 展示；一般使用浓度为向中性值估算的参考值' };
+}
+
 async function getViewerRole(request: Request, env: Env): Promise<string> {
   if (!request.headers.get('authorization')) return 'farmer';
   const user = await requireUser(request, env);
@@ -331,23 +341,57 @@ function parsePH(value: unknown): number | null {
   return numbers.reduce((sum, item) => sum + item, 0) / numbers.length;
 }
 
+function roundPH(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 function displayPH(value: unknown, role: string): number | null {
   const original = parsePH(value);
   if (original === null) return null;
-  if (canSeeTechnicalDetails(role)) return Math.round(original * 100) / 100;
-  return Math.round((7 + (original - 7) * 0.25) * 100) / 100;
+  if (canSeeTechnicalDetails(role)) return roundPH(original);
+  return roundPH(original + (7 - original) * 0.8);
 }
 
 function sanitizeProductPayload(payload: NativePayload, role: string): NativePayload {
   const next = { ...payload };
   const profile = payload.mix_profile && typeof payload.mix_profile === 'object' ? { ...payload.mix_profile } : null;
-  if (profile && profile.ph !== undefined) {
-    const value = displayPH(profile.ph, role);
-    profile.ph = value === null ? profile.ph : String(value);
-    profile.ph_display_note = canSeeTechnicalDetails(role) ? '公司技术视图：按 1:250 倍稀释测试值展示' : '农户视图：已按公开展示口径处理';
+  if (profile) {
+    const diluted = parsePH(profile.ph_diluted_250 ?? profile.ph);
+    const afterMix = parsePH(profile.ph_after_fertilizer) ?? (diluted === null ? null : roundPH(diluted + (7 - diluted) * 0.8));
+    const labelRange = String(profile.ph_label_range || profile.ph_packaging || profile.ph_label || '').trim();
+    if (canSeeTechnicalDetails(role)) {
+      profile.ph = diluted === null ? '' : String(roundPH(diluted));
+      profile.ph_diluted_250 = diluted === null ? '' : roundPH(diluted);
+      profile.ph_after_fertilizer = afterMix === null ? '' : roundPH(afterMix);
+      profile.ph_label_range = labelRange;
+      profile.ph_display_note = '技术视图：按 1:250 倍稀释测试值展示；用户配肥后值按管理员设定或 80% 向中性值估算';
+    } else {
+      profile.ph = labelRange || '暂无包装标注';
+      delete profile.ph_diluted_250;
+      delete profile.ph_after_fertilizer;
+      profile.ph_display_note = '农户/经销商视图：显示包装标注 pH 范围';
+    }
     next.mix_profile = profile;
   }
   return next;
+}
+
+function augmentNativeSpecification(row: Record<string, unknown>): Record<string, unknown> {
+  const payload = parseNativePayload<NativePayload>(String(row.payload_json || ''), {});
+  const packageData = {
+    unit_name: payload.unit_name || payload.package_unit || payload.inner_pack_unit || row.unit || '',
+    inner_pack_count: finiteNumber(payload.inner_pack_count) ?? finiteNumber(row.inner_pack_count),
+    inner_pack_unit: payload.inner_pack_unit || payload.unit_name || row.unit || '',
+    case_price: finiteNumber(payload.case_price),
+    unit_price: finiteNumber(payload.unit_price) ?? finiteNumber(payload.price),
+    coverage_per_package: finiteNumber(payload.coverage_per_package),
+    coverage_unit: payload.coverage_unit || '亩',
+    dose_value: finiteNumber(payload.dose_value),
+    dose_unit: payload.dose_unit || '',
+    price: finiteNumber(payload.price) ?? finiteNumber(payload.unit_price),
+    price_tier: payload.price_tier || '标准价',
+  };
+  return { ...row, payload, package: packageData };
 }
 
 function pesticideFlags(payload: NativePayload): NativePayload {
@@ -451,7 +495,7 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
     ]);
     for (const item of specs.results) {
       const productKey = String(item.product_id);
-      specsByProduct.set(productKey, [...(specsByProduct.get(productKey) || []), { ...item, payload: parseNativePayload(item.payload_json as string, {}) }]);
+      specsByProduct.set(productKey, [...(specsByProduct.get(productKey) || []), augmentNativeSpecification(item)]);
     }
     for (const item of compatibility.results) {
       const productKey = String(item.product_id);
@@ -483,7 +527,7 @@ async function getNativePesticides(url: URL, env: Env, request?: Request): Promi
   return json({ pesticides: results.map((item) => {
     const payload = parseNativePayload<Record<string, unknown>>(item.payload_json, {});
     const extra = mergePesticideExtras(item.component, payload.related, extraMap);
-    return { ...payload, component: item.component, extra: extra ? { ...extra, ph: displayPH(extra.ph, viewerRole) ?? extra.ph } : null };
+    return { ...payload, component: item.component, extra: pesticidePHView(extra) };
   }) }, {}, publicApiHeaders);
 }
 
@@ -514,7 +558,7 @@ async function getNativeMixing(url: URL, env: Env, request?: Request): Promise<R
     const rule = nativeMixingRule({ ...payload, component }, productPayload, extra);
     return { product: productInfo, ...rule };
   });
-  return json({ component, pesticide: { ...payload, component, extra: extra ? { ...extra, ph: displayPH(extra.ph, viewerRole) ?? extra.ph } : null }, results }, {}, publicApiHeaders);
+  return json({ component, pesticide: { ...payload, component, extra: pesticidePHView(extra) }, results }, {}, publicApiHeaders);
 }
 
 function payloadFromRow(value: string): NativePayload {
@@ -629,6 +673,111 @@ async function deleteNativeSpecification(request: Request, env: Env, specificati
   await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .bind(newId(), actor.id, 'delete', 'legacy_product_spec', specificationId, JSON.stringify({ product_id: existing.product_id }), now()).run();
   return json({ deleted: true, id: specificationId });
+}
+
+async function listNativePriceProfiles(request: Request, env: Env): Promise<Response> {
+  const user = await requireUser(request, env);
+  if (isResponse(user)) return user;
+  const { results: profiles } = await env.DB.prepare('SELECT id, name, created_at, updated_at FROM native_price_profiles WHERE user_id = ? ORDER BY updated_at DESC').bind(user.id).all<Record<string, unknown>>();
+  const ids = profiles.map((profile) => String(profile.id));
+  const entriesByProfile = new Map<string, Record<string, unknown>[]>();
+  if (ids.length) {
+    const placeholders = ids.map(() => '?').join(',');
+    const { results: entries } = await env.DB.prepare('SELECT native_price_entries.id, native_price_entries.profile_id, native_price_entries.specification_id, native_price_entries.price, legacy_product_specs.product_id, legacy_product_specs.name AS specification, legacy_products.name AS product_name FROM native_price_entries JOIN legacy_product_specs ON legacy_product_specs.id = native_price_entries.specification_id JOIN legacy_products ON legacy_products.id = legacy_product_specs.product_id WHERE native_price_entries.profile_id IN (' + placeholders + ')').bind(...ids).all<Record<string, unknown>>();
+    entries.forEach((entry) => {
+      const profileId = String(entry.profile_id);
+      entriesByProfile.set(profileId, [...(entriesByProfile.get(profileId) || []), entry]);
+    });
+  }
+  return json({ profiles: profiles.map((profile) => ({ ...profile, entries: entriesByProfile.get(String(profile.id)) || [] })) });
+}
+
+async function createNativePriceProfile(request: Request, env: Env): Promise<Response> {
+  const user = await requireUser(request, env, ['super_admin', 'admin', 'staff', 'expert', 'dealer']);
+  if (isResponse(user)) return user;
+  const body = await readBody(request);
+  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 100) : '';
+  if (!name) return json({ error: '报价档案名称不能为空' }, { status: 400 });
+  const profileId = newId();
+  const timestamp = now();
+  await env.DB.prepare('INSERT INTO native_price_profiles (id, user_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').bind(profileId, user.id, name, timestamp, timestamp).run();
+  const entries = Array.isArray(body.entries) ? body.entries : [];
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') continue;
+    const row = entry as Record<string, unknown>;
+    const specificationId = typeof row.specification_id === 'string' ? row.specification_id : '';
+    const price = finiteNumber(row.price);
+    if (!specificationId || price === null || price < 0) continue;
+    const specification = await env.DB.prepare('SELECT id FROM legacy_product_specs WHERE id = ?').bind(specificationId).first<{ id: string }>();
+    if (!specification) continue;
+    await env.DB.prepare('INSERT INTO native_price_entries (id, profile_id, specification_id, price, updated_at) VALUES (?, ?, ?, ?, ?)').bind(newId(), profileId, specificationId, price, timestamp).run();
+  }
+  return listNativePriceProfiles(request, env);
+}
+
+async function updateNativePriceProfile(request: Request, env: Env, profileId: string): Promise<Response> {
+  const user = await requireUser(request, env, ['super_admin', 'admin', 'staff', 'expert', 'dealer']);
+  if (isResponse(user)) return user;
+  const profile = await env.DB.prepare('SELECT id FROM native_price_profiles WHERE id = ? AND user_id = ?').bind(profileId, user.id).first<{ id: string }>();
+  if (!profile) return json({ error: '报价档案不存在或无权访问' }, { status: 404 });
+  const body = await readBody(request);
+  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 100) : '';
+  const timestamp = now();
+  if (name) await env.DB.prepare('UPDATE native_price_profiles SET name = ?, updated_at = ? WHERE id = ?').bind(name, timestamp, profileId).run();
+  if (Array.isArray(body.entries)) {
+    for (const entry of body.entries) {
+      if (!entry || typeof entry !== 'object') continue;
+      const row = entry as Record<string, unknown>;
+      const specificationId = typeof row.specification_id === 'string' ? row.specification_id : '';
+      const price = finiteNumber(row.price);
+      if (!specificationId || price === null || price < 0) continue;
+      const specification = await env.DB.prepare('SELECT id FROM legacy_product_specs WHERE id = ?').bind(specificationId).first<{ id: string }>();
+      if (!specification) continue;
+      await env.DB.prepare('INSERT INTO native_price_entries (id, profile_id, specification_id, price, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(profile_id, specification_id) DO UPDATE SET price = excluded.price, updated_at = excluded.updated_at').bind(newId(), profileId, specificationId, price, timestamp).run();
+    }
+  }
+  return listNativePriceProfiles(request, env);
+}
+
+async function deleteNativePriceProfile(request: Request, env: Env, profileId: string): Promise<Response> {
+  const user = await requireUser(request, env, ['super_admin', 'admin', 'staff', 'expert', 'dealer']);
+  if (isResponse(user)) return user;
+  await env.DB.prepare('DELETE FROM native_price_profiles WHERE id = ? AND user_id = ?').bind(profileId, user.id).run();
+  return json({ deleted: true, id: profileId });
+}
+
+async function analyzeNativeMixing(request: Request, env: Env): Promise<Response> {
+  const body = await readBody(request);
+  const pesticides = Array.isArray(body.pesticides) ? body.pesticides.map(String).filter(Boolean).slice(0, 10) : [];
+  const products = Array.isArray(body.products) ? body.products.map((item) => typeof item === 'object' && item ? item as Record<string, unknown> : { name: String(item) }).slice(0, 10) : [];
+  if (!pesticides.length || !products.length) return json({ error: '至少选择一个农药和一个产品' }, { status: 400 });
+  const productText = products.map((product) => String(product.name || '产品') + '（' + String(product.ingredients || product.ingredient || '成分资料未录入') + '）').join('、');
+  const prompt = '请问' + pesticides.join('、') + '可以和' + productText + '一起混配吗？请简要回复：结论、主要依据、风险、建议的小试与间隔时间。不要替代产品标签和当地农艺师判断。';
+  if (!env.AI) return json({ prompt, analysis: '当前未连接外部 AI 模型，已先按登记资料与常见混配规则生成保守建议：请分别核对每个农药和产品标签；先做小桶相容性试验，若出现絮凝、沉淀、分层、发热或明显气味变化，不要使用。杀菌剂、铜制剂、强酸强碱制剂及微生物产品尤其不建议未经小试直接混配。', source: 'rule_fallback', message: '这是规则化辅助建议，不替代产品标签、登记要求和农艺师判断。' });
+  try {
+    const model = env.AI_MODEL || '@cf/meta/llama-3.1-8b-instruct';
+    const response = await env.AI.run(model, { messages: [{ role: 'system', content: '你是农业投入品混配风险辅助分析器。不得臆造登记资料，资料不足时明确说资料不足。' }, { role: 'user', content: prompt }] });
+    return json({ prompt, analysis: response, source: 'workers_ai' });
+  } catch (error) {
+    console.error(error);
+    return json({ prompt, analysis: 'AI 服务暂时不可用，已返回保守规则建议：请按产品标签分别使用，先做小范围相容性试验；出现沉淀、分层、絮凝、发热或药害风险时立即停止混配。', source: 'rule_fallback', message: '当前为规则化辅助建议，不替代产品标签、登记要求和农艺师判断。' });
+  }
+}
+
+async function getSiteSettings(env: Env): Promise<Response> {
+  const row = await env.DB.prepare('SELECT payload_json, updated_at FROM site_settings WHERE id = ?').bind('global').first<{ payload_json: string; updated_at: string }>();
+  return json({ settings: row ? parseJson(row.payload_json, {} as Record<string, unknown>) : {}, updated_at: row?.updated_at || null }, {}, publicApiHeaders);
+}
+
+async function updateSiteSettings(request: Request, env: Env): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const body = await readBody(request);
+  const settings = body.settings && typeof body.settings === 'object' ? body.settings as Record<string, unknown> : body;
+  const timestamp = now();
+  await env.DB.prepare('INSERT INTO site_settings (id, payload_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload_json = excluded.payload_json, updated_at = excluded.updated_at').bind('global', JSON.stringify(settings), timestamp).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(newId(), actor.id, 'update', 'site_settings', 'global', JSON.stringify({ keys: Object.keys(settings) }), timestamp).run();
+  return json({ settings, updated_at: timestamp });
 }
 
 async function getNavigation(request: Request, env: Env): Promise<Response> {
@@ -899,9 +1048,16 @@ export default {
       if (url.pathname === '/api/auth/register' && request.method === 'POST') return register(request, env);
       if (url.pathname === '/api/auth/me' && request.method === 'GET') return getCurrentUser(request, env);
       if (url.pathname === '/api/catalog/stats' && request.method === 'GET') return getStats(env);
+      if (url.pathname === '/api/site-settings' && request.method === 'GET') return getSiteSettings(env);
+      if (url.pathname === '/api/admin/site-settings' && request.method === 'PATCH') return updateSiteSettings(request, env);
       if (url.pathname === '/api/native/products' && request.method === 'GET') return getNativeProducts(url, env, request);
       if (url.pathname === '/api/native/pesticides' && request.method === 'GET') return getNativePesticides(url, env, request);
       if (url.pathname === '/api/native/mixing' && request.method === 'GET') return getNativeMixing(url, env, request);
+      if (url.pathname === '/api/native/mixing/analyze' && request.method === 'POST') return analyzeNativeMixing(request, env);
+      if (url.pathname === '/api/me/native-price-profiles' && request.method === 'GET') return listNativePriceProfiles(request, env);
+      if (url.pathname === '/api/me/native-price-profiles' && request.method === 'POST') return createNativePriceProfile(request, env);
+      if (url.pathname.startsWith('/api/me/native-price-profiles/') && request.method === 'PATCH') return updateNativePriceProfile(request, env, decodeURIComponent(url.pathname.slice('/api/me/native-price-profiles/'.length)));
+      if (url.pathname.startsWith('/api/me/native-price-profiles/') && request.method === 'DELETE') return deleteNativePriceProfile(request, env, decodeURIComponent(url.pathname.slice('/api/me/native-price-profiles/'.length)));
       if (url.pathname === '/api/navigation' && request.method === 'GET') return getNavigation(request, env);
       if (url.pathname === '/api/admin/navigation' && request.method === 'PATCH') return updateNavigation(request, env);
       if (url.pathname.startsWith('/api/admin/native/pesticides/') && request.method === 'PATCH') return updateNativePesticide(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/pesticides/'.length)));

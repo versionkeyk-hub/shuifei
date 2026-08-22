@@ -50,6 +50,7 @@ interface ProductCompletionInfo {
 
 const STORAGE_QUIZ_CUSTOM_ANSWERS = 'hmht_quiz_answers_custom_v4';
 const STORAGE_QUIZ_DRAFT_ANSWERS = 'hmht_quiz_user_draft_answers_v4';
+const STORAGE_QUIZ_DRAFT_META = 'hmht_quiz_user_draft_meta_v4';
 const STORAGE_QUIZ_LEADERBOARD = 'hmht_quiz_leaderboard_v4';
 const STORAGE_QUIZ_USER_HISTORY = 'hmht_quiz_user_history_v4';
 
@@ -126,6 +127,7 @@ export const ProductQuizView: React.FC<ProductQuizViewProps> = ({ currentUser })
   const [autoSaveTick, setAutoSaveTick] = useState(false);
   const [validationWarning, setValidationWarning] = useState<string | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(() => localStorage.getItem(STORAGE_QUIZ_DRAFT_META));
 
   // Time tracking
   const [startTime] = useState<number>(() => Date.now());
@@ -460,6 +462,9 @@ export const ProductQuizView: React.FC<ProductQuizViewProps> = ({ currentUser })
 
     // Save to user history
     setSubmissionHistory((prev) => [submissionItem, ...prev]);
+    localStorage.removeItem(STORAGE_QUIZ_DRAFT_ANSWERS);
+    localStorage.removeItem(STORAGE_QUIZ_DRAFT_META);
+    setDraftSavedAt(null);
 
     // Update / Insert into Leaderboard
     const newLeaderboardEntry: LeaderboardEntry = {
@@ -489,6 +494,26 @@ export const ProductQuizView: React.FC<ProductQuizViewProps> = ({ currentUser })
     // Launch celebration
     setShowCelebrationModal(true);
     triggerCelebrationConfetti();
+  };
+
+  const handleSaveDraft = () => {
+    const timestamp = new Date().toLocaleString('zh-CN', { hour12: false });
+    localStorage.setItem(STORAGE_QUIZ_DRAFT_ANSWERS, JSON.stringify(userAllSelections));
+    localStorage.setItem(STORAGE_QUIZ_DRAFT_META, timestamp);
+    setDraftSavedAt(timestamp);
+    setActionSuccessMsg('已保存到草稿箱，下次打开可继续上次勾选位置。');
+    setTimeout(() => setActionSuccessMsg(null), 3000);
+  };
+
+  const handleReopenSubmission = (item: QuizSubmissionHistoryItem) => {
+    if (!item.userSelectionsSnapshot) return;
+    setUserAllSelections(JSON.parse(JSON.stringify(item.userSelectionsSnapshot)));
+    setSelectedProductId(QUIZ_PRODUCTS[0]?.id || '');
+    setGradedResult(null);
+    setIsGradedView(false);
+    setActiveTab('training');
+    setActionSuccessMsg('已重新打开该次提交的作答内容，可继续修改。');
+    setTimeout(() => setActionSuccessMsg(null), 3000);
   };
 
   // In-app confirmation modal state (replaces iframe-incompatible window.confirm)
@@ -778,6 +803,7 @@ export const ProductQuizView: React.FC<ProductQuizViewProps> = ({ currentUser })
                     <span>已实时自动暂存</span>
                   </span>
                 )}
+                {draftSavedAt && <span className="text-[11px] text-blue-600 font-semibold">草稿：{draftSavedAt}</span>}
                 <span className="text-slate-400 font-medium text-[11px]">
                   共需完成全库 31 款产品分类
                 </span>
@@ -814,6 +840,14 @@ export const ProductQuizView: React.FC<ProductQuizViewProps> = ({ currentUser })
                 <span>跳至未作答产品</span>
               </button>
             ) : null}
+
+            <button
+              onClick={handleSaveDraft}
+              className="px-4 py-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-black shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>暂存草稿</span>
+            </button>
 
             <button
               onClick={handleSubmitGrading}
@@ -1690,6 +1724,13 @@ export const ProductQuizView: React.FC<ProductQuizViewProps> = ({ currentUser })
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleReopenSubmission(item)}
+                          className="px-3.5 py-1.5 bg-blue-50 border border-blue-200 hover:border-blue-500 text-blue-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          重新打开作答
+                        </button>
+
                         <button
                           onClick={() => {
                             setGradedResult(item);

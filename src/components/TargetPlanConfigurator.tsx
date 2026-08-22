@@ -4,6 +4,7 @@ import {
   Package, Plus, Save, Target, Trash2,
 } from 'lucide-react';
 import { AppUser, Crop } from '../types';
+import { DEFAULT_QUIZ_ANSWERS } from '../data/productQuizData';
 
 type TargetTier = 'high' | 'middle' | 'low';
 type DoseUnit = '包装/亩' | 'kg/亩' | 'L/亩' | 'g/亩' | 'ml/亩';
@@ -19,6 +20,8 @@ interface ProductSku {
   price?: number | null;
   price_tier?: string;
   source_ref?: { file?: string; sheet?: string; row?: string };
+  package?: Record<string, any>;
+  payload?: Record<string, any>;
 }
 
 interface CatalogProduct {
@@ -32,6 +35,9 @@ interface CatalogProduct {
   ingredients?: Record<string, string>;
   skus?: ProductSku[];
   specifications?: Omit<ProductSku, 'id'>[];
+  applicable_stages?: string[] | string;
+  application_methods?: string[] | string;
+  functions?: string[] | string;
 }
 
 interface PlanItem {
@@ -56,15 +62,25 @@ const TIER_META: Record<TargetTier, { label: string; detail: string; className: 
   low: { label: '低端配置', detail: '保留关键投入并控制成本', className: 'border-emerald-200 bg-emerald-50 text-emerald-800' },
 };
 
+const QUIZ_TO_NATIVE: Record<string, string> = { am: 'aomai', dp: 'aosheng', sk1: 'shikeshou', sk2: 'shikeshou', sk3: 'shikeshou', bn1: 'beineng', bn2: 'beineng', bn3: 'beineng', bn4: 'beineng', js: 'junshi', zy: 'zhuoyan', at: 'aotu', aj: 'aojing', fs: 'fengshuo', hy: 'heiyan', ay: 'aoye', al: 'aolei', hd: 'huadaifu', gd: 'guodaifu', ls: 'aolan', lp: 'aoliang', ag: 'aoguo', amg: 'aomei', sa: 'shaianxin', jt: 'jiete', fh: 'fenghui' };
+const STAGE_LABELS: Record<string, string> = { seedling: '苗期', growth: '生长期', flower: '花期/保花保果', expand: '膨果期', color: '着色增甜期', after: '采后恢复期' };
+const TARGET_FUNCTIONS: Record<string, string[]> = { 保花保果: ['flowerprom', 'microsupp'], 促进根系生长: ['rootprom', 'soil'], 果实膨大: ['expandfun'], 果实增甜: ['colorfun'], 改善着色: ['colorfun'], 补充钙硼: ['microsupp'] };
+
 function normalizeProducts(source: CatalogProduct[]): CatalogProduct[] {
+  const quizByNative = new Map<string, Record<string, string[]>>();
+  Object.entries(DEFAULT_QUIZ_ANSWERS).forEach(([quizId, answer]) => { const nativeId = QUIZ_TO_NATIVE[quizId]; if (nativeId && !quizByNative.has(nativeId)) quizByNative.set(nativeId, answer); });
   return source.map((product) => ({
     ...product,
     source_type: product.source_type || 'own',
+    applicable_stages: product.applicable_stages || (quizByNative.get(product.id)?.stage || []).map((stage) => STAGE_LABELS[stage] || stage),
+    application_methods: product.application_methods || quizByNative.get(product.id)?.use || [],
+    functions: product.functions || quizByNative.get(product.id)?.func || [],
     skus: (product.skus || product.specifications || []).map((sku, index) => ({
       ...sku,
       id: (sku as Partial<ProductSku>).id || `${product.id}-snapshot-${index}`,
       specification: sku.specification || sku.name || sku.capacity || '规格',
       native: Boolean((sku as Partial<ProductSku>).id),
+      price: sku.price ?? sku.package?.price ?? sku.payload?.price ?? null,
     })),
   }));
 }
@@ -75,7 +91,37 @@ function sourceLabel(sku: ProductSku): string {
 }
 
 function priceLabel(price: number | null | undefined): string {
-  return typeof price === 'number' ? `¥${price}` : '报价待核验';
+  return typeof price === 'number' ? '¥' + price : '未设置报价';
+}
+
+function parseCapacity(value: unknown): { amount: number; unit: string } | null {
+  const match = String(value || '').trim().match(/([0-9]+(?:\.[0-9]+)?)\s*(kg|千克|g|克|L|l|升|ml|毫升|mL)/i);
+  if (!match) return null;
+  const unit = match[2].toLowerCase();
+  const amount = Number(match[1]);
+  if (unit === 'kg' || unit === '千克') return { amount: amount * 1000, unit: 'g' };
+  if (unit === 'l' || unit === '升') return { amount: amount * 1000, unit: 'ml' };
+  if (unit === 'g' || unit === '克') return { amount, unit: 'g' };
+  return { amount, unit: 'ml' };
+}
+
+function packageCount(area: number, dose: number | null, doseUnit: DoseUnit, usageCount: number, sku?: ProductSku): number | null {
+  if (dose === null || !sku) return null;
+  if (doseUnit === '包装/亩') return area * dose * usageCount;
+  const capacity = parseCapacity(sku.capacity || sku.specification);
+  const doseUnitBase = doseUnit.includes('kg') || doseUnit.includes('g') ? 'g' : 'ml';
+  const doseBase = doseUnit.includes('kg') || doseUnit.includes('L') ? dose * 1000 : dose;
+  if (!capacity || capacity.unit !== doseUnitBase || capacity.amount <= 0) return null;
+  return area * doseBase * usageCount / capacity.amount;
+}
+
+function asTextList(value: string[] | string | undefined): string[] { return Array.isArray(value) ? value : value ? value.split(/[、,，\n]/).map((item) => item.trim()).filter(Boolean) : []; }
+function isRecommended(product: CatalogProduct, target: string): boolean {
+  const targetFunctions = TARGET_FUNCTIONS[target] || [];
+  return asTextList(product.functions).some((item) => targetFunctions.includes(item) || item.includes(target.replace('促进', '').replace('改善', '')));
+}
+function applicationGroups(product: CatalogProduct): string[] {
+  return asTextList(product.application_methods).map((item) => item === 'foliar' ? '叶面' : item === 'root' ? '根际' : item).filter(Boolean);
 }
 
 export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ crop, currentUser, onOpenFullCycle }) => {
@@ -91,6 +137,9 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
   const [search, setSearch] = useState('');
   const [description, setDescription] = useState('');
   const [message, setMessage] = useState('');
+  const [priceProfiles, setPriceProfiles] = useState<Array<{ id: string; name: string; entries?: Array<{ specification_id: string; price: number }> }>>([]);
+  const [activePriceProfile, setActivePriceProfile] = useState('');
+  const [newProfileName, setNewProfileName] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -121,6 +170,12 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    const token = sessionStorage.getItem('hmht_api_token');
+    if (!token) return;
+    fetch('/api/me/native-price-profiles', { headers: { authorization: 'Bearer ' + token } }).then((response) => response.ok ? response.json() : null).then((payload: { profiles?: typeof priceProfiles } | null) => setPriceProfiles(payload?.profiles || [])).catch(() => undefined);
+  }, [currentUser?.id]);
+
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return products;
@@ -134,13 +189,12 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
   const rows = useMemo(() => items.map((item) => {
     const product = products.find((candidate) => candidate.id === item.productId);
     const sku = product?.skus?.find((candidate) => candidate.id === item.skuId);
-    const packageQuantity = item.doseUnit === '包装/亩' && item.dosePerMu !== null
-      ? area * item.dosePerMu * usageCount
-      : null;
-    const price = item.quotedPrice ?? sku?.price ?? null;
+    const packageQuantity = packageCount(area, item.dosePerMu, item.doseUnit, usageCount, sku);
+    const profilePrice = priceProfiles.find((profile) => profile.id === activePriceProfile)?.entries?.find((entry) => entry.specification_id === sku?.id)?.price;
+    const price = item.quotedPrice ?? profilePrice ?? sku?.price ?? null;
     const subtotal = packageQuantity !== null && price !== null ? packageQuantity * price : null;
     return { item, product, sku, price, packageQuantity, subtotal };
-  }), [area, items, products, usageCount]);
+  }), [activePriceProfile, area, items, priceProfiles, products, usageCount]);
 
   const calculatedRows = rows.filter((row) => row.subtotal !== null);
   const stageCost = calculatedRows.reduce((sum, row) => sum + (row.subtotal || 0), 0);
@@ -167,6 +221,17 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
     const product = products.find((candidate) => candidate.id === item.productId);
     const sku = product?.skus?.find((candidate) => candidate.id === skuId);
     updateItem(item.id, { skuId, quotedPrice: sku?.price ?? null });
+  };
+
+  const createPriceProfile = async () => {
+    const token = sessionStorage.getItem('hmht_api_token');
+    const name = newProfileName.trim();
+    if (!token || !name) { setMessage('请登录并填写报价档案名称。'); return; }
+    const entries = rows.filter((row) => row.sku?.native && row.price !== null).map((row) => ({ specification_id: row.sku?.id, price: row.price }));
+    const response = await fetch('/api/me/native-price-profiles', { method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ name, entries }) });
+    const payload = await response.json() as { profiles?: typeof priceProfiles; error?: string };
+    if (!response.ok) { setMessage(payload.error || '报价档案保存失败'); return; }
+    setPriceProfiles(payload.profiles || []); const created = (payload.profiles || []).find((profile) => profile.name === name); if (created) setActivePriceProfile(created.id); setNewProfileName(''); setMessage('报价档案已保存，仅本人可见。');
   };
 
   const savePlan = async () => {
@@ -243,6 +308,7 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
           return <button key={option} type="button" onClick={() => setTier(option)} className={`rounded-2xl border p-3 text-left transition ${active ? meta.className : 'border-slate-200 hover:border-emerald-200'}`}><div className="text-sm font-black">{meta.label}</div><div className="mt-1 text-[10px] text-slate-500">{meta.detail}</div></button>;
         })}</div>
         <p className="text-[11px] leading-relaxed text-amber-700"><AlertTriangle className="mr-1 inline h-3.5 w-3.5" />当前尚未录入经过技术审核的官方高/中/低配方；这里保存的是销售人员草稿，不能把等级理解为自动换产品或自动打折。</p>
+        {currentUser && <label className="block max-w-md text-xs font-bold text-slate-600">我的报价档案<select value={activePriceProfile} onChange={(event) => setActivePriceProfile(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"><option value="">使用产品标准价</option>{priceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}（仅本人可见）</option>)}</select></label>}
       </section>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -259,7 +325,7 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
                   <label className="text-[10px] font-bold text-slate-500">具体 SKU<select value={row.item.skuId} onChange={(event) => selectSku(row.item, event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-800"><option value="">请选择规格</option>{(row.product?.skus || []).map((sku) => <option key={sku.id} value={sku.id}>{sku.specification} · {priceLabel(sku.price)}</option>)}</select></label>
                   <label className="text-[10px] font-bold text-slate-500">单亩每次用量<input type="number" min="0" step="0.01" value={row.item.dosePerMu ?? ''} onChange={(event) => updateItem(row.item.id, { dosePerMu: event.target.value === '' ? null : Number(event.target.value) })} placeholder="待确认" className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-800" /></label>
                   <label className="text-[10px] font-bold text-slate-500">用量单位<select value={row.item.doseUnit} onChange={(event) => updateItem(row.item.id, { doseUnit: event.target.value as DoseUnit })} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-800">{(['包装/亩', 'kg/亩', 'L/亩', 'g/亩', 'ml/亩'] as DoseUnit[]).map((unit) => <option key={unit}>{unit}</option>)}</select></label>
-                  <label className="text-[10px] font-bold text-slate-500">本次报价<input type="number" min="0" step="0.01" value={row.price ?? ''} onChange={(event) => updateItem(row.item.id, { quotedPrice: event.target.value === '' ? null : Number(event.target.value) })} placeholder="待核验" className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-800" /></label>
+                  <label className="text-[10px] font-bold text-slate-500">本次报价<input type="number" min="0" step="0.01" value={row.item.quotedPrice ?? (row.price ?? '')} onChange={(event) => updateItem(row.item.id, { quotedPrice: event.target.value === '' ? null : Number(event.target.value) })} placeholder="未设置报价" className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-800" /></label>
                 </div>
                 <div className="mt-3 grid gap-2 text-[11px] text-slate-500 md:grid-cols-3"><span>包装：{row.sku?.specification || '待选择'}</span><span>来源：{row.sku ? sourceLabel(row.sku) : '待选择 SKU'}</span><span className="font-bold text-slate-800">{row.packageQuantity !== null ? `阶段需 ${row.packageQuantity.toFixed(2)} 包装单位` : '非“包装/亩”用量需补包装换算后核算成本'}</span></div>
               </div>;
@@ -269,6 +335,7 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-center gap-2"><Plus className="h-4 w-4 text-emerald-700" /><h3 className="font-black text-slate-900">从产品资料库添加</h3></div>
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索产品、成分、规格或品牌" className="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-400" />
+            {(['叶面', '根际'] as const).map((group) => { const recommended = filteredProducts.filter((product) => isRecommended(product, target) && applicationGroups(product).includes(group)); const all = filteredProducts.filter((product) => applicationGroups(product).includes(group) || !applicationGroups(product).length); return <div key={group} className="mt-4"><div className="flex items-center justify-between"><h4 className="text-xs font-black text-slate-800">{group}推荐产品</h4><span className="text-[10px] text-emerald-700">{recommended.length} 个匹配目标</span></div><div className="mt-2 grid max-h-48 gap-2 overflow-y-auto md:grid-cols-2">{recommended.map((product) => <button type="button" key={product.id + '-rec-' + group} onClick={() => addProduct(product)} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left hover:border-emerald-400"><div className="flex items-start justify-between gap-2"><span className="text-sm font-bold text-slate-900">{product.name}</span><span className="rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold text-white">推荐</span></div><p className="mt-1 text-[11px] text-slate-500">{applicationGroups(product).join(' + ') || group} · {product.skus?.length || 0} 条规格</p></button>)}</div><div className="mt-3 flex flex-wrap gap-2">{all.map((product) => <button type="button" key={product.id + '-all-' + group} onClick={() => addProduct(product)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-emerald-300"><span className="text-xs font-bold text-slate-800">{product.name}</span><span className="ml-2 text-[10px] text-slate-400">{product.source_type === 'market' ? '市场' : '自有'}</span></button>)}</div></div>; })}
             <div className="mt-3 grid max-h-72 gap-2 overflow-y-auto md:grid-cols-2">{filteredProducts.map((product) => <button type="button" key={product.id} onClick={() => addProduct(product)} className="rounded-xl border border-slate-200 p-3 text-left hover:border-emerald-300 hover:bg-emerald-50"><div className="flex items-start justify-between gap-2"><span className="text-sm font-bold text-slate-900">{product.name}</span><span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${product.source_type === 'market' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>{product.source_type === 'market' ? '市场' : '自有'}</span></div><p className="mt-1 text-[11px] text-slate-500">{product.brand} · {product.skus?.length || 0} 条 SKU</p></button>)}</div>
             {!loading && !filteredProducts.length && <p className="mt-4 text-xs text-slate-400">未找到匹配产品。</p>}
           </section>
@@ -278,8 +345,9 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
           <section className="space-y-4 rounded-3xl border border-emerald-100 bg-white p-5 shadow-xs">
             <div className="flex items-center gap-2"><Calculator className="h-4 w-4 text-emerald-700" /><h3 className="text-sm font-black">方案核算</h3></div>
             <label className="block text-xs font-bold text-slate-600">适用面积（亩）<input type="number" min="0.1" step="0.5" value={area} onChange={(event) => setArea(Math.max(0.1, Number(event.target.value) || 0.1))} className="mt-1.5 w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-lg font-black text-emerald-900 outline-none" /></label>
-            <div className="space-y-3 border-t border-slate-100 pt-3 text-xs"><div className="flex justify-between"><span className="text-slate-500">已选产品</span><strong>{rows.length} 个</strong></div><div className="flex justify-between"><span className="text-slate-500">可核算产品</span><strong>{calculatedRows.length} / {rows.length}</strong></div><div className="flex justify-between"><span className="text-slate-500">阶段总成本</span><strong className="text-base text-orange-600">{isCompleteCalculation ? `¥${stageCost.toFixed(2)}` : '待核验'}</strong></div><div className="flex justify-between"><span className="text-slate-500">平均每亩成本</span><strong>{isCompleteCalculation ? `¥${(stageCost / area).toFixed(2)}/亩` : '待核验'}</strong></div></div>
-            <p className="rounded-xl bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800">只有选择真实 SKU、填写价格，并把单亩用量确认成“包装/亩”时，系统才会计算成本；其他单位必须先由技术人员确认包装换算关系。</p>
+            <div className="space-y-3 border-t border-slate-100 pt-3 text-xs"><div className="flex justify-between"><span className="text-slate-500">已选产品</span><strong>{rows.length} 个</strong></div><div className="flex justify-between"><span className="text-slate-500">可核算产品</span><strong>{calculatedRows.length} / {rows.length}</strong></div><div className="flex justify-between"><span className="text-slate-500">阶段总成本</span><strong className="text-base text-orange-600">{isCompleteCalculation ? `¥${stageCost.toFixed(2)}` : '未完成核算'}</strong></div><div className="flex justify-between"><span className="text-slate-500">平均每亩成本</span><strong>{isCompleteCalculation ? `¥${(stageCost / area).toFixed(2)}/亩` : '未完成核算'}</strong></div></div>
+            <p className="rounded-xl bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800">选择真实规格并填写已确认用量；系统会按容量、件内数量和报价自动换算包装数量与成本。没有设置价格时显示“未设置报价”。</p>
+            {currentUser && <div className="border-t border-slate-100 pt-3"><div className="text-xs font-black text-slate-700">保存我的报价档案</div><div className="mt-2 flex gap-2"><input value={newProfileName} onChange={(event) => setNewProfileName(event.target.value)} placeholder="例如：张经理-经销商价" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-xs" /><button type="button" onClick={createPriceProfile} className="rounded-lg bg-indigo-600 px-2.5 py-2 text-xs font-bold text-white">保存</button></div><p className="mt-1 text-[10px] text-slate-400">保存当前已填写的规格报价；其他销售人员不可见。</p></div>}
           </section>
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs"><div className="flex items-center gap-2"><FileText className="h-4 w-4 text-emerald-700" /><h3 className="text-sm font-black">方案描述</h3></div><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder={generatedDescription} rows={6} className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed outline-none focus:border-emerald-400" /><p className="mt-2 text-[11px] text-slate-400">默认描述由目标、等级和复核原则组成；可按田间实际情况调整。</p></section>
           <section className="rounded-3xl border border-slate-200 bg-white p-5 text-xs text-slate-600 shadow-xs"><div className="flex items-center gap-2 font-black text-slate-900"><Leaf className="h-4 w-4 text-emerald-700" />农业处方边界</div><p className="mt-2 leading-relaxed">此草稿用于内部技术配置和报价准备，不替代肥料标签、登记信息、混配试验或现场农艺判断。</p></section>

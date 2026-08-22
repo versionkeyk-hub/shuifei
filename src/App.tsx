@@ -106,7 +106,7 @@ export const App: React.FC = () => {
   });
 
   // Navigation & View State
-  const [activeTab, setActiveTab] = useState<NavTab>(() => window.location.pathname === '/admin' ? 'admin_settings' : 'dashboard');
+  const [activeTab, setActiveTab] = useState<NavTab>(() => ['/admin', '/admin.html'].includes(window.location.pathname) ? 'admin_settings' : 'dashboard');
   const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
   const [cropInitialTab, setCropInitialTab] = useState<'scheme' | 'pest'>('scheme');
   const [previousSourceTab, setPreviousSourceTab] = useState<NavTab>('dashboard');
@@ -118,6 +118,36 @@ export const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [exportTargetScheme, setExportTargetScheme] = useState<FertilizationScheme | undefined>(undefined);
+  const adminPath = window.location.pathname === '/admin' || window.location.pathname === '/admin.html';
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('hmht_api_token');
+    if (!token) {
+      if (window.location.pathname === '/login' || window.location.pathname === '/login.html') setIsAuthModalOpen(true);
+      if (adminPath) setIsAuthModalOpen(true);
+      return;
+    }
+    fetch('/api/auth/me', { headers: { authorization: 'Bearer ' + token } })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload: { user?: { id: string; username: string; display_name: string; role: string; status: string } } | null) => {
+        if (!payload?.user) return;
+        setCurrentUser({ id: payload.user.id, username: payload.user.username, realName: payload.user.display_name, role: payload.user.role as AppUser['role'], status: payload.user.status as AppUser['status'], registeredAt: new Date().toISOString().slice(0, 10) });
+      })
+      .catch(() => undefined);
+  }, [adminPath]);
+
+  useEffect(() => {
+    fetch('/api/site-settings').then((response) => response.ok ? response.json() : null).then((payload: { settings?: SystemSettings } | null) => {
+      if (payload?.settings && Object.keys(payload.settings).length) setSettings((current) => ({ ...current, ...payload.settings }));
+    }).catch(() => undefined);
+  }, []);
+
+  const handleUpdateSettings = (nextSettings: SystemSettings) => {
+    setSettings(nextSettings);
+    const token = sessionStorage.getItem('hmht_api_token');
+    if (!token || !['super_admin', 'admin'].includes(currentUser?.role || '')) return;
+    fetch('/api/admin/site-settings', { method: 'PATCH', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ settings: nextSettings }) }).catch(() => undefined);
+  };
 
   // Automated Crop Counter Linkage
   const updateCropCounters = (
@@ -348,7 +378,7 @@ export const App: React.FC = () => {
   const activeSchemesCount = schemes.filter((s) => !s.isDeleted).length;
 
   return (
-    <VisualEditProvider settings={settings} currentUser={currentUser} onUpdateSettings={setSettings}>
+    <VisualEditProvider settings={settings} currentUser={currentUser} onUpdateSettings={handleUpdateSettings}>
       <div className="flex h-screen bg-slate-100/70 font-sans text-slate-800 antialiased overflow-hidden selection:bg-emerald-500 selection:text-white">
         {/* Dynamic Responsive Sidebar */}
         <Sidebar
@@ -569,16 +599,16 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'admin_settings' && (
+          {activeTab === 'admin_settings' && ['super_admin', 'admin'].includes(currentUser?.role || '') && (
             <AdminSettingsView
               settings={settings}
               currentUser={currentUser}
-              onUpdateSettings={setSettings}
+              onUpdateSettings={handleUpdateSettings}
               onDataReset={handleDataReset}
             />
           )}
 
-          {activeTab === 'users_approval' && (
+          {activeTab === 'users_approval' && ['super_admin', 'admin'].includes(currentUser?.role || '') && (
             <ProductLibraryView
               currentUser={currentUser}
               initialMode="admin"

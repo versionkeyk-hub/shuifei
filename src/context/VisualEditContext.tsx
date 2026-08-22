@@ -228,7 +228,7 @@ export const VisualEditProvider: React.FC<VisualEditProviderProps> = ({
         {children}
 
         {/* Floating Toolbar for Super Admin */}
-        {isSuperAdmin && (
+        {false && isSuperAdmin && (
           <VisualEditFloatingBar
             isVisualEditMode={isVisualEditMode}
             onToggle={toggleVisualEditMode}

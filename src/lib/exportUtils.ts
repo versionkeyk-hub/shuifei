@@ -192,16 +192,6 @@ export async function exportElementAsPDF(
 
   pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-  // Apply subtle diagonal watermark text
-  if (watermarkConfig?.enabled && watermarkConfig?.text) {
-    pdf.setTextColor(180, 200, 190);
-    pdf.setFontSize(28);
-    for (let x = 20; x < pdfWidth; x += 80) {
-      for (let y = 30; y < pdfHeight; y += 70) {
-        pdf.text(watermarkConfig.text, x, y, { angle: 30 });
-      }
-    }
-  }
 
   pdf.save(`${filename}.pdf`);
 }
