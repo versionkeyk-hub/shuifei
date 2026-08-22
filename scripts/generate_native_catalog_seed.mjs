@@ -23,7 +23,23 @@ for (const file of ['pesticides.js', 'pesticide_extras.js', 'products.js']) {
   vm.runInContext(await readFile(path.join('public/legacy-pesticide/data', file), 'utf8'), context, { filename: file });
 }
 
-const products = context.COMPANY_PRODUCTS || [];
+const cloudProductsSource = JSON.parse(await readFile('data/generated/legacy-cloud-products.json', 'utf8'));
+const cloudProducts = new Map((cloudProductsSource.products || []).map((entry) => [String(entry.data?.id || entry.legacy_id), entry.data || {}]));
+
+function mergePayload(base, override) {
+  if (Array.isArray(base) || Array.isArray(override)) return override === undefined || override === null ? base : override;
+  if (base && typeof base === 'object' && override && typeof override === 'object') {
+    const merged = { ...base };
+    for (const [key, value] of Object.entries(override)) {
+      if (value === undefined || value === null || value === '') continue;
+      merged[key] = mergePayload(merged[key], value);
+    }
+    return merged;
+  }
+  return override === undefined || override === null || override === '' ? base : override;
+}
+
+const products = (context.COMPANY_PRODUCTS || []).map((product) => mergePayload(product, cloudProducts.get(String(product.id)) || {}));
 const pesticides = context.PESTICIDES || [];
 const extras = context.PESTICIDE_EXTRAS || {};
 const now = new Date().toISOString();
@@ -32,6 +48,8 @@ const statements = [];
 for (const product of products) {
   const productId = String(product.id || stableId('legacy-product-', product.name));
   const payload = { ...product, id: productId };
+  statements.push('DELETE FROM legacy_product_specs WHERE product_id = ' + sqlString(productId) + ';');
+  statements.push('DELETE FROM legacy_product_compatibility WHERE product_id = ' + sqlString(productId) + ';');
   statements.push('INSERT OR REPLACE INTO legacy_products (id, name, category, payload_json, updated_at) VALUES (' + [productId, product.name, product.category, json(payload), now].map(sqlString).join(', ') + ');');
   for (const [index, specification] of (product.specifications || []).entries()) {
     const specId = stableId('legacy-spec-', productId + ':' + index + ':' + json(specification));

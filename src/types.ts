@@ -1,4 +1,4 @@
-export type RoleType = 'super_admin' | 'admin' | 'expert' | 'member' | 'viewer' | 'pending';
+export type RoleType = 'super_admin' | 'admin' | 'staff' | 'dealer' | 'farmer' | 'expert' | 'member' | 'viewer' | 'pending';
 export type UserRole = RoleType;
 export type UserStatus = 'active' | 'approved' | 'pending' | 'pending_approval' | 'rejected' | 'disabled';
 

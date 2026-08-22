@@ -441,6 +441,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? '技术管理员'
                     : currentUser?.role === 'expert'
                     ? '农艺专家'
+                    : currentUser?.role === 'staff'
+                    ? '公司员工'
+                    : currentUser?.role === 'dealer'
+                    ? '经销商'
+                    : currentUser?.role === 'farmer'
+                    ? '农户'
                     : '团队成员'}
                 </span>
               </div>

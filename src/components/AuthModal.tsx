@@ -31,9 +31,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const toAppRole = (role: string): AppUser['role'] => {
     if (role === 'super_admin' || role === 'admin') return role;
-    if (role === 'staff') return 'member';
-    if (role === 'dealer') return 'expert';
-    return 'viewer';
+    if (role === 'staff' || role === 'dealer' || role === 'farmer') return role;
+    if (role === 'expert' || role === 'member' || role === 'viewer') return role;
+    return 'farmer';
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -122,6 +122,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       ? '管理员'
                       : currentUser.role === 'expert'
                       ? '农技专家'
+                      : currentUser.role === 'staff'
+                      ? '公司员工'
+                      : currentUser.role === 'dealer'
+                      ? '经销商'
+                      : currentUser.role === 'farmer'
+                      ? '农户'
                       : '公司伙伴'}
                   </span>
                 </div>

@@ -299,7 +299,136 @@ function parseNativePayload<T>(value: string | null | undefined, fallback: T): T
   return parseJson(value, fallback);
 }
 
-async function getNativeProducts(url: URL, env: Env): Promise<Response> {
+type NativePayload = Record<string, any>;
+
+function mergePesticideExtras(component: string, related: unknown, extraMap: Map<string, NativePayload>): NativePayload | null {
+  const names = [component, ...(Array.isArray(related) ? related.map(String) : [])];
+  const entries = names.map((name) => extraMap.get(name)).filter((value): value is NativePayload => Boolean(value));
+  if (!entries.length) return null;
+  const phValues = [...new Set(entries.map((entry) => String(entry.ph || '')).filter(Boolean))];
+  const contraindications = [...new Set(entries.map((entry) => String(entry.contraindications || '')).filter(Boolean))];
+  return {
+    component,
+    ...(phValues.length ? { ph: phValues.join(' / ') } : {}),
+    ...(contraindications.length ? { contraindications: contraindications.join('\n\n') } : {}),
+  };
+}
+
+async function getViewerRole(request: Request, env: Env): Promise<string> {
+  if (!request.headers.get('authorization')) return 'farmer';
+  const user = await requireUser(request, env);
+  return isResponse(user) ? 'farmer' : user.role;
+}
+
+function canSeeTechnicalDetails(role: string): boolean {
+  return ['super_admin', 'admin', 'staff', 'expert'].includes(role);
+}
+
+function parsePH(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const numbers = String(value).match(/\d+\.?\d*/g)?.map(Number) || [];
+  if (!numbers.length) return null;
+  return numbers.reduce((sum, item) => sum + item, 0) / numbers.length;
+}
+
+function displayPH(value: unknown, role: string): number | null {
+  const original = parsePH(value);
+  if (original === null) return null;
+  if (canSeeTechnicalDetails(role)) return Math.round(original * 100) / 100;
+  return Math.round((7 + (original - 7) * 0.25) * 100) / 100;
+}
+
+function sanitizeProductPayload(payload: NativePayload, role: string): NativePayload {
+  const next = { ...payload };
+  const profile = payload.mix_profile && typeof payload.mix_profile === 'object' ? { ...payload.mix_profile } : null;
+  if (profile && profile.ph !== undefined) {
+    const value = displayPH(profile.ph, role);
+    profile.ph = value === null ? profile.ph : String(value);
+    profile.ph_display_note = canSeeTechnicalDetails(role) ? '公司技术视图：按 1:250 倍稀释测试值展示' : '农户视图：已按公开展示口径处理';
+    next.mix_profile = profile;
+  }
+  return next;
+}
+
+function pesticideFlags(payload: NativePayload): NativePayload {
+  const name = String(payload.component || '');
+  const flags: NativePayload = { ...(payload.flags || {}) };
+  const has = (pattern: RegExp) => pattern.test(name) || Boolean(payload.related?.some((item: unknown) => pattern.test(String(item))));
+  flags.is_copper ||= has(/铜|波尔多/);
+  flags.is_inorganic_copper ||= has(/波尔多|硫酸铜|氢氧化铜|氧化亚铜|王铜|氧氯化铜|碱式硫酸铜/) && !has(/有机铜|松脂酸铜|琥胶肥酸铜|喹菌铜|噻菌铜|腐植酸铜/);
+  flags.is_organic_copper ||= has(/松脂酸铜|琥胶肥酸铜|喹菌铜|噻菌铜|腐植酸铜/);
+  flags.is_dithiocarbamate ||= has(/代森/);
+  flags.is_sulfur ||= has(/石硫|硫磺|硫悬|胶体硫|可湿性硫/);
+  flags.is_thiram ||= has(/福美双|福美锌|福美砷/);
+  flags.is_benzimidazole ||= has(/多菌灵|甲基硫菌灵|甲基托布津|甲托/);
+  flags.is_chloroisobromine ||= has(/氯溴异氰尿酸/);
+  flags.has_calcium ||= has(/钙/);
+  flags.has_phosphorus ||= has(/磷酸|磷酸盐|磷酸二氢|磷酸氢二/);
+  flags.has_humic_acid ||= has(/腐殖酸|黄腐酸|腐植酸/);
+  flags.is_fungicide ||= /杀菌剂/.test(String(payload.category || ''));
+  flags.is_insecticide ||= /杀虫剂/.test(String(payload.category || ''));
+  flags.is_acaricide ||= /杀螨剂/.test(String(payload.category || ''));
+  flags.is_herbicide ||= /除草剂/.test(String(payload.category || ''));
+  flags.has_calcium ||= Boolean(flags.is_calcium);
+  flags.has_phosphorus ||= Boolean(flags.is_phosphorus);
+  flags.has_humic_acid ||= Boolean(flags.is_humic_acid);
+  flags.has_heavy_metal ||= Boolean(flags.is_heavy_metal);
+  flags.is_strong_base ||= Boolean(flags.is_strong_base);
+  flags.is_strong_acid ||= Boolean(flags.is_strong_acid);
+  return flags;
+}
+
+function classifyPH(value: number | null): string {
+  if (value === null) return 'unknown';
+  if (value < 4) return 'strong_acid';
+  if (value < 6.5) return 'acidic';
+  if (value <= 7.5) return 'neutral';
+  if (value <= 10) return 'basic';
+  return 'strong_base';
+}
+
+function nativeMixingRule(pesticide: NativePayload, product: NativePayload, extra: NativePayload | null): { status: string; interval: string; reason: string; level: number } {
+  const pf = pesticideFlags(pesticide);
+  const pp = (product.mix_profile || {}) as NativePayload;
+  const productPH = parsePH(pp.ph);
+  const pesticidePH = parsePH(extra?.ph);
+  const productPHClass = classifyPH(productPH);
+  const pesticidePHClass = classifyPH(pesticidePH);
+  const forbidden = (reason: string, interval = '7天') => ({ status: '禁混', interval, reason, level: 3 });
+  const caution = (reason: string) => ({ status: '需谨慎', interval: '', reason, level: 2 });
+  const separate = (reason: string, interval = '2-3天') => ({ status: '需间隔', interval, reason, level: 2 });
+  const alone = (reason: string) => ({ status: '建议单用', interval: '3-5天', reason, level: 2 });
+
+  if (pf.is_herbicide) return forbidden('除草剂不建议与肥料混配，易产生药害', '');
+  if (pf.has_heavy_metal) return forbidden('含重金属农药，不建议与肥料混用', '');
+  if (pp.has_microbe && (pf.is_fungicide || pf.is_copper)) return forbidden('杀菌剂或铜制剂会影响有益微生物活性，建议先用农药，间隔 3-5 天再用菌剂', '3-5天');
+  if (pp.has_amino_acid && pf.is_copper) return forbidden('氨基酸与铜离子可能发生络合，降低双方效果');
+  if (pp.has_humic_acid && pf.is_copper) return forbidden('腐殖酸或黄腐酸与铜离子可能络合并产生沉淀');
+  if (pp.has_copper && pp.copper_level !== 'trace' && pf.is_copper) return forbidden('产品含铜，与铜制剂叠加可能导致铜离子过量并产生药害');
+  if (pf.is_chloroisobromine && (pp.has_amino_acid || pp.has_humic_acid || pf.has_phosphorus)) return forbidden('氯溴异氰尿酸与氨基酸、腐殖酸或磷酸盐可能产生沉淀并失效');
+  if (pf.suggest_alone) return alone('该农药性质特殊，与肥料混配可能降低效果，建议单独使用');
+  if (pf.is_strong_base && pp.has_amino_acid) return forbidden('强碱性农药会使氨基酸分解失效');
+  if (pf.is_strong_base && pp.has_humic_acid) return forbidden('强碱性条件下腐殖酸结构可能被破坏');
+  if (pp.has_copper && pf.is_dithiocarbamate) return caution('产品含铜，与代森类农药混配可能降低药效，建议先小试');
+  if (pp.has_copper && pf.is_sulfur) return caution('产品含铜，与硫制剂混配可能产生反应，建议先小试');
+  if (pp.has_copper && pf.is_thiram) return caution('产品含铜，与福美双系列混配可能降低药效，建议先试验');
+  if (pp.has_copper && pp.copper_level === 'trace' && pf.is_copper) return caution('产品含微量铜，与铜制剂叠加可能增加铜离子浓度');
+  if (pp.has_copper && pf.is_benzimidazole) return caution('铜与多菌灵或甲基硫菌灵混配可能产生沉淀');
+  if (!pp.has_copper && pf.is_inorganic_copper) return caution('无机铜制剂杀菌性强，一般不建议与肥料混配');
+  if (!pp.has_copper && pf.is_organic_copper) return caution('有机铜制剂混配性较好，但仍建议先小试');
+  if (pp.has_calcium && pf.has_phosphorus) return separate('磷酸根与钙离子反应可能生成磷酸钙沉淀');
+  if (pp.has_phosphorus && pf.has_calcium) return separate('磷酸根与钙离子反应可能生成磷酸钙沉淀');
+  if (pp.has_humic_acid && pf.has_calcium) return separate('腐殖酸与钙离子反应可能产生絮凝沉淀');
+  if (pp.has_calcium && pf.has_humic_acid) return separate('钙离子与腐殖酸反应可能产生絮凝沉淀');
+  if (pf.is_strong_base) return separate('强碱性农药性质活泼，建议与肥料间隔使用', '7天');
+  if (pf.is_strong_acid) return separate('强酸性农药性质活泼，建议与肥料间隔使用', '7天');
+  if (productPHClass === 'strong_acid' && ['basic', 'strong_base'].includes(pesticidePHClass)) return separate('产品为强酸性，与碱性农药可能发生酸碱中和', '3-7天');
+  if (productPHClass === 'strong_base' && ['acidic', 'strong_acid'].includes(pesticidePHClass)) return separate('产品为强碱性，与酸性农药可能发生酸碱中和', '3-7天');
+  if (pf.no_alkali_mix && productPH !== null && productPH > 7.5) return separate('该农药标注不能与碱性物质混用，当前产品偏碱性', '3-7天');
+  return { status: '可混', interval: '', reason: '成分间未发现原站规则中的明确拮抗反应，建议先小范围试用并以产品标签为准。', level: 0 };
+}
+
+async function getNativeProducts(url: URL, env: Env, request?: Request): Promise<Response> {
   const query = url.searchParams.get('query')?.trim() || '';
   const productId = url.searchParams.get('id')?.trim() || '';
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 200);
@@ -310,6 +439,7 @@ async function getNativeProducts(url: URL, env: Env): Promise<Response> {
       ? env.DB.prepare('SELECT * FROM legacy_products WHERE name LIKE ? OR category LIKE ? OR payload_json LIKE ? ORDER BY name LIMIT ?').bind(pattern, pattern, pattern, limit)
       : env.DB.prepare('SELECT * FROM legacy_products ORDER BY name LIMIT ?').bind(limit);
   const { results } = await statement.all<Record<string, string>>();
+  const viewerRole = await getViewerRole(request || new Request(url.toString()), env);
   const ids = results.map((item) => item.id);
   const specsByProduct = new Map<string, Record<string, unknown>[]>();
   const compatibilityByProduct = new Map<string, Record<string, unknown>[]>();
@@ -329,7 +459,7 @@ async function getNativeProducts(url: URL, env: Env): Promise<Response> {
     }
   }
   const products = results.map((row) => ({
-    ...parseNativePayload<Record<string, unknown>>(row.payload_json, {}),
+    ...sanitizeProductPayload(parseNativePayload<Record<string, unknown>>(row.payload_json, {}), viewerRole),
     id: row.id,
     name: row.name,
     category: row.category,
@@ -339,7 +469,7 @@ async function getNativeProducts(url: URL, env: Env): Promise<Response> {
   return json({ products }, {}, publicApiHeaders);
 }
 
-async function getNativePesticides(url: URL, env: Env): Promise<Response> {
+async function getNativePesticides(url: URL, env: Env, request?: Request): Promise<Response> {
   const query = url.searchParams.get('query')?.trim() || '';
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 10000);
   const pattern = '%' + query + '%';
@@ -347,35 +477,89 @@ async function getNativePesticides(url: URL, env: Env): Promise<Response> {
     ? env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides WHERE component LIKE ? OR payload_json LIKE ? ORDER BY component LIMIT ?').bind(pattern, pattern, limit)
     : env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides ORDER BY component LIMIT ?').bind(limit);
   const { results } = await statement.all<{ component: string; payload_json: string }>();
-  const components = results.map((item) => item.component);
   const extras = await env.DB.prepare('SELECT component, payload_json FROM legacy_pesticide_extras').all<{ component: string; payload_json: string }>();
-  const extraMap = new Map(extras.results.map((item) => [item.component, parseNativePayload(item.payload_json, {})]));
-  return json({ pesticides: results.map((item) => ({ ...parseNativePayload<Record<string, unknown>>(item.payload_json, {}), component: item.component, extra: extraMap.get(item.component) || null })) }, {}, publicApiHeaders);
+  const extraMap = new Map<string, NativePayload>(extras.results.map((item) => [item.component, parseNativePayload<NativePayload>(item.payload_json, {})]));
+  const viewerRole = await getViewerRole(request || new Request(url.toString()), env);
+  return json({ pesticides: results.map((item) => {
+    const payload = parseNativePayload<Record<string, unknown>>(item.payload_json, {});
+    const extra = mergePesticideExtras(item.component, payload.related, extraMap);
+    return { ...payload, component: item.component, extra: extra ? { ...extra, ph: displayPH(extra.ph, viewerRole) ?? extra.ph } : null };
+  }) }, {}, publicApiHeaders);
 }
 
-async function getNativeMixing(url: URL, env: Env): Promise<Response> {
+async function getNativeMixing(url: URL, env: Env, request?: Request): Promise<Response> {
   const component = url.searchParams.get('component')?.trim() || '';
   if (!component) return json({ error: '请选择农药有效成分' }, { status: 400 });
   const pesticide = await env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides WHERE component = ?').bind(component).first<{ component: string; payload_json: string }>();
   if (!pesticide) return json({ error: '未找到该农药成分' }, { status: 404 });
-  const [products, compatibility] = await Promise.all([
+  const [products, compatibility, extras] = await Promise.all([
     env.DB.prepare('SELECT id, name, category, payload_json FROM legacy_products ORDER BY name').all<Record<string, string>>(),
-    env.DB.prepare('SELECT product_id, pesticide_name, status, reason FROM legacy_product_compatibility WHERE pesticide_name LIKE ?').bind('%' + component + '%').all<Record<string, string>>(),
+    env.DB.prepare('SELECT product_id, pesticide_name, status, reason FROM legacy_product_compatibility').all<Record<string, string>>(),
+    env.DB.prepare('SELECT component, payload_json FROM legacy_pesticide_extras').all<{ component: string; payload_json: string }>(),
   ]);
-  const rules = new Map(compatibility.results.map((item) => [item.product_id, item]));
+  const pesticideComponents = [component, ...((payloadFromRow(pesticide.payload_json).related || []) as unknown[]).map(String)];
+  const rules = new Map(compatibility.results.filter((item) => pesticideComponents.some((name) => item.pesticide_name === name || item.pesticide_name.includes(name))).map((item) => [item.product_id, item]));
   const payload = parseNativePayload<Record<string, unknown>>(pesticide.payload_json, {});
-  const flags = (payload.flags || {}) as Record<string, boolean>;
+  const extraMap = new Map<string, NativePayload>(extras.results.map((item) => [item.component, parseNativePayload<NativePayload>(item.payload_json, {})]));
+  const extra = mergePesticideExtras(component, payload.related, extraMap);
+  const viewerRole = await getViewerRole(request || new Request(url.toString()), env);
   const results = products.results.map((product) => {
     const productPayload = parseNativePayload<Record<string, unknown>>(product.payload_json, {});
-    const productInfo = { ...productPayload, id: product.id, name: product.name, category: product.category };
+    const productInfo = { ...sanitizeProductPayload(productPayload, viewerRole), id: product.id, name: product.name, category: product.category };
     const explicit = rules.get(product.id);
-    if (explicit) return { product: productInfo, status: explicit.status === 'forbidden' ? '禁混' : explicit.status === 'caution' ? '需间隔' : explicit.status, interval: explicit.status === 'caution' ? '至少3天' : '', reason: explicit.reason };
-    const profile = (productPayload.mix_profile || {}) as Record<string, boolean>;
-    if (flags.is_fungicide && profile.has_microbe) return { product: productInfo, status: '需间隔', interval: '3-5天', reason: '杀菌剂可能影响微生物菌剂活性。' };
-    if (flags.is_copper || flags.is_heavy_metal || flags.is_herbicide || flags.is_strong_base || flags.is_strong_acid) return { product: productInfo, status: '待核验', interval: '', reason: '该农药具有较高混配风险，未发现产品专属规则；请以标签和小试为准。' };
-    return { product: productInfo, status: '待核验', interval: '', reason: '暂无产品专属混配规则，请以产品标签、水质和小范围试验为准。' };
+    if (explicit) {
+      const explicitStatus = explicit.status === 'forbidden' ? '禁混' : explicit.status === 'caution' ? '需谨慎' : explicit.status === 'separate' ? '需间隔' : explicit.status === 'alone' ? '建议单用' : explicit.status === 'unnecessary' ? '可混但无必要' : '可混';
+      return { product: productInfo, status: explicitStatus, interval: explicit.status === 'caution' ? '至少3天' : '', reason: explicit.reason || '后台手动维护的混配规则' };
+    }
+    const rule = nativeMixingRule({ ...payload, component }, productPayload, extra);
+    return { product: productInfo, ...rule };
   });
-  return json({ component, pesticide: { ...payload, component }, results }, {}, publicApiHeaders);
+  return json({ component, pesticide: { ...payload, component, extra: extra ? { ...extra, ph: displayPH(extra.ph, viewerRole) ?? extra.ph } : null }, results }, {}, publicApiHeaders);
+}
+
+function payloadFromRow(value: string): NativePayload {
+  return parseNativePayload<Record<string, unknown>>(value, {});
+}
+
+async function updateNativePesticide(request: Request, env: Env, component: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const existing = await env.DB.prepare('SELECT payload_json FROM legacy_pesticides WHERE component = ?').bind(component).first<{ payload_json: string }>();
+  if (!existing) return json({ error: '农药成分不存在' }, { status: 404 });
+  const body = await readBody(request);
+  const patch = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
+  const current = parseNativePayload<Record<string, unknown>>(existing.payload_json, {});
+  const next = { ...current, ...patch, component };
+  await env.DB.prepare('UPDATE legacy_pesticides SET payload_json = ?, updated_at = ? WHERE component = ?').bind(JSON.stringify(next), now(), component).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, 'update', 'legacy_pesticide', component, JSON.stringify({ fields: Object.keys(patch) }), now()).run();
+  return json({ pesticide: next });
+}
+
+async function updateNativeCompatibility(request: Request, env: Env, productId: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const product = await env.DB.prepare('SELECT id FROM legacy_products WHERE id = ?').bind(productId).first<{ id: string }>();
+  if (!product) return json({ error: '产品不存在' }, { status: 404 });
+  const body = await readBody(request);
+  const pesticideName = typeof body.pesticide_name === 'string' ? body.pesticide_name.trim().slice(0, 200) : '';
+  const status = typeof body.status === 'string' ? body.status.trim() : '';
+  const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 1000) : '';
+  const allowedStatuses = ['forbidden', 'caution', 'separate', 'alone', 'unnecessary', 'mixable', 'default'];
+  if (!pesticideName || !allowedStatuses.includes(status)) return json({ error: '请填写有效的农药名称和混配状态' }, { status: 400 });
+  if (status === 'default') {
+    await env.DB.prepare('DELETE FROM legacy_product_compatibility WHERE product_id = ? AND pesticide_name = ?').bind(productId, pesticideName).run();
+  } else {
+    const existing = await env.DB.prepare('SELECT id FROM legacy_product_compatibility WHERE product_id = ? AND pesticide_name = ?').bind(productId, pesticideName).first<{ id: string }>();
+    if (existing) {
+      await env.DB.prepare('UPDATE legacy_product_compatibility SET status = ?, reason = ? WHERE id = ?').bind(status, reason, existing.id).run();
+    } else {
+      await env.DB.prepare('INSERT INTO legacy_product_compatibility (id, product_id, pesticide_name, status, reason) VALUES (?, ?, ?, ?, ?)').bind(newId(), productId, pesticideName, status, reason).run();
+    }
+  }
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, status === 'default' ? 'delete' : 'update', 'legacy_product_compatibility', productId, JSON.stringify({ pesticide_name: pesticideName, status }), now()).run();
+  return json({ status: 'updated', product_id: productId, pesticide_name: pesticideName, rule_status: status });
 }
 
 async function updateNativeProduct(request: Request, env: Env, productId: string): Promise<Response> {
@@ -394,7 +578,7 @@ async function updateNativeProduct(request: Request, env: Env, productId: string
     .bind(name, category, JSON.stringify(next), now(), productId).run();
   await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .bind(newId(), actor.id, 'update', 'legacy_product', productId, JSON.stringify({ fields: Object.keys(patch) }), now()).run();
-  return getNativeProducts(new URL(request.url + '?id=' + encodeURIComponent(productId)), env);
+  return getNativeProducts(new URL(request.url + '?id=' + encodeURIComponent(productId)), env, request);
 }
 
 async function createNativeSpecification(request: Request, env: Env, productId: string): Promise<Response> {
@@ -715,11 +899,13 @@ export default {
       if (url.pathname === '/api/auth/register' && request.method === 'POST') return register(request, env);
       if (url.pathname === '/api/auth/me' && request.method === 'GET') return getCurrentUser(request, env);
       if (url.pathname === '/api/catalog/stats' && request.method === 'GET') return getStats(env);
-      if (url.pathname === '/api/native/products' && request.method === 'GET') return getNativeProducts(url, env);
-      if (url.pathname === '/api/native/pesticides' && request.method === 'GET') return getNativePesticides(url, env);
-      if (url.pathname === '/api/native/mixing' && request.method === 'GET') return getNativeMixing(url, env);
+      if (url.pathname === '/api/native/products' && request.method === 'GET') return getNativeProducts(url, env, request);
+      if (url.pathname === '/api/native/pesticides' && request.method === 'GET') return getNativePesticides(url, env, request);
+      if (url.pathname === '/api/native/mixing' && request.method === 'GET') return getNativeMixing(url, env, request);
       if (url.pathname === '/api/navigation' && request.method === 'GET') return getNavigation(request, env);
       if (url.pathname === '/api/admin/navigation' && request.method === 'PATCH') return updateNavigation(request, env);
+      if (url.pathname.startsWith('/api/admin/native/pesticides/') && request.method === 'PATCH') return updateNativePesticide(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/pesticides/'.length)));
+      if (url.pathname.startsWith('/api/admin/native/products/') && url.pathname.endsWith('/compatibility') && request.method === 'PATCH') return updateNativeCompatibility(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length, -'/compatibility'.length)));
       if (url.pathname.startsWith('/api/admin/native/products/') && request.method === 'PATCH') return updateNativeProduct(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length)));
       if (url.pathname.startsWith('/api/admin/native/products/') && url.pathname.endsWith('/specs') && request.method === 'POST') return createNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length, -'/specs'.length)));
       if (url.pathname.startsWith('/api/admin/native/specs/') && request.method === 'PATCH') return updateNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/specs/'.length)));
