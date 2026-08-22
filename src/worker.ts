@@ -209,7 +209,7 @@ async function getCurrentUser(request: Request, env: Env): Promise<Response> {
 
 async function getProducts(url: URL, env: Env): Promise<Response> {
   const query = url.searchParams.get('query')?.trim() || '';
-  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 200);
+  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 10000);
   const search = '%' + query + '%';
   const statement = query
     ? env.DB.prepare('SELECT * FROM products WHERE name LIKE ? OR brand LIKE ? OR ingredients_json LIKE ? ORDER BY brand, name LIMIT ?').bind(search, search, search, limit)
@@ -257,10 +257,10 @@ async function getPesticides(url: URL, env: Env): Promise<Response> {
 
 async function getStats(env: Env): Promise<Response> {
   const [products, skus, pesticides, assets, audits] = await Promise.all([
-    env.DB.prepare('SELECT COUNT(*) AS count FROM products').first<{ count: number }>(),
-    env.DB.prepare('SELECT COUNT(*) AS count FROM product_skus').first<{ count: number }>(),
-    env.DB.prepare('SELECT COUNT(*) AS count FROM pesticides').first<{ count: number }>(),
-    env.DB.prepare('SELECT COUNT(*) AS count FROM products WHERE images_json != ?').bind('[]').first<{ count: number }>(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM legacy_products').first<{ count: number }>(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM legacy_product_specs').first<{ count: number }>(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM legacy_pesticides').first<{ count: number }>(),
+    env.DB.prepare("SELECT COUNT(*) AS count FROM legacy_products WHERE payload_json LIKE '%\"images\"%'").first<{ count: number }>(),
     env.DB.prepare('SELECT imported_at, record_counts_json FROM import_audits ORDER BY imported_at DESC LIMIT 1').first<{ imported_at: string; record_counts_json: string }>(),
   ]);
   return json({
@@ -293,6 +293,191 @@ async function getMixing(url: URL, env: Env): Promise<Response> {
     return { product, status: '待核验', interval: '', reason: '基础规则未发现明确禁忌；请以产品标签、实际水质和小范围试验为准。' };
   });
   return json({ component, results }, {}, publicApiHeaders);
+}
+
+function parseNativePayload<T>(value: string | null | undefined, fallback: T): T {
+  return parseJson(value, fallback);
+}
+
+async function getNativeProducts(url: URL, env: Env): Promise<Response> {
+  const query = url.searchParams.get('query')?.trim() || '';
+  const productId = url.searchParams.get('id')?.trim() || '';
+  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 200);
+  const pattern = '%' + query + '%';
+  const statement = productId
+    ? env.DB.prepare('SELECT * FROM legacy_products WHERE id = ?').bind(productId)
+    : query
+      ? env.DB.prepare('SELECT * FROM legacy_products WHERE name LIKE ? OR category LIKE ? OR payload_json LIKE ? ORDER BY name LIMIT ?').bind(pattern, pattern, pattern, limit)
+      : env.DB.prepare('SELECT * FROM legacy_products ORDER BY name LIMIT ?').bind(limit);
+  const { results } = await statement.all<Record<string, string>>();
+  const ids = results.map((item) => item.id);
+  const specsByProduct = new Map<string, Record<string, unknown>[]>();
+  const compatibilityByProduct = new Map<string, Record<string, unknown>[]>();
+  if (ids.length) {
+    const placeholders = ids.map(() => '?').join(',');
+    const [specs, compatibility] = await Promise.all([
+      env.DB.prepare('SELECT * FROM legacy_product_specs WHERE product_id IN (' + placeholders + ') ORDER BY product_id, sort_order').bind(...ids).all<Record<string, unknown>>(),
+      env.DB.prepare('SELECT * FROM legacy_product_compatibility WHERE product_id IN (' + placeholders + ') ORDER BY product_id').bind(...ids).all<Record<string, unknown>>(),
+    ]);
+    for (const item of specs.results) {
+      const productKey = String(item.product_id);
+      specsByProduct.set(productKey, [...(specsByProduct.get(productKey) || []), { ...item, payload: parseNativePayload(item.payload_json as string, {}) }]);
+    }
+    for (const item of compatibility.results) {
+      const productKey = String(item.product_id);
+      compatibilityByProduct.set(productKey, [...(compatibilityByProduct.get(productKey) || []), item]);
+    }
+  }
+  const products = results.map((row) => ({
+    ...parseNativePayload<Record<string, unknown>>(row.payload_json, {}),
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    specifications: specsByProduct.get(row.id) || [],
+    pesticide_compat: compatibilityByProduct.get(row.id) || [],
+  }));
+  return json({ products }, {}, publicApiHeaders);
+}
+
+async function getNativePesticides(url: URL, env: Env): Promise<Response> {
+  const query = url.searchParams.get('query')?.trim() || '';
+  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 10000);
+  const pattern = '%' + query + '%';
+  const statement = query
+    ? env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides WHERE component LIKE ? OR payload_json LIKE ? ORDER BY component LIMIT ?').bind(pattern, pattern, limit)
+    : env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides ORDER BY component LIMIT ?').bind(limit);
+  const { results } = await statement.all<{ component: string; payload_json: string }>();
+  const components = results.map((item) => item.component);
+  const extras = await env.DB.prepare('SELECT component, payload_json FROM legacy_pesticide_extras').all<{ component: string; payload_json: string }>();
+  const extraMap = new Map(extras.results.map((item) => [item.component, parseNativePayload(item.payload_json, {})]));
+  return json({ pesticides: results.map((item) => ({ ...parseNativePayload<Record<string, unknown>>(item.payload_json, {}), component: item.component, extra: extraMap.get(item.component) || null })) }, {}, publicApiHeaders);
+}
+
+async function getNativeMixing(url: URL, env: Env): Promise<Response> {
+  const component = url.searchParams.get('component')?.trim() || '';
+  if (!component) return json({ error: '请选择农药有效成分' }, { status: 400 });
+  const pesticide = await env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides WHERE component = ?').bind(component).first<{ component: string; payload_json: string }>();
+  if (!pesticide) return json({ error: '未找到该农药成分' }, { status: 404 });
+  const [products, compatibility] = await Promise.all([
+    env.DB.prepare('SELECT id, name, category, payload_json FROM legacy_products ORDER BY name').all<Record<string, string>>(),
+    env.DB.prepare('SELECT product_id, pesticide_name, status, reason FROM legacy_product_compatibility WHERE pesticide_name LIKE ?').bind('%' + component + '%').all<Record<string, string>>(),
+  ]);
+  const rules = new Map(compatibility.results.map((item) => [item.product_id, item]));
+  const payload = parseNativePayload<Record<string, unknown>>(pesticide.payload_json, {});
+  const flags = (payload.flags || {}) as Record<string, boolean>;
+  const results = products.results.map((product) => {
+    const productPayload = parseNativePayload<Record<string, unknown>>(product.payload_json, {});
+    const productInfo = { ...productPayload, id: product.id, name: product.name, category: product.category };
+    const explicit = rules.get(product.id);
+    if (explicit) return { product: productInfo, status: explicit.status === 'forbidden' ? '禁混' : explicit.status === 'caution' ? '需间隔' : explicit.status, interval: explicit.status === 'caution' ? '至少3天' : '', reason: explicit.reason };
+    const profile = (productPayload.mix_profile || {}) as Record<string, boolean>;
+    if (flags.is_fungicide && profile.has_microbe) return { product: productInfo, status: '需间隔', interval: '3-5天', reason: '杀菌剂可能影响微生物菌剂活性。' };
+    if (flags.is_copper || flags.is_heavy_metal || flags.is_herbicide || flags.is_strong_base || flags.is_strong_acid) return { product: productInfo, status: '待核验', interval: '', reason: '该农药具有较高混配风险，未发现产品专属规则；请以标签和小试为准。' };
+    return { product: productInfo, status: '待核验', interval: '', reason: '暂无产品专属混配规则，请以产品标签、水质和小范围试验为准。' };
+  });
+  return json({ component, pesticide: { ...payload, component }, results }, {}, publicApiHeaders);
+}
+
+async function updateNativeProduct(request: Request, env: Env, productId: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const existing = await env.DB.prepare('SELECT payload_json FROM legacy_products WHERE id = ?').bind(productId).first<{ payload_json: string }>();
+  if (!existing) return json({ error: '产品不存在' }, { status: 404 });
+  const body = await readBody(request);
+  const patch = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
+  const current = parseNativePayload<Record<string, unknown>>(existing.payload_json, {});
+  const next: Record<string, unknown> = { ...current, ...patch, id: productId };
+  const name = typeof next.name === 'string' ? next.name.trim().slice(0, 200) : '';
+  const category = typeof next.category === 'string' ? next.category.trim().slice(0, 200) : '';
+  if (!name) return json({ error: '产品名称不能为空' }, { status: 400 });
+  await env.DB.prepare('UPDATE legacy_products SET name = ?, category = ?, payload_json = ?, updated_at = ? WHERE id = ?')
+    .bind(name, category, JSON.stringify(next), now(), productId).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, 'update', 'legacy_product', productId, JSON.stringify({ fields: Object.keys(patch) }), now()).run();
+  return getNativeProducts(new URL(request.url + '?id=' + encodeURIComponent(productId)), env);
+}
+
+async function createNativeSpecification(request: Request, env: Env, productId: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const product = await env.DB.prepare('SELECT id, name, category FROM legacy_products WHERE id = ?').bind(productId).first<{ id: string; name: string; category: string }>();
+  if (!product) return json({ error: '产品不存在' }, { status: 404 });
+  const body = await readBody(request);
+  const payload = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
+  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 100) : typeof payload.name === 'string' ? String(payload.name).trim().slice(0, 100) : '';
+  const capacity = typeof body.capacity === 'string' ? body.capacity.trim().slice(0, 100) : typeof payload.capacity === 'string' ? String(payload.capacity).trim().slice(0, 100) : '';
+  const form = typeof body.form === 'string' ? body.form.trim().slice(0, 100) : typeof payload.form === 'string' ? String(payload.form).trim().slice(0, 100) : '';
+  if (!name && !capacity) return json({ error: '规格名称或容量至少填写一项' }, { status: 400 });
+  const specificationId = newId();
+  const sort = await env.DB.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS sort_order FROM legacy_product_specs WHERE product_id = ?').bind(productId).first<{ sort_order: number }>();
+  await env.DB.prepare('INSERT INTO legacy_product_specs (id, product_id, name, capacity, form, payload_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(specificationId, productId, name || capacity, capacity, form, JSON.stringify({ ...payload, name: name || capacity, capacity, form }), sort?.sort_order || 0).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, 'create', 'legacy_product_spec', specificationId, JSON.stringify({ product_id: productId }), now()).run();
+  return json({ id: specificationId, product_id: productId, name: name || capacity, capacity, form }, { status: 201 });
+}
+
+async function updateNativeSpecification(request: Request, env: Env, specificationId: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const existing = await env.DB.prepare('SELECT * FROM legacy_product_specs WHERE id = ?').bind(specificationId).first<Record<string, unknown>>();
+  if (!existing) return json({ error: '规格不存在' }, { status: 404 });
+  const body = await readBody(request);
+  const current = parseNativePayload<Record<string, unknown>>(String(existing.payload_json || ''), {});
+  const payload = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
+  const next = { ...current, ...payload };
+  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 100) : String(existing.name || '');
+  const capacity = typeof body.capacity === 'string' ? body.capacity.trim().slice(0, 100) : String(existing.capacity || '');
+  const form = typeof body.form === 'string' ? body.form.trim().slice(0, 100) : String(existing.form || '');
+  await env.DB.prepare('UPDATE legacy_product_specs SET name = ?, capacity = ?, form = ?, payload_json = ? WHERE id = ?')
+    .bind(name || capacity, capacity, form, JSON.stringify({ ...next, name: name || capacity, capacity, form }), specificationId).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, 'update', 'legacy_product_spec', specificationId, JSON.stringify({ product_id: existing.product_id }), now()).run();
+  return json({ id: specificationId, product_id: existing.product_id, name: name || capacity, capacity, form });
+}
+
+async function deleteNativeSpecification(request: Request, env: Env, specificationId: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const existing = await env.DB.prepare('SELECT product_id FROM legacy_product_specs WHERE id = ?').bind(specificationId).first<{ product_id: string }>();
+  if (!existing) return json({ error: '规格不存在' }, { status: 404 });
+  await env.DB.prepare('DELETE FROM legacy_product_specs WHERE id = ?').bind(specificationId).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, 'delete', 'legacy_product_spec', specificationId, JSON.stringify({ product_id: existing.product_id }), now()).run();
+  return json({ deleted: true, id: specificationId });
+}
+
+async function getNavigation(request: Request, env: Env): Promise<Response> {
+  let isAdmin = false;
+  const authorization = request.headers.get('authorization') || '';
+  if (authorization) {
+    const session = await requireUser(request, env);
+    isAdmin = !isResponse(session) && ['super_admin', 'admin'].includes(session.role);
+  }
+  const query = isAdmin
+    ? 'SELECT * FROM navigation_items ORDER BY sort_order, group_name'
+    : 'SELECT * FROM navigation_items WHERE enabled = 1 AND admin_only = 0 ORDER BY sort_order, group_name';
+  const { results } = await env.DB.prepare(query).all<Record<string, unknown>>();
+  return json({ items: results }, {}, publicApiHeaders);
+}
+
+async function updateNavigation(request: Request, env: Env): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const body = await readBody(request);
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (items.length > 100) return json({ error: '导航项数量过多' }, { status: 400 });
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    if (typeof row.tab !== 'string' || typeof row.label !== 'string' || typeof row.group_name !== 'string') continue;
+    await env.DB.prepare('UPDATE navigation_items SET label = ?, group_name = ?, sort_order = ?, enabled = ?, updated_at = ? WHERE tab = ?')
+      .bind(row.label.slice(0, 100), row.group_name.slice(0, 100), Number(row.sort_order) || 0, row.enabled ? 1 : 0, now(), row.tab)
+      .run();
+  }
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, 'update', 'navigation', 'global', JSON.stringify({ count: items.length }), now()).run();
+  return getNavigation(request, env);
 }
 
 async function uploadAsset(request: Request, env: Env, key: string): Promise<Response> {
@@ -397,6 +582,8 @@ async function updateSkuPrice(request: Request, env: Env, skuId: string): Promis
 
 interface PlanRequestItem {
   product_sku_id?: unknown;
+  native_product_id?: unknown;
+  native_specification_id?: unknown;
   dose_per_mu?: unknown;
   dose_unit?: unknown;
   quoted_price?: unknown;
@@ -427,7 +614,9 @@ async function savePlan(request: Request, env: Env): Promise<Response> {
   const crop = await env.DB.prepare('SELECT id FROM crops WHERE name = ?').bind(cropName).first<{ id: string }>();
   const planTitle = cropName + ' · ' + target + (tier ? ' · ' + (tier === 'high' ? '高端配置' : tier === 'middle' ? '中端配置' : '低端配置') : '');
   const validatedItems: Array<{
-    skuId: string;
+    skuId: string | null;
+    nativeProductId: string | null;
+    nativeSpecificationId: string | null;
     productName: string;
     sourceType: string;
     specification: string;
@@ -439,29 +628,32 @@ async function savePlan(request: Request, env: Env): Promise<Response> {
 
   for (const item of items) {
     const skuId = typeof item.product_sku_id === 'string' ? item.product_sku_id.trim() : '';
+    const nativeProductId = typeof item.native_product_id === 'string' ? item.native_product_id.trim() : '';
+    const nativeSpecificationId = typeof item.native_specification_id === 'string' ? item.native_specification_id.trim() : '';
     const doseValue = finiteNumber(item.dose_per_mu);
     const doseUnit = typeof item.dose_unit === 'string' ? item.dose_unit.trim().slice(0, 50) : '';
     const quotedPrice = finiteNumber(item.quoted_price);
-    if (!skuId || !doseUnit) return json({ error: '每个产品都必须选择真实 SKU 并填写用量单位' }, { status: 400 });
+    if ((!skuId && (!nativeProductId || !nativeSpecificationId)) || (skuId && (nativeProductId || nativeSpecificationId)) || !doseUnit) return json({ error: '每个产品都必须选择真实产品规格并填写用量单位' }, { status: 400 });
     if (doseValue !== null && doseValue < 0) return json({ error: '产品用量不能为负数' }, { status: 400 });
     if (quotedPrice !== null && quotedPrice < 0) return json({ error: '产品报价不能为负数' }, { status: 400 });
 
-    const sku = await env.DB.prepare(
-      'SELECT product_skus.id AS sku_id, product_skus.specification, product_skus.source_ref_json, products.name AS product_name, products.source_type FROM product_skus JOIN products ON products.id = product_skus.product_id WHERE product_skus.id = ?',
-    )
-      .bind(skuId)
-      .first<{ sku_id: string; specification: string; source_ref_json: string; product_name: string; source_type: string }>();
-    if (!sku) return json({ error: '方案中包含不存在的产品 SKU，请刷新产品库后重新选择' }, { status: 400 });
-    validatedItems.push({
-      skuId: sku.sku_id,
-      productName: sku.product_name,
-      sourceType: sku.source_type,
-      specification: sku.specification,
-      sourceReference: sku.source_ref_json,
-      doseValue,
-      doseUnit,
-      quotedPrice,
-    });
+    if (nativeProductId && nativeSpecificationId) {
+      const native = await env.DB.prepare('SELECT legacy_products.id AS product_id, legacy_products.name AS product_name, legacy_products.payload_json AS product_payload, legacy_product_specs.id AS specification_id, legacy_product_specs.name AS specification, legacy_product_specs.payload_json AS specification_payload FROM legacy_product_specs JOIN legacy_products ON legacy_products.id = legacy_product_specs.product_id WHERE legacy_products.id = ? AND legacy_product_specs.id = ?')
+        .bind(nativeProductId, nativeSpecificationId)
+        .first<{ product_id: string; product_name: string; product_payload: string; specification_id: string; specification: string; specification_payload: string }>();
+      if (!native) return json({ error: '方案中包含不存在的原生产品规格，请刷新产品库后重新选择' }, { status: 400 });
+      const productPayload = parseJson<Record<string, unknown>>(native.product_payload, {});
+      const nativeSpecPayload = parseJson<Record<string, unknown>>(native.specification_payload, {});
+      validatedItems.push({ skuId: null, nativeProductId: native.product_id, nativeSpecificationId: native.specification_id, productName: native.product_name, sourceType: productPayload.source_type === 'market' ? 'market' : 'own', specification: native.specification || String(nativeSpecPayload.capacity || ''), sourceReference: native.specification_payload, doseValue, doseUnit, quotedPrice });
+    } else {
+      const sku = await env.DB.prepare(
+        'SELECT product_skus.id AS sku_id, product_skus.specification, product_skus.source_ref_json, products.name AS product_name, products.source_type FROM product_skus JOIN products ON products.id = product_skus.product_id WHERE product_skus.id = ?',
+      )
+        .bind(skuId)
+        .first<{ sku_id: string; specification: string; source_ref_json: string; product_name: string; source_type: string }>();
+      if (!sku) return json({ error: '方案中包含不存在的产品 SKU，请刷新产品库后重新选择' }, { status: 400 });
+      validatedItems.push({ skuId: sku.sku_id, nativeProductId: null, nativeSpecificationId: null, productName: sku.product_name, sourceType: sku.source_type, specification: sku.specification, sourceReference: sku.source_ref_json, doseValue, doseUnit, quotedPrice });
+    }
   }
 
   await env.DB.prepare(
@@ -473,9 +665,9 @@ async function savePlan(request: Request, env: Env): Promise<Response> {
   for (let index = 0; index < validatedItems.length; index += 1) {
     const item = validatedItems[index];
     await env.DB.prepare(
-      'INSERT INTO fertilizer_plan_items (id, plan_id, product_sku_id, product_name_snapshot, source_type, application_method, dose_value, dose_unit, usage_count, usage_interval, sort_order, notes, product_sku_specification, quoted_price, source_ref_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO fertilizer_plan_items (id, plan_id, product_sku_id, product_name_snapshot, source_type, application_method, dose_value, dose_unit, usage_count, usage_interval, sort_order, notes, product_sku_specification, quoted_price, source_ref_json, native_product_id, native_specification_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
-      .bind(newId(), planId, item.skuId, item.productName, item.sourceType, '', item.doseValue, item.doseUnit, interval, index, '', item.specification, item.quotedPrice, item.sourceReference)
+      .bind(newId(), planId, item.skuId, item.productName, item.sourceType, '', item.doseValue, item.doseUnit, interval, index, '', item.specification, item.quotedPrice, item.sourceReference, item.nativeProductId, item.nativeSpecificationId)
       .run();
   }
 
@@ -523,6 +715,15 @@ export default {
       if (url.pathname === '/api/auth/register' && request.method === 'POST') return register(request, env);
       if (url.pathname === '/api/auth/me' && request.method === 'GET') return getCurrentUser(request, env);
       if (url.pathname === '/api/catalog/stats' && request.method === 'GET') return getStats(env);
+      if (url.pathname === '/api/native/products' && request.method === 'GET') return getNativeProducts(url, env);
+      if (url.pathname === '/api/native/pesticides' && request.method === 'GET') return getNativePesticides(url, env);
+      if (url.pathname === '/api/native/mixing' && request.method === 'GET') return getNativeMixing(url, env);
+      if (url.pathname === '/api/navigation' && request.method === 'GET') return getNavigation(request, env);
+      if (url.pathname === '/api/admin/navigation' && request.method === 'PATCH') return updateNavigation(request, env);
+      if (url.pathname.startsWith('/api/admin/native/products/') && request.method === 'PATCH') return updateNativeProduct(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length)));
+      if (url.pathname.startsWith('/api/admin/native/products/') && url.pathname.endsWith('/specs') && request.method === 'POST') return createNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length, -'/specs'.length)));
+      if (url.pathname.startsWith('/api/admin/native/specs/') && request.method === 'PATCH') return updateNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/specs/'.length)));
+      if (url.pathname.startsWith('/api/admin/native/specs/') && request.method === 'DELETE') return deleteNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/specs/'.length)));
       if (url.pathname === '/api/products' && request.method === 'GET') return getProducts(url, env);
       if (url.pathname === '/api/pesticides' && request.method === 'GET') return getPesticides(url, env);
       if (url.pathname === '/api/mixing' && request.method === 'GET') return getMixing(url, env);

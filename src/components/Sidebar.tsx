@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard,
   Sprout,
@@ -13,11 +13,58 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
-  Database
+  Database,
+  FlaskConical
 } from 'lucide-react';
 import { NavTab, AppUser, SystemSettings } from '../types';
 import { getSiteText } from '../lib/siteTexts';
 import { EditableText, EditableImage } from '../context/VisualEditContext';
+
+type NavigationConfig = { tab: string; label: string; group_name: string; sort_order: number; enabled: number | boolean; admin_only?: number | boolean };
+type SidebarItem = { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string | null; badgeColor?: string; hasRedDot?: boolean; visible: boolean; groupName?: string; sortOrder?: number };
+
+const NavigationGroupList: React.FC<{
+  groups: Array<[string, SidebarItem[]]>;
+  activeTab: NavTab;
+  setActiveTab: (tab: NavTab) => void;
+  isCollapsed: boolean;
+}> = ({ groups, activeTab, setActiveTab, isCollapsed }) => (
+  <>
+    {groups.map(([groupName, items], groupIndex) => (
+      <React.Fragment key={groupName}>
+        <div className={(groupIndex ? 'pt-4 ' : '') + 'px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400'}>
+          {!isCollapsed ? groupName : '•••'}
+        </div>
+        {[...items].sort((left, right) => (left.sortOrder || 0) - (right.sortOrder || 0)).map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={'w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all relative ' + (isActive ? 'bg-emerald-600 text-white shadow-md font-bold' : 'text-slate-300 hover:bg-slate-800/80 hover:text-white')}
+              title={isCollapsed ? item.label : undefined}
+            >
+              <div className="relative">
+                <Icon className={'w-4 h-4 shrink-0 ' + (isActive ? 'text-white' : 'text-slate-400')} />
+                {item.hasRedDot && <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-slate-900 animate-pulse" />}
+              </div>
+              {!isCollapsed && (
+                <div className="flex-1 text-left flex items-center justify-between min-w-0">
+                  <span className="truncate">{item.label}</span>
+                  <div className="flex items-center gap-1.5">
+                    {item.hasRedDot && <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />}
+                    {item.badge && <span className={'text-[10px] px-1.5 py-0.2 rounded-full font-bold ' + (item.badgeColor || 'bg-slate-700 text-slate-300')}>{item.badge}</span>}
+                  </div>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </React.Fragment>
+    ))}
+  </>
+);
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -89,12 +136,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       visible: true,
     },
     {
-      id: 'legacy_pesticide' as NavTab,
-      label: getSiteText('nav_product_library_label', settings?.siteTexts, settings.navTitles?.product_library || '原版农药混配与产品资料库'),
+      id: 'pesticide_mixing' as NavTab,
+      label: '产品混配性查询',
+      icon: FlaskConical,
+      badge: String(totalPesticideIngredients) + ' 药',
+      badgeColor: 'bg-amber-500 text-white font-bold',
+      desc: '农药成分与总站产品的混配规则查询',
+      visible: true,
+    },
+    {
+      id: 'product_catalog' as NavTab,
+      label: '产品信息库',
       icon: Database,
-      badge: String(totalProductCatalogCount) + ' 品 / ' + String(totalPesticideIngredients) + ' 药',
+      badge: String(totalProductCatalogCount) + ' 品',
       badgeColor: 'bg-indigo-500 text-white font-bold',
-      desc: '原版布局、产品资料、农药库与混配管理后台',
+      desc: '产品属性、规格、价格、图片与登记信息',
       visible: true,
     },
     {
@@ -138,6 +194,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       visible: isAdmin,
     },
     {
+      id: 'navigation_settings' as NavTab,
+      label: '导航排序与分组',
+      icon: SlidersHorizontal,
+      badge: '管理员',
+      badgeColor: 'bg-purple-600 text-white font-bold',
+      desc: '调整左侧导航顺序、分组、名称和显示状态',
+      visible: isAdmin,
+    },
+    {
       id: 'users_approval' as NavTab,
       label: settings.navTitles?.users_approval || '成员与权限管理',
       icon: Users,
@@ -147,6 +212,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
       visible: isAdmin,
     },
   ].filter((item) => item.visible);
+
+  const fallbackItems = [...menuItems, ...adminMenuItems] as SidebarItem[];
+  const [remoteNavigation, setRemoteNavigation] = useState<NavigationConfig[]>([]);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('hmht_api_token') || '';
+    fetch('/api/navigation', token ? { headers: { authorization: 'Bearer ' + token } } : undefined)
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload: { items?: NavigationConfig[] } | null) => setRemoteNavigation(payload?.items || []))
+      .catch(() => setRemoteNavigation([]));
+  }, [currentUser?.id, isAdmin]);
+
+  const configuredItems = useMemo<SidebarItem[]>(() => {
+    if (!remoteNavigation.length) return fallbackItems;
+    const byTab = new Map(fallbackItems.map((item) => [item.id, item]));
+    const result: SidebarItem[] = [];
+    for (const config of remoteNavigation) {
+      const item = byTab.get(config.tab as NavTab);
+      if (!item || !item.visible || !config.enabled || (config.admin_only && !isAdmin)) continue;
+      result.push({ ...item, label: config.label || item.label, groupName: config.group_name, sortOrder: Number(config.sort_order) || 0 });
+    }
+    return result.length ? result : fallbackItems;
+  }, [fallbackItems, isAdmin, remoteNavigation]);
+
+  const navigationGroups = useMemo(() => {
+    const groups = new Map<string, SidebarItem[]>();
+    for (const item of configuredItems) {
+      const group = item.groupName || (item.id === 'admin_settings' || item.id === 'users_approval' || item.id === 'navigation_settings' ? '管理与安全中枢' : '核心功能智库');
+      groups.set(group, [...(groups.get(group) || []), item]);
+    }
+    return [...groups.entries()].sort(([, left], [, right]) => (left[0]?.sortOrder || 0) - (right[0]?.sortOrder || 0));
+  }, [configuredItems]);
+
+  const configuredMainItems = configuredItems.filter((item) => !['admin_settings', 'users_approval', 'navigation_settings'].includes(item.id));
+  const configuredAdminItems = configuredItems.filter((item) => ['admin_settings', 'users_approval', 'navigation_settings'].includes(item.id));
+  const mainGroupName = configuredMainItems[0]?.groupName || '核心功能智库';
+  const adminGroupName = configuredAdminItems[0]?.groupName || '管理与安全中枢';
 
   return (
     <aside
@@ -212,11 +314,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Main Navigation Items */}
         <div className="p-3 space-y-1">
+          {remoteNavigation.length > 0 && <NavigationGroupList groups={navigationGroups} activeTab={activeTab} setActiveTab={setActiveTab} isCollapsed={isCollapsed} />}
+          {remoteNavigation.length === 0 && (
+            <>
           <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            {!isCollapsed ? '核心功能智库' : '•••'}
+            {!isCollapsed ? mainGroupName : '•••'}
           </div>
 
-          {menuItems.map((item) => {
+          {configuredMainItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
 
@@ -262,13 +367,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
 
           {/* Admin Management Section */}
-          {adminMenuItems.length > 0 && (
+          {configuredAdminItems.length > 0 && (
             <>
               <div className="pt-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                {!isCollapsed ? '管理与安全中枢' : '•••'}
+                {!isCollapsed ? adminGroupName : '•••'}
               </div>
 
-              {adminMenuItems.map((item) => {
+              {configuredAdminItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
 
@@ -302,6 +407,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                 );
               })}
+            </>
+          )}
             </>
           )}
         </div>

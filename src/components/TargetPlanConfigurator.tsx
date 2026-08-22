@@ -10,7 +10,10 @@ type DoseUnit = '包装/亩' | 'kg/亩' | 'L/亩' | 'g/亩' | 'ml/亩';
 
 interface ProductSku {
   id: string;
+  native?: boolean;
   specification: string;
+  name?: string;
+  capacity?: string;
   unit?: string;
   inner_pack_count?: number | null;
   price?: number | null;
@@ -56,9 +59,12 @@ const TIER_META: Record<TargetTier, { label: string; detail: string; className: 
 function normalizeProducts(source: CatalogProduct[]): CatalogProduct[] {
   return source.map((product) => ({
     ...product,
+    source_type: product.source_type || 'own',
     skus: (product.skus || product.specifications || []).map((sku, index) => ({
       ...sku,
       id: (sku as Partial<ProductSku>).id || `${product.id}-snapshot-${index}`,
+      specification: sku.specification || sku.name || sku.capacity || '规格',
+      native: Boolean((sku as Partial<ProductSku>).id),
     })),
   }));
 }
@@ -90,7 +96,7 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
     let active = true;
     const loadCatalog = async () => {
       try {
-        const response = await fetch('/api/products?limit=200');
+        const response = await fetch('/api/native/products?limit=200');
         if (!response.ok) throw new Error('D1 API unavailable');
         const payload = await response.json() as { products?: CatalogProduct[] };
         if (!active) return;
@@ -169,7 +175,10 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
       description: generatedDescription,
       items: rows.map((row) => ({
         product_id: row.product?.id || '', product_name: row.product?.name || '资料待补充',
-        product_sku_id: row.sku?.id || '', specification: row.sku?.specification || '',
+        product_sku_id: row.sku?.native ? '' : row.sku?.id || '',
+        native_product_id: row.sku?.native ? row.product?.id || '' : '',
+        native_specification_id: row.sku?.native ? row.sku?.id || '' : '',
+        specification: row.sku?.specification || '',
         dose_per_mu: row.item.dosePerMu, dose_unit: row.item.doseUnit, quoted_price: row.price,
       })),
     };

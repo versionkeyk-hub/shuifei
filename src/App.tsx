@@ -21,7 +21,9 @@ import { LocalImporterView } from './components/LocalImporterView';
 import { ExportStudioView } from './components/ExportStudioView';
 import { ProductQuizView } from './components/ProductQuizView';
 import { CatalogStats, ProductLibraryView } from './components/ProductLibraryView';
-import { LegacyPesticideView } from './components/LegacyPesticideView';
+import { NativePesticideMixingView } from './components/NativePesticideMixingView';
+import { NativeProductCatalogView } from './components/NativeProductCatalogView';
+import { NavigationSettingsView } from './components/NavigationSettingsView';
 import { AdminSettingsView } from './components/AdminSettingsView';
 import { UserApprovalView } from './components/UserApprovalView';
 import { CommunityView } from './components/CommunityView';
@@ -104,7 +106,7 @@ export const App: React.FC = () => {
   });
 
   // Navigation & View State
-  const [activeTab, setActiveTab] = useState<NavTab>(() => window.location.pathname === '/admin' ? 'legacy_pesticide' : 'dashboard');
+  const [activeTab, setActiveTab] = useState<NavTab>(() => window.location.pathname === '/admin' ? 'admin_settings' : 'dashboard');
   const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
   const [cropInitialTab, setCropInitialTab] = useState<'scheme' | 'pest'>('scheme');
   const [previousSourceTab, setPreviousSourceTab] = useState<NavTab>('dashboard');
@@ -148,6 +150,15 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('hmht_community_comments', JSON.stringify(comments));
   }, [comments]);
+
+  useEffect(() => {
+    fetch('/api/catalog/stats')
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload: CatalogStats | null) => {
+        if (payload) setCatalogStats((current) => ({ ...current, ...payload, source: 'api' }));
+      })
+      .catch(() => undefined);
+  }, []);
 
   // Handle Crop Selection & Navigation with History Source Tracking
   const handleSelectCrop = (cropId: string, initialTab: 'scheme' | 'pest' = 'scheme', source?: NavTab) => {
@@ -405,7 +416,7 @@ export const App: React.FC = () => {
               }}
               onOpenProductQuiz={() => setActiveTab('product_quiz')}
               catalogStats={catalogStats}
-              onNavigateToProductLibrary={() => setActiveTab('legacy_pesticide')}
+              onNavigateToProductLibrary={() => setActiveTab('product_catalog')}
               onOpenQuickAI={() => setActiveTab('local_import')}
               onOpenNewScheme={() => {
                 setSelectedCropId(crops[0]?.id || null);
@@ -522,9 +533,11 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'legacy_pesticide' && (
-            <LegacyPesticideView initialMode={window.location.pathname === '/admin' ? 'admin' : 'front'} />
-          )}
+          {activeTab === 'pesticide_mixing' && <NativePesticideMixingView />}
+
+          {activeTab === 'product_catalog' && <NativeProductCatalogView />}
+
+          {activeTab === 'navigation_settings' && <NavigationSettingsView />}
 
           {activeTab === 'local_import' && (
             <LocalImporterView
