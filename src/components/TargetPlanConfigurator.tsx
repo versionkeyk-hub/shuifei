@@ -79,7 +79,7 @@ function normalizeProducts(source: CatalogProduct[]): CatalogProduct[] {
       ...sku,
       id: (sku as Partial<ProductSku>).id || `${product.id}-snapshot-${index}`,
       specification: sku.specification || sku.name || sku.capacity || '规格',
-      native: Boolean((sku as Partial<ProductSku>).id),
+      native: (sku as Partial<ProductSku>).native !== false,
       price: sku.price ?? sku.package?.price ?? sku.payload?.price ?? null,
     })),
   }));

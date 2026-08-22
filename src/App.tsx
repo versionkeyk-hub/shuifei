@@ -26,6 +26,7 @@ import { NativeProductCatalogView } from './components/NativeProductCatalogView'
 import { NavigationSettingsView } from './components/NavigationSettingsView';
 import { AdminSettingsView } from './components/AdminSettingsView';
 import { UserApprovalView } from './components/UserApprovalView';
+import { AdminConsoleView } from './components/AdminConsoleView';
 import { CommunityView } from './components/CommunityView';
 import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { AuthModal } from './components/AuthModal';
@@ -377,6 +378,13 @@ export const App: React.FC = () => {
   const pendingUsersCount = users.filter((u) => u.status === 'pending').length;
   const activeSchemesCount = schemes.filter((s) => !s.isDeleted).length;
 
+  if (adminPath) {
+    return <>
+      <AdminConsoleView currentUser={currentUser} onLogout={handleLogout} onOpenLogin={() => setIsAuthModalOpen(true)} />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} />
+    </>;
+  }
+
   return (
     <VisualEditProvider settings={settings} currentUser={currentUser} onUpdateSettings={handleUpdateSettings}>
       <div className="flex h-screen bg-slate-100/70 font-sans text-slate-800 antialiased overflow-hidden selection:bg-emerald-500 selection:text-white">
@@ -384,6 +392,10 @@ export const App: React.FC = () => {
         <Sidebar
         activeTab={activeTab}
         setActiveTab={(tab) => {
+          if (['admin_settings', 'users_approval'].includes(tab) && currentUser && ['super_admin', 'admin'].includes(currentUser.role)) {
+            window.location.assign('/admin');
+            return;
+          }
           setActiveTab(tab);
           if (tab !== 'crops') {
             setSelectedCropId(null);

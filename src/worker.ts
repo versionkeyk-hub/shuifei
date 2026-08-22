@@ -258,16 +258,21 @@ async function getPesticides(url: URL, env: Env): Promise<Response> {
 }
 
 async function getStats(env: Env): Promise<Response> {
-  const [products, skus, pesticides, assets, audits] = await Promise.all([
-    env.DB.prepare('SELECT COUNT(*) AS count FROM legacy_products').first<{ count: number }>(),
+  const [legacyProducts, legacySpecs, modernProducts, modernSkus, pesticides, assets, audits] = await Promise.all([
+    env.DB.prepare('SELECT id, name, payload_json FROM legacy_products').all<Record<string, unknown>>(),
     env.DB.prepare('SELECT COUNT(*) AS count FROM legacy_product_specs').first<{ count: number }>(),
+    env.DB.prepare('SELECT id, name FROM products').all<Record<string, unknown>>(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM product_skus').first<{ count: number }>(),
     env.DB.prepare('SELECT COUNT(*) AS count FROM legacy_pesticides').first<{ count: number }>(),
     env.DB.prepare("SELECT COUNT(*) AS count FROM legacy_products WHERE payload_json LIKE '%\"images\"%'").first<{ count: number }>(),
     env.DB.prepare('SELECT imported_at, record_counts_json FROM import_audits ORDER BY imported_at DESC LIMIT 1').first<{ imported_at: string; record_counts_json: string }>(),
   ]);
+  const unmatchedModernProducts = modernProducts.results.filter((modernProduct) => !legacyProducts.results.some((legacyProduct) => modernProductMatchesNative(legacyProduct, modernProduct))).length;
   return json({
-    products: products?.count || 0,
-    skus: skus?.count || 0,
+    products: legacyProducts.results.length + unmatchedModernProducts,
+    skus: (legacySpecs?.count || 0) + (modernSkus?.count || 0),
+    source_products: modernProducts.results.length,
+    source_skus: modernSkus?.count || 0,
     pesticides: pesticides?.count || 0,
     products_with_legacy_images: assets?.count || 0,
     last_import: audits ? { imported_at: audits.imported_at, record_counts: parseJson(audits.record_counts_json, {}) } : null,
@@ -307,9 +312,11 @@ function mergePesticideExtras(component: string, related: unknown, extraMap: Map
   const names = [component, ...(Array.isArray(related) ? related.map(String) : [])];
   const entries = names.map((name) => extraMap.get(name)).filter((value): value is NativePayload => Boolean(value));
   if (!entries.length) return null;
-  const phValues = [...new Set(entries.map((entry) => String(entry.ph || '')).filter(Boolean))];
+  const merged = entries.reduce<NativePayload>((result, entry) => ({ ...result, ...entry }), {});
+  const phValues = [...new Set(entries.map((entry) => String(entry.ph_diluted_250 ?? entry.ph ?? '')).filter(Boolean))];
   const contraindications = [...new Set(entries.map((entry) => String(entry.contraindications || '')).filter(Boolean))];
   return {
+    ...merged,
     component,
     ...(phValues.length ? { ph: phValues.join(' / ') } : {}),
     ...(contraindications.length ? { contraindications: contraindications.join('\n\n') } : {}),
@@ -319,7 +326,7 @@ function mergePesticideExtras(component: string, related: unknown, extraMap: Map
 function pesticidePHView(extra: NativePayload | null): NativePayload | null {
   if (!extra) return null;
   const diluted = parsePH(extra.ph_diluted_250 ?? extra.ph);
-  if (diluted === null) return { ...extra, ph: null, ph_diluted_250: null, ph_general_use: null, ph_note: '暂无登记 pH 资料' };
+  if (diluted === null) return { ...extra, ph: null, ph_diluted_250: null, ph_general_use: null, ph_note: '' };
   const generalUse = roundPH(diluted + (7 - diluted) * 0.8);
   return { ...extra, ph: diluted, ph_diluted_250: diluted, ph_general_use: generalUse, ph_note: '农药统一按登记/资料中的 1:250 倍稀释 pH 展示；一般使用浓度为向中性值估算的参考值' };
 }
@@ -366,7 +373,7 @@ function sanitizeProductPayload(payload: NativePayload, role: string): NativePay
       profile.ph_label_range = labelRange;
       profile.ph_display_note = '技术视图：按 1:250 倍稀释测试值展示；用户配肥后值按管理员设定或 80% 向中性值估算';
     } else {
-      profile.ph = labelRange || '暂无包装标注';
+      profile.ph = labelRange;
       delete profile.ph_diluted_250;
       delete profile.ph_after_fertilizer;
       profile.ph_display_note = '农户/经销商视图：显示包装标注 pH 范围';
@@ -392,6 +399,85 @@ function augmentNativeSpecification(row: Record<string, unknown>): Record<string
     price_tier: payload.price_tier || '标准价',
   };
   return { ...row, payload, package: packageData };
+}
+
+function normalizeCatalogName(value: unknown): string {
+  return String(value || '').toLowerCase().replace(/[\s·.。()（）_-]/g, '');
+}
+
+function modernProductMatchesNative(nativeProduct: Record<string, unknown>, modernProduct: Record<string, unknown>): boolean {
+  const nativeName = normalizeCatalogName(nativeProduct.name);
+  const nativePayload = parseNativePayload<NativePayload>(String(nativeProduct.payload_json || ''), {});
+  const aliases = [nativeName, ...(Array.isArray(nativePayload.aliases) ? nativePayload.aliases.map(normalizeCatalogName) : [])].filter(Boolean);
+  const candidate = normalizeCatalogName(modernProduct.name);
+  return aliases.some((alias) => alias === candidate || alias.includes(candidate) || candidate.includes(alias));
+}
+
+function mergeUnifiedSpecifications(
+  nativeProduct: Record<string, unknown>,
+  legacySpecifications: Record<string, unknown>[],
+  modernProducts: Record<string, unknown>[],
+  modernSkus: Record<string, unknown>[],
+  modernProductOwners?: Map<string, string>,
+): Record<string, unknown>[] {
+  const nativeName = normalizeCatalogName(nativeProduct.name);
+  const nativePayload = parseNativePayload<NativePayload>(String(nativeProduct.payload_json || ''), {});
+  const aliases = [nativeName, ...(Array.isArray(nativePayload.aliases) ? nativePayload.aliases.map(normalizeCatalogName) : [])].filter(Boolean);
+  const matches = modernProducts.filter((product) => {
+    const candidate = normalizeCatalogName(product.name);
+    const matched = aliases.some((alias) => alias === candidate || alias.includes(candidate) || candidate.includes(alias));
+    const owner = modernProductOwners?.get(String(product.id));
+    return matched && (!modernProductOwners || owner === String(nativeProduct.id) || !owner);
+  });
+  const matchedIds = new Set(matches.map((product) => String(product.id)));
+  const modernRows = modernSkus.filter((sku) => matchedIds.has(String(sku.product_id))).map((sku) => {
+    const source = parseJson<Record<string, unknown>>(String(sku.source_ref_json || ''), {});
+    const packCount = finiteNumber(sku.inner_pack_count);
+    const casePrice = finiteNumber(sku.price);
+    const unitPrice = casePrice !== null && packCount && packCount > 1 ? roundPH(casePrice / packCount) : casePrice;
+    const payload = {
+      sku: sku.sku || '',
+      specification: sku.specification || '',
+      unit: sku.unit || '',
+      inner_pack_count: sku.inner_pack_count ?? null,
+      price: casePrice,
+      unit_price: unitPrice,
+      case_price: casePrice,
+      price_tier: sku.price_tier || '标准价',
+      product_type: sku.product_type || '',
+      source_ref: source,
+      source_model: 'product_skus',
+      modern_product_id: sku.product_id,
+      modern_sku_id: sku.id,
+    };
+    const specificationText = String(sku.specification || '');
+    const capacityMatch = specificationText.match(/^(.+?)[*xX×](\d+)$/);
+    const capacity = capacityMatch ? capacityMatch[1].trim() : specificationText;
+    return {
+      id: String(sku.id),
+      product_id: nativeProduct.id,
+      name: specificationText,
+      capacity,
+      form: sku.product_type || '',
+      payload,
+      package: {
+        unit_name: sku.unit || '',
+        inner_pack_count: packCount,
+        inner_pack_unit: sku.unit || '',
+        unit_price: unitPrice,
+        case_price: casePrice,
+        price: casePrice,
+        price_tier: sku.price_tier || '标准价',
+        sku: sku.sku || '',
+        source_ref: source,
+      },
+      source: 'product_skus',
+      editable: false,
+      native: false,
+    };
+  });
+  const legacyRows = legacySpecifications.map((specification) => ({ ...specification, source: 'legacy_product_specs', editable: true, native: true }));
+  return [...legacyRows, ...modernRows];
 }
 
 function pesticideFlags(payload: NativePayload): NativePayload {
@@ -483,8 +569,18 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
       ? env.DB.prepare('SELECT * FROM legacy_products WHERE name LIKE ? OR category LIKE ? OR payload_json LIKE ? ORDER BY name LIMIT ?').bind(pattern, pattern, pattern, limit)
       : env.DB.prepare('SELECT * FROM legacy_products ORDER BY name LIMIT ?').bind(limit);
   const { results } = await statement.all<Record<string, string>>();
+  const modernProducts = await env.DB.prepare('SELECT * FROM products').all<Record<string, unknown>>();
+  const modernSkus = await env.DB.prepare('SELECT * FROM product_skus ORDER BY product_id, specification').all<Record<string, unknown>>();
   const viewerRole = await getViewerRole(request || new Request(url.toString()), env);
   const ids = results.map((item) => item.id);
+  const modernProductOwners = new Map<string, string>();
+  for (const row of results) {
+    for (const modernProduct of modernProducts.results) {
+      if (modernProductMatchesNative(row, modernProduct) && !modernProductOwners.has(String(modernProduct.id))) {
+        modernProductOwners.set(String(modernProduct.id), String(row.id));
+      }
+    }
+  }
   const specsByProduct = new Map<string, Record<string, unknown>[]>();
   const compatibilityByProduct = new Map<string, Record<string, unknown>[]>();
   if (ids.length) {
@@ -502,15 +598,60 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
       compatibilityByProduct.set(productKey, [...(compatibilityByProduct.get(productKey) || []), item]);
     }
   }
-  const products = results.map((row) => ({
-    ...sanitizeProductPayload(parseNativePayload<Record<string, unknown>>(row.payload_json, {}), viewerRole),
-    id: row.id,
-    name: row.name,
-    category: row.category,
-    specifications: specsByProduct.get(row.id) || [],
-    pesticide_compat: compatibilityByProduct.get(row.id) || [],
-  }));
-  return json({ products }, {}, publicApiHeaders);
+  const assignedModernSkuIds = new Set<string>();
+  const products = results.map((row) => {
+    const specifications = mergeUnifiedSpecifications(row, specsByProduct.get(row.id) || [], modernProducts.results, modernSkus.results, modernProductOwners)
+      .filter((specification) => {
+        if (specification.source !== 'product_skus') return true;
+        const skuId = String(specification.id || '');
+        if (assignedModernSkuIds.has(skuId)) return false;
+        assignedModernSkuIds.add(skuId);
+        return true;
+      });
+    return {
+      ...sanitizeProductPayload(parseNativePayload<Record<string, unknown>>(row.payload_json, {}), viewerRole),
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      specifications,
+      sku_count: specifications.length,
+      pesticide_compat: compatibilityByProduct.get(row.id) || [],
+    };
+  });
+  const visibleModernProducts = modernProducts.results.filter((product) => {
+    if (productId) return false;
+    if (!query) return true;
+    const text = [product.name, product.brand, product.ingredients_json, product.legacy_details_json].map((value) => String(value || '')).join(' ');
+    return text.toLowerCase().includes(query.toLowerCase());
+  });
+  const matchedModernIds = new Set(results.flatMap((row) => modernProducts.results.filter((product) => modernProductMatchesNative(row, product)).map((product) => String(product.id))));
+  const syntheticProducts = visibleModernProducts.filter((product) => !matchedModernIds.has(String(product.id))).map((product) => {
+    const payload = {
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      source_type: product.source_type,
+      form: product.form,
+      usage: product.usage,
+      plain_usage: product.plain_usage,
+      ingredients: parseJson(product.ingredients_json as string, {}),
+      legacy_details: parseJson(product.legacy_details_json as string, {}),
+      images: parseJson(product.images_json as string, []),
+      mix_flags: parseJson(product.mix_flags_json as string, {}),
+      needs_verification: Boolean(product.needs_verification),
+    };
+    const syntheticRow = { id: String(product.id), name: String(product.name || ''), category: String(product.form || product.brand || ''), payload_json: JSON.stringify(payload) };
+    const specifications = mergeUnifiedSpecifications(syntheticRow, [], modernProducts.results, modernSkus.results, modernProductOwners)
+      .filter((specification) => {
+        if (specification.source !== 'product_skus') return true;
+        const skuId = String(specification.id || '');
+        if (assignedModernSkuIds.has(skuId)) return false;
+        assignedModernSkuIds.add(skuId);
+        return true;
+      });
+    return { ...sanitizeProductPayload(payload, viewerRole), id: syntheticRow.id, name: syntheticRow.name, category: syntheticRow.category, brand: product.brand, source_type: product.source_type, specifications, sku_count: specifications.length, pesticide_compat: [] };
+  });
+  return json({ products: [...products, ...syntheticProducts].slice(0, limit) }, {}, publicApiHeaders);
 }
 
 async function getNativePesticides(url: URL, env: Env, request?: Request): Promise<Response> {
@@ -518,9 +659,13 @@ async function getNativePesticides(url: URL, env: Env, request?: Request): Promi
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 10000);
   const pattern = '%' + query + '%';
   const statement = query
-    ? env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides WHERE component LIKE ? OR payload_json LIKE ? ORDER BY component LIMIT ?').bind(pattern, pattern, limit)
-    : env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides ORDER BY component LIMIT ?').bind(limit);
+    ? env.DB.prepare('SELECT p.component, p.payload_json FROM legacy_pesticides p LEFT JOIN pesticide_search_stats s ON s.component = p.component WHERE p.component LIKE ? OR p.payload_json LIKE ? ORDER BY COALESCE(s.search_count, 0) DESC, COALESCE(s.select_count, 0) DESC, p.component LIMIT ?').bind(pattern, pattern, limit)
+    : env.DB.prepare('SELECT p.component, p.payload_json FROM legacy_pesticides p LEFT JOIN pesticide_search_stats s ON s.component = p.component ORDER BY COALESCE(s.search_count, 0) DESC, COALESCE(s.select_count, 0) DESC, COALESCE(s.last_selected_at, "") DESC, p.component LIMIT ?').bind(limit);
   const { results } = await statement.all<{ component: string; payload_json: string }>();
+  if (query && results.length) {
+    const timestamp = now();
+    await Promise.all(results.slice(0, 100).map((item) => env.DB.prepare('INSERT INTO pesticide_search_stats (component, search_count, last_searched_at) VALUES (?, 1, ?) ON CONFLICT(component) DO UPDATE SET search_count = search_count + 1, last_searched_at = excluded.last_searched_at').bind(item.component, timestamp).run()));
+  }
   const extras = await env.DB.prepare('SELECT component, payload_json FROM legacy_pesticide_extras').all<{ component: string; payload_json: string }>();
   const extraMap = new Map<string, NativePayload>(extras.results.map((item) => [item.component, parseNativePayload<NativePayload>(item.payload_json, {})]));
   const viewerRole = await getViewerRole(request || new Request(url.toString()), env);
@@ -534,6 +679,7 @@ async function getNativePesticides(url: URL, env: Env, request?: Request): Promi
 async function getNativeMixing(url: URL, env: Env, request?: Request): Promise<Response> {
   const component = url.searchParams.get('component')?.trim() || '';
   if (!component) return json({ error: '请选择农药有效成分' }, { status: 400 });
+  await env.DB.prepare('INSERT INTO pesticide_search_stats (component, select_count, last_selected_at) VALUES (?, 1, ?) ON CONFLICT(component) DO UPDATE SET select_count = select_count + 1, last_selected_at = excluded.last_selected_at').bind(component, now()).run();
   const pesticide = await env.DB.prepare('SELECT component, payload_json FROM legacy_pesticides WHERE component = ?').bind(component).first<{ component: string; payload_json: string }>();
   if (!pesticide) return json({ error: '未找到该农药成分' }, { status: 404 });
   const [products, compatibility, extras] = await Promise.all([
@@ -580,6 +726,21 @@ async function updateNativePesticide(request: Request, env: Env, component: stri
   return json({ pesticide: next });
 }
 
+async function createNativePesticide(request: Request, env: Env): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const body = await readBody(request);
+  const component = typeof body.component === 'string' ? body.component.trim().slice(0, 200) : '';
+  if (!component) return json({ error: '农药名称不能为空' }, { status: 400 });
+  const exists = await env.DB.prepare('SELECT component FROM legacy_pesticides WHERE component = ?').bind(component).first();
+  if (exists) return json({ error: '该农药已存在' }, { status: 409 });
+  const payload = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
+  const next = { ...payload, component };
+  await env.DB.prepare('INSERT INTO legacy_pesticides (component, payload_json, updated_at) VALUES (?, ?, ?)').bind(component, JSON.stringify(next), now()).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(newId(), actor.id, 'create', 'legacy_pesticide', component, JSON.stringify({ fields: Object.keys(next) }), now()).run();
+  return json({ pesticide: next }, { status: 201 });
+}
+
 async function updateNativeCompatibility(request: Request, env: Env, productId: string): Promise<Response> {
   const actor = await requireUser(request, env, ['super_admin', 'admin']);
   if (isResponse(actor)) return actor;
@@ -610,9 +771,35 @@ async function updateNativeProduct(request: Request, env: Env, productId: string
   const actor = await requireUser(request, env, ['super_admin', 'admin']);
   if (isResponse(actor)) return actor;
   const existing = await env.DB.prepare('SELECT payload_json FROM legacy_products WHERE id = ?').bind(productId).first<{ payload_json: string }>();
-  if (!existing) return json({ error: '产品不存在' }, { status: 404 });
   const body = await readBody(request);
   const patch = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
+  if (!existing) {
+    const modern = await env.DB.prepare('SELECT * FROM products WHERE id = ?').bind(productId).first<Record<string, unknown>>();
+    if (!modern) return json({ error: '产品不存在' }, { status: 404 });
+    const current = {
+      id: modern.id,
+      name: modern.name,
+      brand: modern.brand,
+      source_type: modern.source_type,
+      form: modern.form,
+      usage: modern.usage,
+      plain_usage: modern.plain_usage,
+      ingredients: parseJson(modern.ingredients_json as string, {}),
+      legacy_details: parseJson(modern.legacy_details_json as string, {}),
+      images: parseJson(modern.images_json as string, []),
+      mix_flags: parseJson(modern.mix_flags_json as string, {}),
+    } as Record<string, unknown>;
+    const next = { ...current, ...patch };
+    const name = typeof next.name === 'string' ? next.name.trim().slice(0, 200) : String(modern.name || '');
+    const ingredients = next.ingredients && typeof next.ingredients === 'object' ? next.ingredients : {};
+    const images = Array.isArray(next.images) ? next.images : [];
+    const mixFlags = next.mix_flags && typeof next.mix_flags === 'object' ? next.mix_flags : {};
+    await env.DB.prepare('UPDATE products SET name = ?, form = ?, usage = ?, plain_usage = ?, ingredients_json = ?, images_json = ?, mix_flags_json = ?, legacy_details_json = ?, updated_at = ? WHERE id = ?')
+      .bind(name, String(next.form || modern.form || ''), String(next.usage || modern.usage || ''), String(next.plain_usage || modern.plain_usage || ''), JSON.stringify(ingredients), JSON.stringify(images), JSON.stringify(mixFlags), JSON.stringify(next.legacy_details || {}), now(), productId).run();
+    await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(newId(), actor.id, 'update', 'product', productId, JSON.stringify({ fields: Object.keys(patch) }), now()).run();
+    return json({ product: { ...next, name, images } });
+  }
   const current = parseNativePayload<Record<string, unknown>>(existing.payload_json, {});
   const next: Record<string, unknown> = { ...current, ...patch, id: productId };
   const name = typeof next.name === 'string' ? next.name.trim().slice(0, 200) : '';
@@ -823,6 +1010,15 @@ async function uploadAsset(request: Request, env: Env, key: string): Promise<Res
   return json({ key: safeKey, url: '/api/assets/' + safeKey }, { status: 201 });
 }
 
+async function deleteAsset(request: Request, env: Env, key: string): Promise<Response> {
+  const user = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(user)) return user;
+  const safeKey = key.replace(/^\/+/, '').replace(/\.\./g, '');
+  if (!safeKey.startsWith('products/')) return json({ error: '仅允许删除产品图片' }, { status: 400 });
+  await (env.PRODUCT_ASSETS as R2Bucket & { delete(key: string): Promise<void> }).delete(safeKey);
+  return json({ deleted: true, key: safeKey });
+}
+
 async function getAsset(env: Env, key: string): Promise<Response> {
   const safeKey = key.replace(/^\/+/, '').replace(/\.\./g, '');
   const asset = await env.PRODUCT_ASSETS.get(safeKey);
@@ -843,10 +1039,36 @@ const managedStatuses = ['pending', 'approved', 'rejected', 'disabled'];
 async function listAdminUsers(request: Request, env: Env): Promise<Response> {
   const user = await requireUser(request, env, ['super_admin']);
   if (isResponse(user)) return user;
-  const { results } = await env.DB.prepare(
-    "SELECT id, username, display_name, role, status, created_at, updated_at, migrated_from FROM users ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, created_at DESC LIMIT 200",
-  ).all<Record<string, unknown>>();
+  const url = new URL(request.url);
+  const query = url.searchParams.get('query')?.trim() || '';
+  const status = url.searchParams.get('status')?.trim() || '';
+  const pattern = '%' + query + '%';
+  const where = [query ? '(username LIKE ? OR display_name LIKE ? OR role LIKE ?)' : '', status ? 'status = ?' : ''].filter(Boolean).join(' AND ');
+  const statement = env.DB.prepare('SELECT id, username, display_name, role, status, created_at, updated_at, migrated_from FROM users ' + (where ? 'WHERE ' + where + ' ' : '') + "ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, created_at DESC LIMIT 500");
+  const { results } = query && status
+    ? await statement.bind(pattern, pattern, pattern, status).all<Record<string, unknown>>()
+    : query
+      ? await statement.bind(pattern, pattern, pattern).all<Record<string, unknown>>()
+      : status
+        ? await statement.bind(status).all<Record<string, unknown>>()
+        : await statement.all<Record<string, unknown>>();
   return json({ users: results });
+}
+
+async function exportCatalogData(request: Request, env: Env): Promise<Response> {
+  const user = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(user)) return user;
+  const [products, specs, compatibility, pesticides, extras, users, navigation, settings] = await Promise.all([
+    env.DB.prepare('SELECT * FROM legacy_products').all(),
+    env.DB.prepare('SELECT * FROM legacy_product_specs').all(),
+    env.DB.prepare('SELECT * FROM legacy_product_compatibility').all(),
+    env.DB.prepare('SELECT * FROM legacy_pesticides').all(),
+    env.DB.prepare('SELECT * FROM legacy_pesticide_extras').all(),
+    env.DB.prepare('SELECT id, username, display_name, role, status, created_at, updated_at FROM users').all(),
+    env.DB.prepare('SELECT * FROM navigation_items').all(),
+    env.DB.prepare('SELECT * FROM site_settings').all(),
+  ]);
+  return json({ exported_at: now(), version: 'catalog-export-v1', tables: { legacy_products: products.results, legacy_product_specs: specs.results, legacy_product_compatibility: compatibility.results, legacy_pesticides: pesticides.results, legacy_pesticide_extras: extras.results, users: users.results, navigation_items: navigation.results, site_settings: settings.results } });
 }
 
 async function updateAdminUser(request: Request, env: Env, userId: string): Promise<Response> {
@@ -911,6 +1133,21 @@ async function updateSkuPrice(request: Request, env: Env, skuId: string): Promis
     .bind(newId(), actor.id, 'update_price', 'product_sku', sku.id, JSON.stringify({ product: sku.product_name, specification: sku.specification, before: sku.price, after: price, price_tier: priceTier || '管理员报价' }), now())
     .run();
   return json({ sku: { id: sku.id, price, price_tier: priceTier || '管理员报价' } });
+}
+
+async function updateCatalogSku(request: Request, env: Env, skuId: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const body = await readBody(request);
+  const price = finiteNumber(body.price);
+  const innerPackCount = body.inner_pack_count === null || body.inner_pack_count === '' ? null : finiteNumber(body.inner_pack_count);
+  const unit = typeof body.unit === 'string' ? body.unit.trim().slice(0, 40) : '';
+  if (price !== null && (price < 0 || price > 10_000_000)) return json({ error: '请输入有效整件价格' }, { status: 400 });
+  if (innerPackCount !== null && (!Number.isInteger(innerPackCount) || innerPackCount < 1 || innerPackCount > 1_000_000)) return json({ error: '件内数量必须是正整数' }, { status: 400 });
+  const existing = await env.DB.prepare('SELECT id FROM product_skus WHERE id = ?').bind(skuId).first<{ id: string }>();
+  if (!existing) return json({ error: 'SKU 不存在' }, { status: 404 });
+  await env.DB.prepare('UPDATE product_skus SET price = COALESCE(?, price), inner_pack_count = ?, unit = COALESCE(NULLIF(?, ""), unit), updated_at = ? WHERE id = ?').bind(price, innerPackCount, unit, now(), skuId).run();
+  return json({ status: 'updated', id: skuId });
 }
 
 interface PlanRequestItem {
@@ -1061,6 +1298,7 @@ export default {
       if (url.pathname === '/api/navigation' && request.method === 'GET') return getNavigation(request, env);
       if (url.pathname === '/api/admin/navigation' && request.method === 'PATCH') return updateNavigation(request, env);
       if (url.pathname.startsWith('/api/admin/native/pesticides/') && request.method === 'PATCH') return updateNativePesticide(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/pesticides/'.length)));
+      if (url.pathname === '/api/admin/native/pesticides' && request.method === 'POST') return createNativePesticide(request, env);
       if (url.pathname.startsWith('/api/admin/native/products/') && url.pathname.endsWith('/compatibility') && request.method === 'PATCH') return updateNativeCompatibility(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length, -'/compatibility'.length)));
       if (url.pathname.startsWith('/api/admin/native/products/') && request.method === 'PATCH') return updateNativeProduct(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length)));
       if (url.pathname.startsWith('/api/admin/native/products/') && url.pathname.endsWith('/specs') && request.method === 'POST') return createNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length, -'/specs'.length)));
@@ -1076,8 +1314,11 @@ export default {
       if (url.pathname.startsWith('/api/admin/users/') && url.pathname.endsWith('/password') && request.method === 'POST') return resetAdminUserPassword(request, env, decodeURIComponent(url.pathname.slice('/api/admin/users/'.length, -'/password'.length)));
       if (url.pathname.startsWith('/api/admin/users/') && request.method === 'PATCH') return updateAdminUser(request, env, decodeURIComponent(url.pathname.slice('/api/admin/users/'.length)));
       if (url.pathname.startsWith('/api/admin/skus/') && request.method === 'PATCH') return updateSkuPrice(request, env, decodeURIComponent(url.pathname.slice('/api/admin/skus/'.length)));
+      if (url.pathname.startsWith('/api/admin/catalog/skus/') && request.method === 'PATCH') return updateCatalogSku(request, env, decodeURIComponent(url.pathname.slice('/api/admin/catalog/skus/'.length)));
       if (url.pathname.startsWith('/api/assets/') && request.method === 'GET') return getAsset(env, decodeURIComponent(url.pathname.slice('/api/assets/'.length)));
       if (url.pathname.startsWith('/api/admin/assets/') && request.method === 'PUT') return uploadAsset(request, env, decodeURIComponent(url.pathname.slice('/api/admin/assets/'.length)));
+      if (url.pathname.startsWith('/api/admin/assets/') && request.method === 'DELETE') return deleteAsset(request, env, decodeURIComponent(url.pathname.slice('/api/admin/assets/'.length)));
+      if (url.pathname === '/api/admin/export' && request.method === 'GET') return exportCatalogData(request, env);
       if (url.pathname.startsWith('/api/')) return json({ error: '未找到接口' }, { status: 404 });
       return env.ASSETS.fetch(request);
     } catch (error) {
