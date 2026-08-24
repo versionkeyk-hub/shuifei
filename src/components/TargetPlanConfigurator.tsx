@@ -55,7 +55,7 @@ interface TargetPlanConfiguratorProps {
   onOpenFullCycle: () => void;
 }
 
-const TARGET_OPTIONS = ['保花保果', '促进根系生长', '果实膨大', '果实增甜', '改善着色', '补充钙硼'];
+const TARGET_OPTIONS = ['全周期', '保花保果', '促进根系生长', '果实膨大', '果实增甜', '改善着色', '补充钙硼'];
 const TIER_META: Record<TargetTier, { label: string; detail: string; className: string }> = {
   high: { label: '高端配置', detail: '技术完整度和价值优先', className: 'border-rose-200 bg-rose-50 text-rose-800' },
   middle: { label: '中端配置', detail: '效果与投入平衡', className: 'border-sky-200 bg-sky-50 text-sky-800' },
@@ -64,7 +64,7 @@ const TIER_META: Record<TargetTier, { label: string; detail: string; className: 
 
 const QUIZ_TO_NATIVE: Record<string, string> = { am: 'aomai', dp: 'aosheng', sk1: 'shikeshou', sk2: 'shikeshou', sk3: 'shikeshou', bn1: 'beineng', bn2: 'beineng', bn3: 'beineng', bn4: 'beineng', js: 'junshi', zy: 'zhuoyan', at: 'aotu', aj: 'aojing', fs: 'fengshuo', hy: 'heiyan', ay: 'aoye', al: 'aolei', hd: 'huadaifu', gd: 'guodaifu', ls: 'aolan', lp: 'aoliang', ag: 'aoguo', amg: 'aomei', sa: 'shaianxin', jt: 'jiete', fh: 'fenghui' };
 const STAGE_LABELS: Record<string, string> = { seedling: '苗期', growth: '生长期', flower: '花期/保花保果', expand: '膨果期', color: '着色增甜期', after: '采后恢复期' };
-const TARGET_FUNCTIONS: Record<string, string[]> = { 保花保果: ['flowerprom', 'microsupp'], 促进根系生长: ['rootprom', 'soil'], 果实膨大: ['expandfun'], 果实增甜: ['colorfun'], 改善着色: ['colorfun'], 补充钙硼: ['microsupp'] };
+const TARGET_FUNCTIONS: Record<string, string[]> = { 保花保果: ['flowerprom', 'microsupp', '保花保果', '促花保果', '花芽分化'], 促进根系生长: ['rootprom', 'soil', '促根', '生根'], 果实膨大: ['expandfun', '膨果', '果实膨大'], 果实增甜: ['colorfun', '增甜', '糖度'], 改善着色: ['colorfun', '着色', '转色'], 补充钙硼: ['microsupp', '补钙', '补硼'] };
 
 function normalizeProducts(source: CatalogProduct[]): CatalogProduct[] {
   const quizByNative = new Map<string, Record<string, string[]>>();
@@ -72,9 +72,9 @@ function normalizeProducts(source: CatalogProduct[]): CatalogProduct[] {
   return source.map((product) => ({
     ...product,
     source_type: product.source_type || 'own',
-    applicable_stages: product.applicable_stages || (quizByNative.get(product.id)?.stage || []).map((stage) => STAGE_LABELS[stage] || stage),
-    application_methods: product.application_methods || quizByNative.get(product.id)?.use || [],
-    functions: product.functions || quizByNative.get(product.id)?.func || [],
+    applicable_stages: Array.from(new Set([...asTextList(product.applicable_stages), ...(quizByNative.get(product.id)?.stage || []).map((stage) => STAGE_LABELS[stage] || stage)])),
+    application_methods: Array.from(new Set([...asTextList(product.application_methods), ...(quizByNative.get(product.id)?.use || [])])),
+    functions: Array.from(new Set([...asTextList(product.functions), ...(quizByNative.get(product.id)?.func || [])])),
     skus: (product.skus || product.specifications || []).map((sku, index) => ({
       ...sku,
       id: (sku as Partial<ProductSku>).id || `${product.id}-snapshot-${index}`,
@@ -117,8 +117,10 @@ function packageCount(area: number, dose: number | null, doseUnit: DoseUnit, usa
 
 function asTextList(value: string[] | string | undefined): string[] { return Array.isArray(value) ? value : value ? value.split(/[、,，\n]/).map((item) => item.trim()).filter(Boolean) : []; }
 function isRecommended(product: CatalogProduct, target: string): boolean {
+  if (target === '全周期') return true;
   const targetFunctions = TARGET_FUNCTIONS[target] || [];
-  return asTextList(product.functions).some((item) => targetFunctions.includes(item) || item.includes(target.replace('促进', '').replace('改善', '')));
+  const haystack = [product.id, product.name, ...asTextList(product.functions), ...asTextList(product.applicable_stages), ...asTextList(product.usage)].join(' ').toLowerCase();
+  return targetFunctions.some((item) => haystack.includes(item.toLowerCase())) || (target === '保花保果' && /沣硕|促花|花芽|保果|微量元素/.test(haystack));
 }
 function applicationGroups(product: CatalogProduct): string[] {
   return asTextList(product.application_methods).map((item) => item === 'foliar' ? '叶面' : item === 'root' ? '根际' : item).filter(Boolean);
@@ -140,6 +142,7 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
   const [priceProfiles, setPriceProfiles] = useState<Array<{ id: string; name: string; entries?: Array<{ specification_id: string; price: number }> }>>([]);
   const [activePriceProfile, setActivePriceProfile] = useState('');
   const [newProfileName, setNewProfileName] = useState('');
+  const [expandedTier, setExpandedTier] = useState<TargetTier | null>('middle');
 
   useEffect(() => {
     let active = true;
@@ -199,6 +202,13 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
   const calculatedRows = rows.filter((row) => row.subtotal !== null);
   const stageCost = calculatedRows.reduce((sum, row) => sum + (row.subtotal || 0), 0);
   const isCompleteCalculation = rows.length > 0 && calculatedRows.length === rows.length;
+  const tierPreview = useMemo(() => {
+    const candidates = products.filter((product) => isRecommended(product, target));
+    const sorted = [...candidates].sort((left, right) => (left.skus?.[0]?.price || 0) - (right.skus?.[0]?.price || 0));
+    if (tier === 'high') return sorted.slice(-4).reverse();
+    if (tier === 'low') return sorted.slice(0, 4);
+    return sorted.slice(0, 4);
+  }, [products, target, tier]);
   const generatedDescription = description || `${crop.name}当前以“${target}”为目标，采用${TIER_META[tier].label}草稿组合。已选产品、使用次数和报价均需结合田间情况、产品标签及渠道价格复核后再对外使用。`;
 
   const addProduct = (product: CatalogProduct) => {
@@ -302,12 +312,13 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
           <label className="text-xs font-bold text-slate-600">推荐使用次数<input type="number" min="1" value={usageCount} onChange={(event) => setUsageCount(Math.max(1, Number(event.target.value) || 1))} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-400" /></label>
           <label className="text-xs font-bold text-slate-600">使用间隔<input value={interval} onChange={(event) => setInterval(event.target.value)} placeholder="例如 7-10天/次" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-400" /></label>
         </div>
-        <div className="grid gap-2 md:grid-cols-3">{(Object.keys(TIER_META) as TargetTier[]).map((option) => {
+        <div className="grid gap-3 md:grid-cols-3">{(Object.keys(TIER_META) as TargetTier[]).map((option) => {
           const active = tier === option;
           const meta = TIER_META[option];
-          return <button key={option} type="button" onClick={() => setTier(option)} className={`rounded-2xl border p-3 text-left transition ${active ? meta.className : 'border-slate-200 hover:border-emerald-200'}`}><div className="text-sm font-black">{meta.label}</div><div className="mt-1 text-[10px] text-slate-500">{meta.detail}</div></button>;
+          const open = expandedTier === option;
+          return <div key={option} className={`rounded-2xl border transition ${active ? meta.className : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => { setTier(option); setExpandedTier(open ? null : option); }} className="w-full p-4 text-left"><div className="flex items-center justify-between gap-2"><span className="text-base font-black">{meta.label}</span><span className="text-xs font-bold">{open ? '收起' : '查看配方'}</span></div><div className="mt-1 text-xs text-slate-500">{meta.detail}</div></button>{open && <div className="border-t border-black/5 px-4 pb-4 pt-3"><div className="text-[11px] font-bold text-slate-600">根据当前目标和产品属性生成的初始组合（可继续添加外部肥料、农药、调节剂）</div><div className="mt-2 flex flex-wrap gap-2">{tierPreview.length ? tierPreview.map((product) => <button type="button" key={product.id} onClick={() => addProduct(product)} className="rounded-xl border border-white/70 bg-white/80 px-3 py-2 text-left shadow-sm"><span className="block text-xs font-black text-slate-800">{product.name}</span><span className="mt-1 block text-[10px] text-slate-500">{applicationGroups(product).join(' + ') || '按产品资料'}</span></button>) : <span className="text-xs text-slate-500">当前目标暂无属性匹配，可从下方全部产品添加。</span>}</div></div>}</div>;
         })}</div>
-        <p className="text-[11px] leading-relaxed text-amber-700"><AlertTriangle className="mr-1 inline h-3.5 w-3.5" />当前尚未录入经过技术审核的官方高/中/低配方；这里保存的是销售人员草稿，不能把等级理解为自动换产品或自动打折。</p>
+        <p className="text-[11px] leading-relaxed text-amber-700"><AlertTriangle className="mr-1 inline h-3.5 w-3.5" />上面是按产品属性和价格生成的初始配置预览；管理员可以在后台维护官方组合，销售人员也可以添加外部商品并保存自己的方案。</p>
         {currentUser && <label className="block max-w-md text-xs font-bold text-slate-600">我的报价档案<select value={activePriceProfile} onChange={(event) => setActivePriceProfile(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"><option value="">使用产品标准价</option>{priceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}（仅本人可见）</option>)}</select></label>}
       </section>
 

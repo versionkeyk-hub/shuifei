@@ -1,4 +1,5 @@
 node_modules/
+.wrangler/
 build/
 dist/
 coverage/
@@ -8,5 +9,6 @@ coverage/
 !.env.example
 data/generated/0001-initial-seed.sql
 data/generated/seed-batches/
+data/generated/source-document-batches/
 data/generated/r2-check.png
 data/generated/r2-asset-verify.png

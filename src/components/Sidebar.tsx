@@ -14,7 +14,9 @@ import {
   Settings,
   Sparkles,
   Database,
-  FlaskConical
+  FlaskConical,
+  FileText,
+  Calculator
 } from 'lucide-react';
 import { NavTab, AppUser, SystemSettings } from '../types';
 import { getSiteText } from '../lib/siteTexts';
@@ -32,9 +34,9 @@ const NavigationGroupList: React.FC<{
   <>
     {groups.map(([groupName, items], groupIndex) => (
       <React.Fragment key={groupName}>
-        <div className={(groupIndex ? 'pt-4 ' : '') + 'px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400'}>
+        {groupName !== '核心功能智库' && <div className={(groupIndex ? 'pt-4 ' : '') + 'px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400'}>
           {!isCollapsed ? groupName : '•••'}
-        </div>
+        </div>}
         {[...items].sort((left, right) => (left.sortOrder || 0) - (right.sortOrder || 0)).map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -119,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'crops' as NavTab,
-      label: getSiteText('nav_crops_label', settings?.siteTexts, settings.navTitles?.crops || '作物与施肥方案'),
+      label: getSiteText('nav_crops_label', settings?.siteTexts, settings.navTitles?.crops || '施肥方案与报价'),
       icon: Sprout,
       badge: `${totalSchemesCount} 套`,
       badgeColor: 'bg-emerald-100 text-emerald-800',
@@ -145,12 +147,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
       visible: true,
     },
     {
+      id: 'direct_quote' as NavTab,
+      label: '直接选商品报价',
+      icon: Calculator,
+      badge: null,
+      desc: '不绑定作物阶段，直接按 SKU 组合报价',
+      visible: true,
+    },
+    {
+      id: 'plan_quotes' as NavTab,
+      label: '方案与报价管理',
+      icon: History,
+      badge: null,
+      desc: '管理本人保存的方案、报价和复用记录',
+      visible: Boolean(currentUser),
+    },
+    {
       id: 'product_catalog' as NavTab,
       label: '产品信息库',
       icon: Database,
       badge: String(totalProductCatalogCount) + ' 品',
       badgeColor: 'bg-indigo-500 text-white font-bold',
       desc: '产品属性、规格、价格、图片与登记信息',
+      visible: true,
+    },
+    {
+      id: 'source_documents' as NavTab,
+      label: '作物病虫害解决方案资料',
+      icon: FileText,
+      badge: '原文',
+      badgeColor: 'bg-amber-600 text-white font-bold',
+      desc: '标准化技术资料原文与配图',
       visible: true,
     },
     {
@@ -170,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: '实训库',
       badgeColor: 'bg-teal-500 text-white font-bold',
       desc: '农小蛙/锄头猫 5 维属性与功效练习',
-      visible: true,
+      visible: false,
     },
     {
       id: 'local_import' as NavTab,
@@ -228,11 +255,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (!remoteNavigation.length) return fallbackItems;
     const byTab = new Map(fallbackItems.map((item) => [item.id, item]));
     const result: SidebarItem[] = [];
+    const configuredTabs = new Set<string>();
     for (const config of remoteNavigation) {
       const item = byTab.get(config.tab as NavTab);
       if (!item || !item.visible || !config.enabled || (config.admin_only && !isAdmin)) continue;
+      configuredTabs.add(config.tab);
       result.push({ ...item, label: config.label || item.label, groupName: config.group_name, sortOrder: Number(config.sort_order) || 0 });
     }
+    fallbackItems.forEach((item, index) => {
+      if (!configuredTabs.has(item.id)) result.push({ ...item, sortOrder: 900 + index });
+    });
     return result.length ? result : fallbackItems;
   }, [fallbackItems, isAdmin, remoteNavigation]);
 
@@ -317,9 +349,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {remoteNavigation.length > 0 && <NavigationGroupList groups={navigationGroups} activeTab={activeTab} setActiveTab={setActiveTab} isCollapsed={isCollapsed} />}
           {remoteNavigation.length === 0 && (
             <>
-          <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          {mainGroupName !== '核心功能智库' && <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             {!isCollapsed ? mainGroupName : '•••'}
-          </div>
+          </div>}
 
           {configuredMainItems.map((item) => {
             const Icon = item.icon;

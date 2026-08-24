@@ -942,7 +942,7 @@ export const INITIAL_USERS: AppUser[] = [
 
 export const INITIAL_SETTINGS: SystemSettings = {
   siteName: '惠民皓天内部技术综合平台',
-  siteSubtitle: '作物全周期水肥一体化方案 · 病虫害精准图谱 · 产品分类实训平台',
+  siteSubtitle: '作物全周期水肥一体化方案 · 病虫害精准图谱',
   siteLogo: '惠',
   logoType: 'icon',
   companyName: '惠民皓天农业科技有限公司',

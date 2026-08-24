@@ -2,7 +2,7 @@ import { VersionLog } from '../types';
 
 export const SYSTEM_VERSION_LOGS: VersionLog[] = [
   {
-    version: 'v2.6.0',
+    version: '0.0.0',
     releaseDate: '2026-08-20',
     title: '图谱分类体系升级、本地离线解析与全作物智库扩充',
     isCurrent: true,

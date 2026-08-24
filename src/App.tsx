@@ -23,12 +23,15 @@ import { ProductQuizView } from './components/ProductQuizView';
 import { CatalogStats, ProductLibraryView } from './components/ProductLibraryView';
 import { NativePesticideMixingView } from './components/NativePesticideMixingView';
 import { NativeProductCatalogView } from './components/NativeProductCatalogView';
+import { SourceDocumentView } from './components/SourceDocumentView';
 import { NavigationSettingsView } from './components/NavigationSettingsView';
 import { AdminSettingsView } from './components/AdminSettingsView';
 import { UserApprovalView } from './components/UserApprovalView';
 import { AdminConsoleView } from './components/AdminConsoleView';
 import { CommunityView } from './components/CommunityView';
 import { ProfileSettingsView } from './components/ProfileSettingsView';
+import { PlanQuotesView } from './components/PlanQuotesView';
+import { TargetPlanConfigurator } from './components/TargetPlanConfigurator';
 import { AuthModal } from './components/AuthModal';
 import { VersionModal } from './components/VersionModal';
 import { VisualEditProvider } from './context/VisualEditContext';
@@ -578,6 +581,18 @@ export const App: React.FC = () => {
           {activeTab === 'pesticide_mixing' && <NativePesticideMixingView />}
 
           {activeTab === 'product_catalog' && <NativeProductCatalogView currentUser={currentUser} />}
+
+          {activeTab === 'direct_quote' && (
+            <TargetPlanConfigurator
+              crop={{ id: 'generic-quote', categoryId: 'generic', name: '通用商品组合', aliases: [], coverImage: '', description: '', schemeCount: 0, diseaseCount: 0, tags: [], createdAt: '', updatedAt: '' }}
+              currentUser={currentUser}
+              onOpenFullCycle={() => undefined}
+            />
+          )}
+
+          {activeTab === 'plan_quotes' && <PlanQuotesView />}
+
+          {activeTab === 'source_documents' && <SourceDocumentView />}
 
           {activeTab === 'navigation_settings' && <NavigationSettingsView />}
 

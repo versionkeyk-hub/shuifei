@@ -267,9 +267,10 @@ async function getStats(env: Env): Promise<Response> {
     env.DB.prepare("SELECT COUNT(*) AS count FROM legacy_products WHERE payload_json LIKE '%\"images\"%'").first<{ count: number }>(),
     env.DB.prepare('SELECT imported_at, record_counts_json FROM import_audits ORDER BY imported_at DESC LIMIT 1').first<{ imported_at: string; record_counts_json: string }>(),
   ]);
-  const unmatchedModernProducts = modernProducts.results.filter((modernProduct) => !legacyProducts.results.some((legacyProduct) => modernProductMatchesNative(legacyProduct, modernProduct))).length;
+  const visibleLegacyProducts = legacyProducts.results.filter((product) => !catalogProductHidden(product.name, catalogBrand(product)));
+  const unmatchedModernProducts = modernProducts.results.filter((modernProduct) => !legacyProducts.results.some((legacyProduct) => modernProductMatchesNative(legacyProduct, modernProduct)) && !catalogProductHidden(modernProduct.name, modernProduct.brand)).length;
   return json({
-    products: legacyProducts.results.length + unmatchedModernProducts,
+    products: visibleLegacyProducts.length + unmatchedModernProducts,
     skus: (legacySpecs?.count || 0) + (modernSkus?.count || 0),
     source_products: modernProducts.results.length,
     source_skus: modernSkus?.count || 0,
@@ -403,6 +404,68 @@ function augmentNativeSpecification(row: Record<string, unknown>): Record<string
 
 function normalizeCatalogName(value: unknown): string {
   return String(value || '').toLowerCase().replace(/[\s·.。()（）_-]/g, '');
+}
+
+function catalogBrand(product: Record<string, unknown>): string {
+  const payload = parseNativePayload<Record<string, unknown>>(String(product.payload_json || ''), {});
+  const explicit = String(product.brand || payload.brand || '').trim();
+  if (explicit) return explicit;
+  const id = String(product.id || '');
+  if (id.includes('u5b89-u6b23-u519c') || id.startsWith('prd-u5b89')) return '安欣农';
+  if (id.includes('u9504-u5934-u732b') || id.startsWith('prd-u9504')) return '锄头猫';
+  return '';
+}
+
+function catalogFamilyKey(product: Record<string, unknown>): string {
+  const name = normalizeCatalogName(product.name).replace(/^(安欣农|锄头猫|农小蛙)/, '');
+  const brand = catalogBrand(product);
+  const sameBrand = brand === '安欣农' || brand === '锄头猫' || name.startsWith('安欣农') || name.startsWith('锄头猫');
+  if (!sameBrand) return String(product.id || name);
+  if (/高钙中量元素|高钙/.test(name)) return 'calcium';
+  if (/花果多|微量元素/.test(name)) return 'trace_elements';
+  if (/鱼蛋白|有机水溶肥/.test(name)) return 'fish_protein';
+  if (/氨基酸|多肽/.test(name)) return 'amino_acid';
+  if (/菌剂|微生物/.test(name)) return 'microbial';
+  return String(product.id || name);
+}
+
+function catalogProductHidden(value: unknown, brand?: unknown): boolean {
+  const name = normalizeCatalogName(value);
+  const normalizedBrand = String(brand || '').trim();
+  if (/防冻套装/.test(name)) return true;
+  if (/高钙中量元素|花果多微量元素|有机水溶肥鱼蛋白|氨基酸叶面肥|氨基酸水溶肥/.test(name)) return true;
+  if (name === '菌剂' && normalizedBrand === '锄头猫') return true;
+  return false;
+}
+
+function catalogProductDisplayName(name: string, brand?: unknown): string {
+  const text = String(name || '').trim();
+  if (String(brand || '').trim() === '安欣农' && !text.startsWith('安欣农')) return '安欣农·' + text;
+  return text;
+}
+
+function mergeCatalogFamilyDetails(products: Record<string, unknown>[]): Record<string, unknown>[] {
+  const sharedKeys = ['intro', 'description', 'advantages', 'ingredients', 'functions', 'usage', 'applicable_crops', 'applicable_stages', 'application_methods', 'registrations', 'mix_profile', 'custom_fields', 'images'];
+  const familyDetails = new Map<string, Record<string, unknown>>();
+  const completeness = (product: Record<string, unknown>) => sharedKeys.reduce((score, key) => {
+    const value = product[key];
+    return score + (value && (!Array.isArray(value) || value.length) ? String(value).length : 0);
+  }, 0);
+  for (const product of products) {
+    const family = catalogFamilyKey(product);
+    const current = familyDetails.get(family);
+    if (!current || completeness(product) > completeness(current)) familyDetails.set(family, product);
+  }
+  return products.map((product) => {
+    const shared = familyDetails.get(catalogFamilyKey(product));
+    if (!shared || shared === product) return product;
+    const next = { ...product };
+    for (const key of sharedKeys) {
+      const current = next[key];
+      if (current === null || current === undefined || current === '' || (Array.isArray(current) && current.length === 0)) next[key] = shared[key];
+    }
+    return next;
+  });
 }
 
 function modernProductMatchesNative(nativeProduct: Record<string, unknown>, modernProduct: Record<string, unknown>): boolean {
@@ -599,7 +662,7 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
     }
   }
   const assignedModernSkuIds = new Set<string>();
-  const products = results.map((row) => {
+  const products = results.filter((row) => !catalogProductHidden(row.name, catalogBrand(row))).map((row) => {
     const specifications = mergeUnifiedSpecifications(row, specsByProduct.get(row.id) || [], modernProducts.results, modernSkus.results, modernProductOwners)
       .filter((specification) => {
         if (specification.source !== 'product_skus') return true;
@@ -611,8 +674,9 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
     return {
       ...sanitizeProductPayload(parseNativePayload<Record<string, unknown>>(row.payload_json, {}), viewerRole),
       id: row.id,
-      name: row.name,
+      name: catalogProductDisplayName(row.name, catalogBrand(row)),
       category: row.category,
+      brand: catalogBrand(row),
       specifications,
       sku_count: specifications.length,
       pesticide_compat: compatibilityByProduct.get(row.id) || [],
@@ -625,7 +689,7 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
     return text.toLowerCase().includes(query.toLowerCase());
   });
   const matchedModernIds = new Set(results.flatMap((row) => modernProducts.results.filter((product) => modernProductMatchesNative(row, product)).map((product) => String(product.id))));
-  const syntheticProducts = visibleModernProducts.filter((product) => !matchedModernIds.has(String(product.id))).map((product) => {
+  const syntheticProducts = visibleModernProducts.filter((product) => !matchedModernIds.has(String(product.id)) && !catalogProductHidden(product.name, product.brand)).map((product) => {
     const payload = {
       id: product.id,
       name: product.name,
@@ -649,9 +713,51 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
         assignedModernSkuIds.add(skuId);
         return true;
       });
-    return { ...sanitizeProductPayload(payload, viewerRole), id: syntheticRow.id, name: syntheticRow.name, category: syntheticRow.category, brand: product.brand, source_type: product.source_type, specifications, sku_count: specifications.length, pesticide_compat: [] };
+    return { ...sanitizeProductPayload(payload, viewerRole), id: syntheticRow.id, name: catalogProductDisplayName(syntheticRow.name, catalogBrand(product)), category: syntheticRow.category, brand: catalogBrand(product), source_type: product.source_type, specifications, sku_count: specifications.length, pesticide_compat: [] };
   });
-  return json({ products: [...products, ...syntheticProducts].slice(0, limit) }, {}, publicApiHeaders);
+  return json({ products: mergeCatalogFamilyDetails([...products, ...syntheticProducts]).slice(0, limit) }, {}, publicApiHeaders);
+}
+
+async function getSourceDocuments(url: URL, env: Env): Promise<Response> {
+  const documentId = url.searchParams.get('id')?.trim() || '';
+  if (!documentId) {
+    const { results } = await env.DB.prepare('SELECT id, title, source_path, source_sha256, node_count, image_count, imported_at, updated_at FROM source_documents ORDER BY updated_at DESC').all<Record<string, unknown>>();
+    return json({ documents: results }, {}, publicApiHeaders);
+  }
+  const includeHtml = url.searchParams.get('include_html') === '1';
+  const document = await env.DB.prepare('SELECT id, title, source_path, source_sha256, ' + (includeHtml ? 'original_html, ' : '') + 'node_count, image_count, imported_at, updated_at FROM source_documents WHERE id = ?').bind(documentId).first<Record<string, unknown>>();
+  if (!document) return json({ error: '资料源不存在' }, { status: 404 });
+  if (includeHtml && !document.original_html) {
+    const fragments = await env.DB.prepare('SELECT content FROM source_document_fragments WHERE document_id = ? ORDER BY sort_order').bind(documentId).all<{ content: string }>();
+    document.original_html = fragments.results.map((fragment) => fragment.content).join('');
+  }
+  const query = url.searchParams.get('query')?.trim() || '';
+  const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '4000'), 1), 6000);
+  const pattern = '%' + query + '%';
+  const nodesStatement = query
+    ? env.DB.prepare('SELECT id, parent_id, depth, sort_order, node_type, text_content, image_urls_json FROM source_document_nodes WHERE document_id = ? AND text_content LIKE ? ORDER BY sort_order LIMIT ?').bind(documentId, pattern, limit)
+    : env.DB.prepare('SELECT id, parent_id, depth, sort_order, node_type, text_content, image_urls_json FROM source_document_nodes WHERE document_id = ? ORDER BY sort_order LIMIT ?').bind(documentId, limit);
+  const [nodes, assets] = await Promise.all([
+    nodesStatement.all<Record<string, unknown>>(),
+    env.DB.prepare('SELECT id, source_url, asset_key, content_type, status, sort_order FROM source_document_assets WHERE document_id = ? ORDER BY sort_order').bind(documentId).all<Record<string, unknown>>(),
+  ]);
+  return json({ document, nodes: nodes.results.map((node) => ({ ...node, image_urls: parseJson(String(node.image_urls_json || '[]'), []) })), assets: assets.results }, {}, publicApiHeaders);
+}
+
+async function getSourceDocumentAsset(env: Env, assetId: string): Promise<Response> {
+  const asset = await env.DB.prepare('SELECT id, source_url, asset_key, content_type FROM source_document_assets WHERE id = ?').bind(assetId).first<{ id: string; source_url: string; asset_key: string; content_type: string }>();
+  if (!asset) return new Response('Not found', { status: 404 });
+  const cached = await env.PRODUCT_ASSETS.get(asset.asset_key);
+  if (cached) return new Response(cached.body, { headers: { 'content-type': cached.httpMetadata?.contentType || asset.content_type || 'image/*', 'cache-control': 'public, max-age=31536000, immutable' } });
+  if (!/^https:\/\/api2\.mubu\.com\//i.test(asset.source_url)) return new Response('Blocked source', { status: 403 });
+  const upstream = await fetch(asset.source_url);
+  if (!upstream.ok || !upstream.body) return new Response('Asset unavailable', { status: 502 });
+  const contentType = upstream.headers.get('content-type') || asset.content_type || 'image/*';
+  const body = await upstream.arrayBuffer();
+  await env.PRODUCT_ASSETS.put(asset.asset_key, body, { httpMetadata: { contentType } });
+  await env.DB.prepare('UPDATE source_document_assets SET status = ?, content_type = ? WHERE id = ?').bind('cached', contentType, asset.id).run();
+  const fresh = await env.PRODUCT_ASSETS.get(asset.asset_key);
+  return fresh ? new Response(fresh.body, { headers: { 'content-type': contentType, 'cache-control': 'public, max-age=31536000, immutable' } }) : new Response('Asset unavailable', { status: 502 });
 }
 
 async function getNativePesticides(url: URL, env: Env, request?: Request): Promise<Response> {
@@ -840,7 +946,8 @@ async function updateNativeSpecification(request: Request, env: Env, specificati
   const body = await readBody(request);
   const current = parseNativePayload<Record<string, unknown>>(String(existing.payload_json || ''), {});
   const payload = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
-  const next = { ...current, ...payload };
+  const packagePatch = body.package && typeof body.package === 'object' ? body.package as Record<string, unknown> : {};
+  const next = { ...current, ...payload, ...packagePatch };
   const name = typeof body.name === 'string' ? body.name.trim().slice(0, 100) : String(existing.name || '');
   const capacity = typeof body.capacity === 'string' ? body.capacity.trim().slice(0, 100) : String(existing.capacity || '');
   const form = typeof body.form === 'string' ? body.form.trim().slice(0, 100) : String(existing.form || '');
@@ -849,6 +956,25 @@ async function updateNativeSpecification(request: Request, env: Env, specificati
   await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .bind(newId(), actor.id, 'update', 'legacy_product_spec', specificationId, JSON.stringify({ product_id: existing.product_id }), now()).run();
   return json({ id: specificationId, product_id: existing.product_id, name: name || capacity, capacity, form });
+}
+
+async function updateLegacySpecificationPackage(request: Request, env: Env, specificationId: string): Promise<Response> {
+  const actor = await requireUser(request, env, ['super_admin', 'admin']);
+  if (isResponse(actor)) return actor;
+  const existing = await env.DB.prepare('SELECT * FROM legacy_product_specs WHERE id = ?').bind(specificationId).first<Record<string, unknown>>();
+  if (!existing) return json({ error: '规格不存在' }, { status: 404 });
+  const body = await readBody(request);
+  const current = parseNativePayload<Record<string, unknown>>(String(existing.payload_json || ''), {});
+  const patch = body.payload && typeof body.payload === 'object' ? body.payload as Record<string, unknown> : body;
+  const next = { ...current, ...patch };
+  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 100) : String(existing.name || '');
+  const capacity = typeof body.capacity === 'string' ? body.capacity.trim().slice(0, 100) : String(existing.capacity || '');
+  const form = typeof body.form === 'string' ? body.form.trim().slice(0, 100) : String(existing.form || '');
+  await env.DB.prepare('UPDATE legacy_product_specs SET name = ?, capacity = ?, form = ?, payload_json = ? WHERE id = ?')
+    .bind(name || capacity, capacity, form, JSON.stringify({ ...next, name: name || capacity, capacity, form }), specificationId).run();
+  await env.DB.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(newId(), actor.id, 'update', 'legacy_product_spec_package', specificationId, JSON.stringify({ product_id: existing.product_id }), now()).run();
+  return json({ status: 'updated', id: specificationId });
 }
 
 async function deleteNativeSpecification(request: Request, env: Env, specificationId: string): Promise<Response> {
@@ -1142,11 +1268,14 @@ async function updateCatalogSku(request: Request, env: Env, skuId: string): Prom
   const price = finiteNumber(body.price);
   const innerPackCount = body.inner_pack_count === null || body.inner_pack_count === '' ? null : finiteNumber(body.inner_pack_count);
   const unit = typeof body.unit === 'string' ? body.unit.trim().slice(0, 40) : '';
+  const specification = typeof body.specification === 'string' ? body.specification.trim().slice(0, 200) : '';
+  const productType = typeof body.product_type === 'string' ? body.product_type.trim().slice(0, 80) : '';
+  const priceTier = typeof body.price_tier === 'string' ? body.price_tier.trim().slice(0, 50) : '';
   if (price !== null && (price < 0 || price > 10_000_000)) return json({ error: '请输入有效整件价格' }, { status: 400 });
   if (innerPackCount !== null && (!Number.isInteger(innerPackCount) || innerPackCount < 1 || innerPackCount > 1_000_000)) return json({ error: '件内数量必须是正整数' }, { status: 400 });
   const existing = await env.DB.prepare('SELECT id FROM product_skus WHERE id = ?').bind(skuId).first<{ id: string }>();
   if (!existing) return json({ error: 'SKU 不存在' }, { status: 404 });
-  await env.DB.prepare('UPDATE product_skus SET price = COALESCE(?, price), inner_pack_count = ?, unit = COALESCE(NULLIF(?, ""), unit), updated_at = ? WHERE id = ?').bind(price, innerPackCount, unit, now(), skuId).run();
+  await env.DB.prepare('UPDATE product_skus SET specification = COALESCE(NULLIF(?, ""), specification), product_type = COALESCE(NULLIF(?, ""), product_type), price = COALESCE(?, price), price_tier = COALESCE(NULLIF(?, ""), price_tier), inner_pack_count = ?, unit = COALESCE(NULLIF(?, ""), unit), updated_at = ? WHERE id = ?').bind(specification, productType, price, priceTier, innerPackCount, unit, now(), skuId).run();
   return json({ status: 'updated', id: skuId });
 }
 
@@ -1288,6 +1417,8 @@ export default {
       if (url.pathname === '/api/site-settings' && request.method === 'GET') return getSiteSettings(env);
       if (url.pathname === '/api/admin/site-settings' && request.method === 'PATCH') return updateSiteSettings(request, env);
       if (url.pathname === '/api/native/products' && request.method === 'GET') return getNativeProducts(url, env, request);
+      if (url.pathname === '/api/source-documents' && request.method === 'GET') return getSourceDocuments(url, env);
+      if (url.pathname.startsWith('/api/source-document-assets/') && request.method === 'GET') return getSourceDocumentAsset(env, decodeURIComponent(url.pathname.slice('/api/source-document-assets/'.length)));
       if (url.pathname === '/api/native/pesticides' && request.method === 'GET') return getNativePesticides(url, env, request);
       if (url.pathname === '/api/native/mixing' && request.method === 'GET') return getNativeMixing(url, env, request);
       if (url.pathname === '/api/native/mixing/analyze' && request.method === 'POST') return analyzeNativeMixing(request, env);
@@ -1303,6 +1434,7 @@ export default {
       if (url.pathname.startsWith('/api/admin/native/products/') && request.method === 'PATCH') return updateNativeProduct(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length)));
       if (url.pathname.startsWith('/api/admin/native/products/') && url.pathname.endsWith('/specs') && request.method === 'POST') return createNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/products/'.length, -'/specs'.length)));
       if (url.pathname.startsWith('/api/admin/native/specs/') && request.method === 'PATCH') return updateNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/specs/'.length)));
+      if (url.pathname.startsWith('/api/admin/native/spec-packages/') && request.method === 'PATCH') return updateLegacySpecificationPackage(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/spec-packages/'.length)));
       if (url.pathname.startsWith('/api/admin/native/specs/') && request.method === 'DELETE') return deleteNativeSpecification(request, env, decodeURIComponent(url.pathname.slice('/api/admin/native/specs/'.length)));
       if (url.pathname === '/api/products' && request.method === 'GET') return getProducts(url, env);
       if (url.pathname === '/api/pesticides' && request.method === 'GET') return getPesticides(url, env);

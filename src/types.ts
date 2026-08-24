@@ -291,12 +291,15 @@ export type NavTab =
   | 'product_library'
   | 'pesticide_mixing'
   | 'product_catalog'
+  | 'source_documents'
   | 'navigation_settings'
   | 'local_import'
   | 'export_studio'
   | 'admin_settings'
-  | 'users_approval'
-  | 'profile_settings';
+    | 'users_approval'
+    | 'profile_settings'
+    | 'direct_quote'
+    | 'plan_quotes';
 
 export interface GlobalSearchResult {
   type: 'crop' | 'scheme' | 'disease' | 'product';

@@ -436,6 +436,18 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
         <div className="flex items-center justify-between px-6 border-t border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <button
+              onClick={() => setActiveTab('target')}
+              className={`mr-1 rounded-t-2xl border-2 border-sky-300 px-5 py-4 font-black text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'target'
+                  ? 'bg-sky-600 text-white shadow-md'
+                  : 'bg-sky-50 text-sky-800 hover:bg-sky-100'
+              }`}
+            >
+              <Sliders className="h-5 w-5" />
+              <span>目标阶段配置与报价</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('scheme')}
               className={`py-3.5 px-4 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-2 ${
                 activeTab === 'scheme'
@@ -459,17 +471,6 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
               <span>病虫害防治图谱与解决方案 ({pests.length})</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('target')}
-              className={`py-3.5 px-4 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-2 ${
-                activeTab === 'target'
-                  ? 'border-sky-600 text-sky-800 bg-white shadow-2xs rounded-t-xl'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Sliders className="w-4 h-4 text-sky-600" />
-              <span>目标阶段配置与报价</span>
-            </button>
 
             {deletedSchemes.length > 0 && (
               <button
