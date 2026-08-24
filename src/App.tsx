@@ -17,6 +17,7 @@ import { DashboardView } from './components/DashboardView';
 import { CropListView } from './components/CropListView';
 import { CropDetailView } from './components/CropDetailView';
 import { PestGalleryView } from './components/PestGalleryView';
+import { SourcePestGraphView } from './components/SourcePestGraphView';
 import { LocalImporterView } from './components/LocalImporterView';
 import { ExportStudioView } from './components/ExportStudioView';
 import { ProductQuizView } from './components/ProductQuizView';
@@ -202,6 +203,10 @@ export const App: React.FC = () => {
       setPreviousSourceTab(activeTab);
     }
     setSelectedCropId(cropId);
+    if (initialTab === 'pest') {
+      setActiveTab('pests');
+      return;
+    }
     setCropInitialTab(initialTab);
     setActiveTab('crops');
   };
@@ -531,22 +536,7 @@ export const App: React.FC = () => {
             </>
           )}
 
-          {activeTab === 'pests' && (
-            <PestGalleryView
-              pests={pests}
-              crops={crops}
-              currentUser={currentUser}
-              onSelectCrop={(cropId, tab) => handleSelectCrop(cropId, tab, 'pests')}
-              onAddPest={handleAddPest}
-              onUpdatePest={handleUpdatePest}
-              onDeletePest={handleDeletePest}
-              onOpenLocalImport={() => setActiveTab('local_import')}
-              onOpenPesticideMixing={(component) => {
-                sessionStorage.setItem('hmht_pesticide_component', component);
-                setActiveTab('pesticide_mixing');
-              }}
-            />
-          )}
+          {activeTab === 'pests' && <SourcePestGraphView crops={crops} pests={pests} initialCropId={selectedCropId} />}
 
           {activeTab === 'community' && (
             <CommunityView

@@ -948,7 +948,7 @@ export const INITIAL_SETTINGS: SystemSettings = {
   companyName: '惠民皓天农业科技有限公司',
   navTitles: {
     dashboard: '系统看板',
-    crops: '作物与施肥方案',
+    crops: '作物施肥方案',
     pests: '病虫害图谱',
     product_quiz: '产品分类练习',
     local_import: '本地离线文件识别',

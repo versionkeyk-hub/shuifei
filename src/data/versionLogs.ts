@@ -2,6 +2,18 @@ import { VersionLog } from '../types';
 
 export const SYSTEM_VERSION_LOGS: VersionLog[] = [
   {
+    version: '0.0.6',
+    releaseDate: '2026-08-24',
+    title: '病虫害图谱统一卡片与模块归位',
+    isCurrent: true,
+    changes: [
+      '病虫害资料统一进入左侧病虫害图谱模块，作物施肥方案页不再重复展示病虫害卡片。',
+      '顶部提供作物导航与病害类别导航，资料卡片平铺展示，不再按类别折叠遮挡内容。',
+      '标准档案与 HTML 整理资料统一为同一种卡片样式，图片、症状、原因、预防、用药和水肥协同字段一致。',
+      '修复推荐用药长文本挤压换行，统一作物施肥方案名称。'
+    ]
+  },
+  {
     version: '0.0.5',
     releaseDate: '2026-08-24',
     title: 'HTML 病虫害资料卡片化归档',

@@ -378,13 +378,13 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
 
           {/* Top Right Actions */}
           <div className="absolute top-4 right-4 flex items-center gap-2">
-            <button
+             <button
               onClick={() => setLightboxImage({ url: crop.coverImage, title: crop.name })}
               className="px-3 py-1.5 bg-black/60 hover:bg-black/80 backdrop-blur-xs text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>查看大图</span>
-            </button>
+              </button>
 
             {isAdmin && (
               <button
@@ -438,11 +438,11 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveTab('target')}
-              className={`mr-1 rounded-t-2xl border-2 border-sky-300 px-5 py-4 font-black text-sm transition-all flex items-center gap-2 ${
+               className={`mr-1 border-b-4 border-transparent px-5 py-4 font-black text-sm transition-all flex items-center gap-2 ${
                 activeTab === 'target'
-                  ? 'bg-sky-600 text-white shadow-md'
-                  : 'bg-sky-50 text-sky-800 hover:bg-sky-100'
-              }`}
+                  ? 'border-sky-600 text-sky-800'
+                  : 'text-sky-700 hover:border-sky-300'
+               }`}
             >
               <Sliders className="h-5 w-5" />
               <span>目标阶段配置与报价</span>
@@ -460,17 +460,7 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
               <span>全周期水肥一体化方案 ({activeSchemes.length})</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('pest')}
-              className={`py-3.5 px-4 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-2 ${
-                activeTab === 'pest'
-                  ? 'border-amber-600 text-amber-800 bg-white shadow-2xs rounded-t-xl'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Bug className="w-4 h-4 text-amber-600" />
-               <span>病虫害防治图谱与解决方案</span>
-            </button>
+             {false && <button onClick={() => setActiveTab('pest')} className="py-3.5 px-4 font-bold text-xs"><Bug className="w-4 h-4 text-amber-600" /><span>病虫害图谱</span></button>}
 
 
             {deletedSchemes.length > 0 && (
@@ -771,7 +761,7 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
       )}
 
       {/* TAB 2: Pest & Disease Gallery */}
-      {activeTab === 'pest' && (
+      {false && activeTab === 'pest' && (
         <div className="space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-3xl border border-slate-200 gap-3 shadow-xs">
             <div>

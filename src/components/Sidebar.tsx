@@ -121,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'crops' as NavTab,
-      label: getSiteText('nav_crops_label', settings?.siteTexts, settings.navTitles?.crops || '施肥方案与报价'),
+      label: getSiteText('nav_crops_label', settings?.siteTexts, settings.navTitles?.crops === '作物与施肥方案' || settings.navTitles?.crops === '施肥方案与报价' ? '作物施肥方案' : settings.navTitles?.crops || '作物施肥方案'),
       icon: Sprout,
       badge: `${totalSchemesCount} 套`,
       badgeColor: 'bg-emerald-100 text-emerald-800',
@@ -132,7 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'pests' as NavTab,
       label: getSiteText('nav_pests_label', settings?.siteTexts, settings.navTitles?.pests || '病虫害图谱'),
       icon: Bug,
-      badge: `${totalPestsCount} 种`,
+      badge: '资料库',
       badgeColor: 'bg-amber-100 text-amber-800',
       desc: '症状图谱、分类归属与农药配方',
       visible: true,
