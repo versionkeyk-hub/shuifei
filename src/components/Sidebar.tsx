@@ -173,11 +173,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'source_documents' as NavTab,
-      label: '作物病虫害解决方案资料',
+      label: '农药科普',
       icon: FileText,
-      badge: '原文',
-      badgeColor: 'bg-amber-600 text-white font-bold',
-      desc: '标准化技术资料原文与配图',
+      badge: '知识',
+      badgeColor: 'bg-emerald-600 text-white font-bold',
+      desc: '农药科普与其他农业知识；作物资料归入图谱',
       visible: true,
     },
     {

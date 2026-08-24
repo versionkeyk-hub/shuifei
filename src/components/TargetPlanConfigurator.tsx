@@ -123,7 +123,10 @@ function isRecommended(product: CatalogProduct, target: string): boolean {
   return targetFunctions.some((item) => haystack.includes(item.toLowerCase())) || (target === '保花保果' && /沣硕|促花|花芽|保果|微量元素/.test(haystack));
 }
 function applicationGroups(product: CatalogProduct): string[] {
-  return asTextList(product.application_methods).map((item) => item === 'foliar' ? '叶面' : item === 'root' ? '根际' : item).filter(Boolean);
+  const groups = asTextList(product.application_methods).map((item) => item === 'foliar' ? '叶面' : item === 'root' ? '根际' : item).filter(Boolean);
+  if (groups.length) return groups;
+  if (product.id === 'fengshuo' || /沣硕/.test(product.name)) return ['叶面', '根际'];
+  return groups;
 }
 
 export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ crop, currentUser, onOpenFullCycle }) => {
@@ -142,7 +145,8 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
   const [priceProfiles, setPriceProfiles] = useState<Array<{ id: string; name: string; entries?: Array<{ specification_id: string; price: number }> }>>([]);
   const [activePriceProfile, setActivePriceProfile] = useState('');
   const [newProfileName, setNewProfileName] = useState('');
-  const [expandedTier, setExpandedTier] = useState<TargetTier | null>('middle');
+  const [expandedTiers, setExpandedTiers] = useState<Set<TargetTier>>(() => new Set(['high', 'middle', 'low']));
+  const [savedRecipes, setSavedRecipes] = useState<Array<{ id: string; name: string; tier: TargetTier; target: string; productNames: string[]; savedAt: string; recipeNumber?: number }>>([]);
 
   useEffect(() => {
     let active = true;
@@ -178,6 +182,11 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
     if (!token) return;
     fetch('/api/me/native-price-profiles', { headers: { authorization: 'Bearer ' + token } }).then((response) => response.ok ? response.json() : null).then((payload: { profiles?: typeof priceProfiles } | null) => setPriceProfiles(payload?.profiles || [])).catch(() => undefined);
   }, [currentUser?.id]);
+  useEffect(() => {
+    try {
+      setSavedRecipes(JSON.parse(localStorage.getItem('hmht_target_plan_recipes') || '[]'));
+    } catch { setSavedRecipes([]); }
+  }, []);
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -202,13 +211,15 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
   const calculatedRows = rows.filter((row) => row.subtotal !== null);
   const stageCost = calculatedRows.reduce((sum, row) => sum + (row.subtotal || 0), 0);
   const isCompleteCalculation = rows.length > 0 && calculatedRows.length === rows.length;
-  const tierPreview = useMemo(() => {
+  const tierPreviewByTier = useMemo(() => {
     const candidates = products.filter((product) => isRecommended(product, target));
     const sorted = [...candidates].sort((left, right) => (left.skus?.[0]?.price || 0) - (right.skus?.[0]?.price || 0));
-    if (tier === 'high') return sorted.slice(-4).reverse();
-    if (tier === 'low') return sorted.slice(0, 4);
-    return sorted.slice(0, 4);
-  }, [products, target, tier]);
+    return {
+      high: sorted.slice(-4).reverse(),
+      middle: sorted.slice(0, 4),
+      low: sorted.slice(0, 2),
+    } satisfies Record<TargetTier, CatalogProduct[]>;
+  }, [products, target]);
   const generatedDescription = description || `${crop.name}当前以“${target}”为目标，采用${TIER_META[tier].label}草稿组合。已选产品、使用次数和报价均需结合田间情况、产品标签及渠道价格复核后再对外使用。`;
 
   const addProduct = (product: CatalogProduct) => {
@@ -278,6 +289,17 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
     if (!token) setMessage('已保存本机草稿。登录 Cloudflare 后台后可同步到 D1。');
   };
 
+  const saveRecipePreset = (recipeTier: TargetTier) => {
+    const recipeNumber = savedRecipes.length + 2;
+    const recipeName = window.prompt('请输入要保存的配方名称', `配方${recipeNumber} · ${crop.name} · ${target} · ${TIER_META[recipeTier].label}`)?.trim();
+    if (!recipeName) return;
+    const tierProducts = tierPreviewByTier[recipeTier];
+    const next = [{ id: crypto.randomUUID(), name: recipeName, tier: recipeTier, target, productNames: tierProducts.map((product) => product.name), savedAt: new Date().toISOString(), recipeNumber }, ...savedRecipes].slice(0, 30);
+    setSavedRecipes(next);
+    localStorage.setItem('hmht_target_plan_recipes', JSON.stringify(next));
+    setMessage(`配方${recipeNumber} 已保存到当前账号的本机配方列表。`);
+  };
+
   const copyPlan = async () => {
     const productLines = rows.map((row) => `- ${row.product?.name || '资料待补充'} ${row.sku?.specification || ''}：${row.item.dosePerMu ?? '待填写'}${row.item.doseUnit}，${priceLabel(row.price)}`).join('\n');
     const text = `${crop.name}${target}施肥方案（${TIER_META[tier].label}草稿）\n适用面积：${area}亩\n使用次数：${usageCount}次\n使用间隔：${interval}\n${productLines}\n阶段成本：${isCompleteCalculation ? `¥${stageCost.toFixed(2)}` : '待核验'}\n说明：${generatedDescription}`;
@@ -312,14 +334,16 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
           <label className="text-xs font-bold text-slate-600">推荐使用次数<input type="number" min="1" value={usageCount} onChange={(event) => setUsageCount(Math.max(1, Number(event.target.value) || 1))} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-400" /></label>
           <label className="text-xs font-bold text-slate-600">使用间隔<input value={interval} onChange={(event) => setInterval(event.target.value)} placeholder="例如 7-10天/次" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-400" /></label>
         </div>
-        <div className="grid gap-3 md:grid-cols-3">{(Object.keys(TIER_META) as TargetTier[]).map((option) => {
-          const active = tier === option;
-          const meta = TIER_META[option];
-          const open = expandedTier === option;
-          return <div key={option} className={`rounded-2xl border transition ${active ? meta.className : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => { setTier(option); setExpandedTier(open ? null : option); }} className="w-full p-4 text-left"><div className="flex items-center justify-between gap-2"><span className="text-base font-black">{meta.label}</span><span className="text-xs font-bold">{open ? '收起' : '查看配方'}</span></div><div className="mt-1 text-xs text-slate-500">{meta.detail}</div></button>{open && <div className="border-t border-black/5 px-4 pb-4 pt-3"><div className="text-[11px] font-bold text-slate-600">根据当前目标和产品属性生成的初始组合（可继续添加外部肥料、农药、调节剂）</div><div className="mt-2 flex flex-wrap gap-2">{tierPreview.length ? tierPreview.map((product) => <button type="button" key={product.id} onClick={() => addProduct(product)} className="rounded-xl border border-white/70 bg-white/80 px-3 py-2 text-left shadow-sm"><span className="block text-xs font-black text-slate-800">{product.name}</span><span className="mt-1 block text-[10px] text-slate-500">{applicationGroups(product).join(' + ') || '按产品资料'}</span></button>) : <span className="text-xs text-slate-500">当前目标暂无属性匹配，可从下方全部产品添加。</span>}</div></div>}</div>;
-        })}</div>
+        <div className="grid gap-3 md:grid-cols-3">{(Object.keys(TIER_META) as TargetTier[]).map((option, index) => {
+           const active = tier === option;
+           const meta = TIER_META[option];
+           const open = expandedTiers.has(option);
+           const preview = tierPreviewByTier[option];
+           return <div key={option} className={`rounded-2xl border transition ${active ? meta.className : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => { setTier(option); setExpandedTiers((current) => { const next = new Set(current); if (next.has(option)) next.delete(option); else next.add(option); return next; }); }} className="w-full p-4 text-left"><div className="flex items-center justify-between gap-2"><span className="text-base font-black">配方{index + 1} · {meta.label}</span><span className="text-xs font-bold">{open ? '收起' : '展开配方'}</span></div><div className="mt-1 text-xs text-slate-500">{meta.detail}</div></button>{open && <div className="border-t border-black/5 px-4 pb-4 pt-3"><div className="flex items-center justify-between gap-2"><div className="text-[11px] font-bold text-slate-600">根据当前目标和产品属性生成的初始组合（可继续添加外部肥料、农药、调节剂）</div><button type="button" onClick={() => saveRecipePreset(option)} className="shrink-0 rounded-lg bg-white/80 px-2.5 py-1.5 text-[11px] font-black text-indigo-700 shadow-sm">保存为新配方</button></div><div className="mt-3 grid gap-2 sm:grid-cols-2">{preview.length ? preview.map((product) => <button type="button" key={product.id} onClick={() => addProduct(product)} className="min-w-0 rounded-xl border border-white/70 bg-white/80 px-3 py-2 text-left shadow-sm hover:bg-white"><span className="block truncate text-xs font-black text-slate-800">{product.name}</span><span className="mt-1 block text-[10px] text-slate-500">{applicationGroups(product).join(' + ') || '按产品资料'}</span></button>) : <span className="text-xs text-slate-500">当前目标暂无属性匹配，可从下方全部产品添加。</span>}</div></div>}</div>;
+         })}</div>
         <p className="text-[11px] leading-relaxed text-amber-700"><AlertTriangle className="mr-1 inline h-3.5 w-3.5" />上面是按产品属性和价格生成的初始配置预览；管理员可以在后台维护官方组合，销售人员也可以添加外部商品并保存自己的方案。</p>
-        {currentUser && <label className="block max-w-md text-xs font-bold text-slate-600">我的报价档案<select value={activePriceProfile} onChange={(event) => setActivePriceProfile(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"><option value="">使用产品标准价</option>{priceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}（仅本人可见）</option>)}</select></label>}
+         {savedRecipes.length > 0 && <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-3"><div className="text-xs font-black text-indigo-900">我的自定义配方</div><div className="mt-2 grid gap-2 md:grid-cols-2">{savedRecipes.map((recipe, index) => <div key={recipe.id} className="rounded-xl bg-white px-3 py-2 text-xs text-slate-700 shadow-sm"><div className="font-black text-indigo-800">配方{recipe.recipeNumber || (savedRecipes.length - index + 1)} · {recipe.name}</div><div className="mt-1 text-[11px] text-slate-500">{recipe.tier === 'high' ? '高端配置' : recipe.tier === 'low' ? '低端配置' : '中端配置'} · {recipe.productNames.join('、') || '尚未添加产品'}</div></div>)}</div></div>}
+         {currentUser && <label className="block max-w-md text-xs font-bold text-slate-600">我的报价档案<select value={activePriceProfile} onChange={(event) => setActivePriceProfile(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"><option value="">使用产品标准价</option>{priceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}（仅本人可见）</option>)}</select></label>}
       </section>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -346,8 +370,7 @@ export const TargetPlanConfigurator: React.FC<TargetPlanConfiguratorProps> = ({ 
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-center gap-2"><Plus className="h-4 w-4 text-emerald-700" /><h3 className="font-black text-slate-900">从产品资料库添加</h3></div>
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索产品、成分、规格或品牌" className="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-emerald-400" />
-            {(['叶面', '根际'] as const).map((group) => { const recommended = filteredProducts.filter((product) => isRecommended(product, target) && applicationGroups(product).includes(group)); const all = filteredProducts.filter((product) => applicationGroups(product).includes(group) || !applicationGroups(product).length); return <div key={group} className="mt-4"><div className="flex items-center justify-between"><h4 className="text-xs font-black text-slate-800">{group}推荐产品</h4><span className="text-[10px] text-emerald-700">{recommended.length} 个匹配目标</span></div><div className="mt-2 grid max-h-48 gap-2 overflow-y-auto md:grid-cols-2">{recommended.map((product) => <button type="button" key={product.id + '-rec-' + group} onClick={() => addProduct(product)} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left hover:border-emerald-400"><div className="flex items-start justify-between gap-2"><span className="text-sm font-bold text-slate-900">{product.name}</span><span className="rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold text-white">推荐</span></div><p className="mt-1 text-[11px] text-slate-500">{applicationGroups(product).join(' + ') || group} · {product.skus?.length || 0} 条规格</p></button>)}</div><div className="mt-3 flex flex-wrap gap-2">{all.map((product) => <button type="button" key={product.id + '-all-' + group} onClick={() => addProduct(product)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-emerald-300"><span className="text-xs font-bold text-slate-800">{product.name}</span><span className="ml-2 text-[10px] text-slate-400">{product.source_type === 'market' ? '市场' : '自有'}</span></button>)}</div></div>; })}
-            <div className="mt-3 grid max-h-72 gap-2 overflow-y-auto md:grid-cols-2">{filteredProducts.map((product) => <button type="button" key={product.id} onClick={() => addProduct(product)} className="rounded-xl border border-slate-200 p-3 text-left hover:border-emerald-300 hover:bg-emerald-50"><div className="flex items-start justify-between gap-2"><span className="text-sm font-bold text-slate-900">{product.name}</span><span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${product.source_type === 'market' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>{product.source_type === 'market' ? '市场' : '自有'}</span></div><p className="mt-1 text-[11px] text-slate-500">{product.brand} · {product.skus?.length || 0} 条 SKU</p></button>)}</div>
+             {(['叶面', '根际'] as const).map((group) => { const recommended = filteredProducts.filter((product) => isRecommended(product, target) && applicationGroups(product).includes(group)); const recommendedIds = new Set(recommended.map((product) => product.id)); const all = filteredProducts.filter((product) => !recommendedIds.has(product.id) && (applicationGroups(product).includes(group) || !applicationGroups(product).length)); return <div key={group} className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4"><div className="flex items-center justify-between"><h4 className="text-sm font-black text-slate-800">{group}推荐产品</h4><span className="text-[10px] text-emerald-700">{recommended.length} 个匹配目标</span></div><div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{recommended.map((product) => <button type="button" key={product.id + '-rec-' + group} onClick={() => addProduct(product)} className="min-w-0 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left hover:border-emerald-400"><div className="flex items-start justify-between gap-2"><span className="truncate text-sm font-bold text-slate-900">{product.name}</span><span className="shrink-0 rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold text-white">推荐</span></div><p className="mt-1 truncate text-[11px] text-slate-500">{applicationGroups(product).join(' + ') || group} · {product.skus?.length || 0} 条规格</p></button>)}</div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{all.map((product) => <button type="button" key={product.id + '-all-' + group} onClick={() => addProduct(product)} className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-emerald-300"><span className="block truncate text-xs font-bold text-slate-800">{product.name}</span><span className="text-[10px] text-slate-400">{product.source_type === 'market' ? '市场' : '自有'}</span></button>)}</div></div>; })}
             {!loading && !filteredProducts.length && <p className="mt-4 text-xs text-slate-400">未找到匹配产品。</p>}
           </section>
         </div>

@@ -35,6 +35,7 @@ while ((imageMatch = imagePattern.exec(html))) {
 
 const nodes = [];
 const nodeStack = [];
+let lastNode = null;
 const tagStack = [];
 const tokenPattern = /<!--[\s\S]*?-->|<[^>]+>|[^<]+/g;
 const attribute = (raw, name) => raw.match(new RegExp('\\b' + name + '\\s*=\\s*["\']([^"\']+)', 'i'))?.[1] || '';
@@ -78,10 +79,11 @@ while ((tokenMatch = tokenPattern.exec(html))) {
     };
     nodes.push(node);
     nodeStack.push(node);
+    lastNode = node;
   }
-  const current = nodeStack[nodeStack.length - 1];
+  const current = nodeStack[nodeStack.length - 1] || lastNode;
   if (tagName === 'div' && current && hasClass(token, 'content')) current.contentDepth = tagStack.length;
-  if (tagName === 'img' && current && current.contentDepth) {
+  if (tagName === 'img' && current) {
     const sourceUrl = attribute(token, 'src');
     if (sourceUrl && !current.urls.includes(sourceUrl)) current.urls.push(sourceUrl);
   }

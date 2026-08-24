@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bug,
   Search,
@@ -37,6 +37,7 @@ interface PestGalleryViewProps {
   onUpdatePest: (updatedPest: PestDiseaseItem) => void;
   onDeletePest: (pestId: string) => void;
   onOpenLocalImport: () => void;
+  onOpenPesticideMixing?: (component: string) => void;
 }
 
 export const PEST_CATEGORIES: string[] = [
@@ -50,6 +51,42 @@ export const PEST_CATEGORIES: string[] = [
   '药害与肥害',
   '环境与灾害胁迫',
 ];
+
+type SourceNode = { id: string; parent_id?: string | null; depth: number; text_content: string; image_urls: string[]; source_kind?: string; crop_label?: string; source_path?: string };
+type SourceAsset = { id: string; source_url: string; status: string };
+
+const SourceKnowledgePanel: React.FC<{ crop?: Crop; nodes: SourceNode[]; assets: SourceAsset[]; loading: boolean }> = ({ crop, nodes, assets, loading }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [lightbox, setLightbox] = useState<{ images: string[]; initialIndex: number; title: string } | null>(null);
+  const byId = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
+  const assetByUrl = useMemo(() => new Map(assets.map((asset) => [asset.source_url, asset])), [assets]);
+  const matches = useMemo(() => {
+    if (!crop) return [];
+    const aliases: Record<string, string[]> = { '柑橘橙柚': ['柑橘', '橙', '柚'], '番茄（西红柿）': ['番茄', '西红柿'], '辣椒（朝天椒、甜椒）': ['辣椒'], '黄瓜（青瓜、刺黄瓜）': ['黄瓜', '青瓜'], '番石榴（芭乐）': ['番石榴', '芭乐'], '桃树': ['桃'] };
+    const names = [crop.name, ...(crop.aliases || []), ...(aliases[crop.name] || [])].map((value) => String(value).replace(/[\s·.。()（）_-]/g, '').toLowerCase()).filter((value) => value.length >= 2);
+    return nodes.filter((node) => {
+      const path: string[] = [];
+      let current: SourceNode | undefined = node;
+      while (current) {
+        path.push(current.text_content || '');
+        current = current.parent_id ? byId.get(current.parent_id) : undefined;
+      }
+      const text = path.join(' ').replace(/[\s·.。()（）_-]/g, '').toLowerCase();
+      const explicitCrop = String(node.crop_label || '').replace(/[\s·.。()（）_-]/g, '').toLowerCase();
+      return (Boolean(explicitCrop) && names.some((name) => explicitCrop.includes(name) || name.includes(explicitCrop))) || (node.source_kind === 'crop' && names.some((name) => text.includes(name))) || (names.some((name) => text.includes(name)) && !/农药分类|农药禁用|农药知识/.test(text));
+    });
+  }, [byId, crop, nodes]);
+  const visible = expanded ? matches : [...matches.filter((node) => node.image_urls.length > 0).slice(0, 12), ...matches.filter((node) => node.image_urls.length === 0).slice(0, 12)];
+  if (!crop) return null;
+  return <section className="rounded-3xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm md:p-7">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div><div className="text-xs font-black text-amber-700">作物病虫害资料</div><h2 className="mt-1 text-lg font-black text-slate-900">{crop.name}的图文资料</h2><p className="mt-1 text-xs leading-5 text-slate-600">原始技术资料已按作物归入图谱，文字和图片均保留；点击图片可放大查看。</p></div>
+      <div className="flex items-center gap-2"><span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-amber-800">{matches.length} 条资料</span>{matches.length > 24 && <button type="button" onClick={() => setExpanded((value) => !value)} className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white">{expanded ? '收起资料' : '展开全部'}</button>}</div>
+    </div>
+    <div className="mt-4 space-y-3">{loading && <div className="rounded-xl bg-white p-5 text-center text-xs text-slate-500">正在加载原始图文资料…</div>}{!loading && !matches.length && <div className="rounded-xl bg-white p-5 text-center text-xs text-slate-500">该作物暂未匹配到导入资料，可在后台继续补充。</div>}{visible.map((node) => <article key={node.id} className="rounded-2xl border border-amber-100 bg-white p-4"><div className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{node.text_content || '图文资料'}</div>{node.image_urls.length > 0 && <div className="mt-3 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">{node.image_urls.map((url) => { const asset = assetByUrl.get(url); const src = asset ? '/api/source-document-assets/' + encodeURIComponent(asset.id) : url; return <button type="button" key={url} onClick={() => setLightbox({ images: [src], initialIndex: 0, title: crop.name + '病虫害资料' })} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1"><img src={src} alt={crop.name + '病虫害资料'} loading="lazy" className="h-36 w-full object-contain" /></button>; })}</div>}</article>)}</div>
+    {lightbox && <ImageLightboxModal images={lightbox.images} initialIndex={lightbox.initialIndex} title={lightbox.title} onClose={() => setLightbox(null)} />}
+  </section>;
+};
 
 // 3-Tier Categorization Definition
 export interface CategoryFilterItem {
@@ -95,10 +132,31 @@ export const PestGalleryView: React.FC<PestGalleryViewProps> = ({
   onUpdatePest,
   onDeletePest,
   onOpenLocalImport,
+  onOpenPesticideMixing,
 }) => {
   const [selectedCropId, setSelectedCropId] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sourceNodes, setSourceNodes] = useState<SourceNode[]>([]);
+  const [sourceAssets, setSourceAssets] = useState<SourceAsset[]>([]);
+  const [sourceLoading, setSourceLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/source-documents')
+      .then((response) => response.json())
+      .then((payload: { documents?: Array<{ id: string }> }) => {
+        const documentId = payload.documents?.[0]?.id;
+        if (!documentId) return null;
+        return fetch('/api/source-documents?id=' + encodeURIComponent(documentId) + '&limit=6000')
+          .then((response) => response.json())
+          .then((data: { nodes?: SourceNode[]; assets?: SourceAsset[] }) => {
+            setSourceNodes(data.nodes || []);
+            setSourceAssets(data.assets || []);
+          });
+      })
+      .catch(() => undefined)
+      .finally(() => setSourceLoading(false));
+  }, []);
 
   // Hover collage preview
   const [hoveredPestId, setHoveredPestId] = useState<string | null>(null);
@@ -542,6 +600,8 @@ export const PestGalleryView: React.FC<PestGalleryViewProps> = ({
         </div>
       </div>
 
+      <SourceKnowledgePanel crop={crops.find((crop) => crop.id === selectedCropId)} nodes={sourceNodes} assets={sourceAssets} loading={sourceLoading} />
+
       {/* Grid of Pest Cards */}
       {filteredPests.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4 shadow-xs">
@@ -757,7 +817,7 @@ export const PestGalleryView: React.FC<PestGalleryViewProps> = ({
                             key={c.id}
                             className="p-1.5 bg-slate-50 rounded-lg border border-slate-100 text-[11px] flex items-center justify-between"
                           >
-                            <span className="font-medium text-slate-800">{c.formulaName}</span>
+                            {onOpenPesticideMixing ? <button type="button" onClick={() => onOpenPesticideMixing(c.formulaName)} className="font-medium text-left text-emerald-700 underline decoration-dotted underline-offset-2" title="打开产品混配性查询">{c.formulaName}</button> : <span className="font-medium text-slate-800">{c.formulaName}</span>}
                             <span className="text-amber-700 font-mono font-bold">{c.dosageRate}</span>
                           </div>
                         ))}

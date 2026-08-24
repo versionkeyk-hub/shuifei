@@ -92,6 +92,12 @@ export const NativePesticideMixingView: React.FC<{ currentUser?: AppUser | null 
 
   useEffect(() => { loadPesticides(); }, [authHeaders]);
   useEffect(() => { fetch('/api/native/products?limit=200', { headers: authHeaders }).then((response) => response.json()).then((payload: { products?: Product[] }) => setCatalogProducts(payload.products || [])).catch(() => undefined); }, [authHeaders]);
+  useEffect(() => {
+    const component = sessionStorage.getItem('hmht_pesticide_component');
+    if (!component || !pesticides.some((item) => item.component === component)) return;
+    sessionStorage.removeItem('hmht_pesticide_component');
+    void choose(component);
+  }, [pesticides]);
 
   const categories = useMemo(() => {
     const preferred = ['杀菌剂', '杀虫剂', '叶面肥', '肥料', '调节剂', '助剂', '杀螨剂', '杀线虫剂', '卫生杀虫剂', '杀软体动物剂', '杀鼠剂', '除草剂'];
@@ -105,6 +111,7 @@ export const NativePesticideMixingView: React.FC<{ currentUser?: AppUser | null 
 
   const choose = async (component: string) => {
     setSelected(component);
+    setMultiSelected((current) => current.includes(component) ? current : [...current, component]);
     setSelectedProduct(null);
     setLoading(true);
     try {

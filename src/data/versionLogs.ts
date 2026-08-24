@@ -2,10 +2,21 @@ import { VersionLog } from '../types';
 
 export const SYSTEM_VERSION_LOGS: VersionLog[] = [
   {
+    version: '0.0.4',
+    releaseDate: '2026-08-24',
+    title: '产品族同步、技术资料归档与方案产品展示优化',
+    isCurrent: true,
+    changes: [
+      '安欣农五款产品与锄头猫对应产品同步完整资料，规格与价格保持独立。',
+      'HTML 技术资料接口返回农药科普、作物病虫害和其他农业知识归属，901 张图片继续由 R2 提供。',
+      '方案页叶面/根际产品卡片取消重复列表，推荐产品与备选产品分组展示。'
+    ]
+  },
+  {
     version: '0.0.0',
     releaseDate: '2026-08-20',
     title: '图谱分类体系升级、本地离线解析与全作物智库扩充',
-    isCurrent: true,
+    isCurrent: false,
     changes: [
       '新增病虫害大类归属选择（虫害、真菌性高等/低等真菌、细菌、病毒、线虫、生理性病害、药害肥害、灾害胁迫等）。',
       '新增方案回收站与彻底删除机制：方案删除后进入该作物的「已删除方案」，支持随时一键恢复或彻底销毁。',

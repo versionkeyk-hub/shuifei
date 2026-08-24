@@ -541,6 +541,10 @@ export const App: React.FC = () => {
               onUpdatePest={handleUpdatePest}
               onDeletePest={handleDeletePest}
               onOpenLocalImport={() => setActiveTab('local_import')}
+              onOpenPesticideMixing={(component) => {
+                sessionStorage.setItem('hmht_pesticide_component', component);
+                setActiveTab('pesticide_mixing');
+              }}
             />
           )}
 
@@ -578,7 +582,7 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'pesticide_mixing' && <NativePesticideMixingView />}
+          {activeTab === 'pesticide_mixing' && <NativePesticideMixingView currentUser={currentUser} />}
 
           {activeTab === 'product_catalog' && <NativeProductCatalogView currentUser={currentUser} />}
 

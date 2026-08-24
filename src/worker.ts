@@ -402,6 +402,10 @@ function augmentNativeSpecification(row: Record<string, unknown>): Record<string
   return { ...row, payload, package: packageData };
 }
 
+function sqlLiteral(value: string): string {
+  return "'" + value.replace(/'/g, "''") + "'";
+}
+
 function normalizeCatalogName(value: unknown): string {
   return String(value || '').toLowerCase().replace(/[\s·.。()（）_-]/g, '');
 }
@@ -410,6 +414,10 @@ function catalogBrand(product: Record<string, unknown>): string {
   const payload = parseNativePayload<Record<string, unknown>>(String(product.payload_json || ''), {});
   const explicit = String(product.brand || payload.brand || '').trim();
   if (explicit) return explicit;
+  const name = String(product.name || '').trim();
+  if (/^安欣农[·.]/.test(name)) return '安欣农';
+  if (/^锄头猫[·.]/.test(name)) return '锄头猫';
+  if (/^农小蛙[·.]/.test(name)) return '农小蛙';
   const id = String(product.id || '');
   if (id.includes('u5b89-u6b23-u519c') || id.startsWith('prd-u5b89')) return '安欣农';
   if (id.includes('u9504-u5934-u732b') || id.startsWith('prd-u9504')) return '锄头猫';
@@ -432,6 +440,7 @@ function catalogFamilyKey(product: Record<string, unknown>): string {
 function catalogProductHidden(value: unknown, brand?: unknown): boolean {
   const name = normalizeCatalogName(value);
   const normalizedBrand = String(brand || '').trim();
+  if (normalizedBrand === '安欣农') return false;
   if (/防冻套装/.test(name)) return true;
   if (/高钙中量元素|花果多微量元素|有机水溶肥鱼蛋白|氨基酸叶面肥|氨基酸水溶肥/.test(name)) return true;
   if (name === '菌剂' && normalizedBrand === '锄头猫') return true;
@@ -445,7 +454,7 @@ function catalogProductDisplayName(name: string, brand?: unknown): string {
 }
 
 function mergeCatalogFamilyDetails(products: Record<string, unknown>[]): Record<string, unknown>[] {
-  const sharedKeys = ['intro', 'description', 'advantages', 'ingredients', 'functions', 'usage', 'applicable_crops', 'applicable_stages', 'application_methods', 'registrations', 'mix_profile', 'custom_fields', 'images'];
+  const sharedKeys = ['intro', 'description', 'advantages', 'ingredients', 'functions', 'usage', 'applicable_crops', 'applicable_stages', 'application_methods', 'registrations', 'mix_profile', 'custom_fields', 'field_order', 'field_labels', 'images', 'category'];
   const familyDetails = new Map<string, Record<string, unknown>>();
   const completeness = (product: Record<string, unknown>) => sharedKeys.reduce((score, key) => {
     const value = product[key];
@@ -456,24 +465,44 @@ function mergeCatalogFamilyDetails(products: Record<string, unknown>[]): Record<
     const current = familyDetails.get(family);
     if (!current || completeness(product) > completeness(current)) familyDetails.set(family, product);
   }
+  const brandDetails = new Map<string, Record<string, unknown>>();
+  for (const product of products) {
+    const brand = catalogBrand(product);
+    if (brand === '锄头猫') brandDetails.set(catalogFamilyKey(product), product);
+  }
   return products.map((product) => {
     const shared = familyDetails.get(catalogFamilyKey(product));
-    if (!shared || shared === product) return product;
+    const source = catalogBrand(product) === '安欣农' ? brandDetails.get(catalogFamilyKey(product)) || shared : shared;
+    if (!source || source === product) return product;
     const next = { ...product };
     for (const key of sharedKeys) {
-      const current = next[key];
-      if (current === null || current === undefined || current === '' || (Array.isArray(current) && current.length === 0)) next[key] = shared[key];
+      const value = source[key];
+      if (value !== null && value !== undefined && value !== '' && (!Array.isArray(value) || value.length)) next[key] = value;
     }
     return next;
   });
 }
 
 function modernProductMatchesNative(nativeProduct: Record<string, unknown>, modernProduct: Record<string, unknown>): boolean {
+  const nativeBrand = catalogBrand(nativeProduct);
+  const modernBrand = catalogBrand(modernProduct);
+  if (nativeBrand && modernBrand && nativeBrand !== modernBrand) return false;
   const nativeName = normalizeCatalogName(nativeProduct.name);
   const nativePayload = parseNativePayload<NativePayload>(String(nativeProduct.payload_json || ''), {});
   const aliases = [nativeName, ...(Array.isArray(nativePayload.aliases) ? nativePayload.aliases.map(normalizeCatalogName) : [])].filter(Boolean);
   const candidate = normalizeCatalogName(modernProduct.name);
   return aliases.some((alias) => alias === candidate || alias.includes(candidate) || candidate.includes(alias));
+}
+
+function modernProductBelongsToNative(nativeProduct: Record<string, unknown>, modernProduct: Record<string, unknown>): boolean {
+  const nativeBrand = catalogBrand(nativeProduct);
+  const modernBrand = catalogBrand(modernProduct);
+  if (nativeBrand && modernBrand && nativeBrand !== modernBrand) return false;
+  const nativeName = normalizeCatalogName(nativeProduct.name);
+  const modernName = normalizeCatalogName(modernProduct.name);
+  const nativePayload = parseNativePayload<NativePayload>(String(nativeProduct.payload_json || ''), {});
+  const aliases = [nativeName, ...(Array.isArray(nativePayload.aliases) ? nativePayload.aliases.map(normalizeCatalogName) : [])].filter(Boolean);
+  return aliases.some((alias) => alias === modernName || alias.includes(modernName) || modernName.includes(alias));
 }
 
 function mergeUnifiedSpecifications(
@@ -488,7 +517,7 @@ function mergeUnifiedSpecifications(
   const aliases = [nativeName, ...(Array.isArray(nativePayload.aliases) ? nativePayload.aliases.map(normalizeCatalogName) : [])].filter(Boolean);
   const matches = modernProducts.filter((product) => {
     const candidate = normalizeCatalogName(product.name);
-    const matched = aliases.some((alias) => alias === candidate || alias.includes(candidate) || candidate.includes(alias));
+    const matched = modernProductBelongsToNative(nativeProduct, product);
     const owner = modernProductOwners?.get(String(product.id));
     return matched && (!modernProductOwners || owner === String(nativeProduct.id) || !owner);
   });
@@ -661,14 +690,13 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
       compatibilityByProduct.set(productKey, [...(compatibilityByProduct.get(productKey) || []), item]);
     }
   }
-  const assignedModernSkuIds = new Set<string>();
   const products = results.filter((row) => !catalogProductHidden(row.name, catalogBrand(row))).map((row) => {
+    const seenSpecificationIds = new Set<string>();
     const specifications = mergeUnifiedSpecifications(row, specsByProduct.get(row.id) || [], modernProducts.results, modernSkus.results, modernProductOwners)
       .filter((specification) => {
-        if (specification.source !== 'product_skus') return true;
-        const skuId = String(specification.id || '');
-        if (assignedModernSkuIds.has(skuId)) return false;
-        assignedModernSkuIds.add(skuId);
+        const specificationId = String(specification.id || '');
+        if (!specificationId || seenSpecificationIds.has(specificationId)) return false;
+        seenSpecificationIds.add(specificationId);
         return true;
       });
     return {
@@ -705,12 +733,12 @@ async function getNativeProducts(url: URL, env: Env, request?: Request): Promise
       needs_verification: Boolean(product.needs_verification),
     };
     const syntheticRow = { id: String(product.id), name: String(product.name || ''), category: String(product.form || product.brand || ''), payload_json: JSON.stringify(payload) };
+    const seenSpecificationIds = new Set<string>();
     const specifications = mergeUnifiedSpecifications(syntheticRow, [], modernProducts.results, modernSkus.results, modernProductOwners)
       .filter((specification) => {
-        if (specification.source !== 'product_skus') return true;
-        const skuId = String(specification.id || '');
-        if (assignedModernSkuIds.has(skuId)) return false;
-        assignedModernSkuIds.add(skuId);
+        const specificationId = String(specification.id || '');
+        if (!specificationId || seenSpecificationIds.has(specificationId)) return false;
+        seenSpecificationIds.add(specificationId);
         return true;
       });
     return { ...sanitizeProductPayload(payload, viewerRole), id: syntheticRow.id, name: catalogProductDisplayName(syntheticRow.name, catalogBrand(product)), category: syntheticRow.category, brand: catalogBrand(product), source_type: product.source_type, specifications, sku_count: specifications.length, pesticide_compat: [] };
@@ -741,14 +769,39 @@ async function getSourceDocuments(url: URL, env: Env): Promise<Response> {
     nodesStatement.all<Record<string, unknown>>(),
     env.DB.prepare('SELECT id, source_url, asset_key, content_type, status, sort_order FROM source_document_assets WHERE document_id = ? ORDER BY sort_order').bind(documentId).all<Record<string, unknown>>(),
   ]);
-  return json({ document, nodes: nodes.results.map((node) => ({ ...node, image_urls: parseJson(String(node.image_urls_json || '[]'), []) })), assets: assets.results }, {}, publicApiHeaders);
+  const rawNodes = nodes.results;
+  const byId = new Map(rawNodes.map((candidate) => [String(candidate.id), candidate]));
+  const nodeRows = rawNodes.map((node) => {
+    const path: string[] = [];
+    let current: Record<string, unknown> | undefined = node;
+    while (current) {
+      path.push(String(current.text_content || ''));
+      const parentId = String(current.parent_id || '');
+      current = parentId ? byId.get(parentId) : undefined;
+    }
+    const joinedPath = path.reverse().join(' / ');
+    const isPesticide = /农药分类|农药禁用|生物制剂|化学制剂|农药科普|农药知识/.test(joinedPath);
+    const isCrop = /果树|蔬菜|主粮|粮油|糖料|药材|盆景|景观|苗木|花卉|山茶|茶树|病害|虫害|病虫/.test(joinedPath);
+    const cropLabel = [...path].reverse().find((part) => /^2\.[1-6]\.\d+\s*/.test(part)) || path.find((part) => /^2\.[1-6]\s*/.test(part)) || path.find((part) => /果树|蔬菜|主粮|药材|盆景|景观|苗木|花卉|山茶|茶树/.test(part)) || '';
+    return {
+      ...node,
+      image_urls: parseJson(String(node.image_urls_json || '[]'), []),
+      source_kind: isPesticide ? 'pesticide' : isCrop ? 'crop' : 'other',
+      crop_label: cropLabel.replace(/^2\.[1-6](?:\.\d+)?\s*/, '').trim(),
+      source_path: joinedPath,
+    };
+  });
+  return json({ document, nodes: nodeRows, assets: assets.results }, {}, publicApiHeaders);
 }
 
 async function getSourceDocumentAsset(env: Env, assetId: string): Promise<Response> {
-  const asset = await env.DB.prepare('SELECT id, source_url, asset_key, content_type FROM source_document_assets WHERE id = ?').bind(assetId).first<{ id: string; source_url: string; asset_key: string; content_type: string }>();
+  const asset = await env.DB.prepare('SELECT id, source_url, asset_key, content_type, status FROM source_document_assets WHERE id = ?').bind(assetId).first<{ id: string; source_url: string; asset_key: string; content_type: string; status: string }>();
   if (!asset) return new Response('Not found', { status: 404 });
   const cached = await env.PRODUCT_ASSETS.get(asset.asset_key);
-  if (cached) return new Response(cached.body, { headers: { 'content-type': cached.httpMetadata?.contentType || asset.content_type || 'image/*', 'cache-control': 'public, max-age=31536000, immutable' } });
+  if (cached) {
+    if (asset.status !== 'cached') await env.DB.prepare('UPDATE source_document_assets SET status = ?, content_type = ? WHERE id = ?').bind('cached', cached.httpMetadata?.contentType || asset.content_type || 'image/*', asset.id).run();
+    return new Response(cached.body, { headers: { 'content-type': cached.httpMetadata?.contentType || asset.content_type || 'image/*', 'cache-control': 'public, max-age=31536000, immutable' } });
+  }
   if (!/^https:\/\/api2\.mubu\.com\//i.test(asset.source_url)) return new Response('Blocked source', { status: 403 });
   const upstream = await fetch(asset.source_url);
   if (!upstream.ok || !upstream.body) return new Response('Asset unavailable', { status: 502 });
@@ -764,9 +817,12 @@ async function getNativePesticides(url: URL, env: Env, request?: Request): Promi
   const query = url.searchParams.get('query')?.trim() || '';
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '100'), 1), 10000);
   const pattern = '%' + query + '%';
+  const popularFallback = ['多菌灵', '百菌清', '代森锰锌', '吡虫啉', '啶虫脒', '阿维菌素', '螺虫乙酯', '噻虫嗪', '高效氯氰菊酯', '氯溴异氰尿酸', '戊唑醇', '苯醚甲环唑', '嘧菌酯', '霜脲氰', '芸苔素内酯', '磷酸二氢钾', '赤霉酸', '乙烯利'];
+  const popularCase = popularFallback.map((component, index) => 'WHEN p.component = ' + sqlLiteral(component) + ' THEN ' + index).join(' ');
+  const popularityOrder = 'CASE WHEN COALESCE(s.search_count, 0) > 0 THEN 0 ELSE 1 END, COALESCE(s.search_count, 0) DESC, CASE ' + popularCase + ' ELSE 9999 END, p.component';
   const statement = query
     ? env.DB.prepare('SELECT p.component, p.payload_json FROM legacy_pesticides p LEFT JOIN pesticide_search_stats s ON s.component = p.component WHERE p.component LIKE ? OR p.payload_json LIKE ? ORDER BY COALESCE(s.search_count, 0) DESC, COALESCE(s.select_count, 0) DESC, p.component LIMIT ?').bind(pattern, pattern, limit)
-    : env.DB.prepare('SELECT p.component, p.payload_json FROM legacy_pesticides p LEFT JOIN pesticide_search_stats s ON s.component = p.component ORDER BY COALESCE(s.search_count, 0) DESC, COALESCE(s.select_count, 0) DESC, COALESCE(s.last_selected_at, "") DESC, p.component LIMIT ?').bind(limit);
+    : env.DB.prepare('SELECT p.component, p.payload_json FROM legacy_pesticides p LEFT JOIN pesticide_search_stats s ON s.component = p.component ORDER BY ' + popularityOrder + ' LIMIT ?').bind(limit);
   const { results } = await statement.all<{ component: string; payload_json: string }>();
   if (query && results.length) {
     const timestamp = now();
