@@ -45,6 +45,7 @@ import { MindMapView } from './MindMapView';
 import { ImageUploader } from './ImageUploader';
 import { ImageLightboxModal } from './ImageLightboxModal';
 import { TargetPlanConfigurator } from './TargetPlanConfigurator';
+import { SourcePestGraphView } from './SourcePestGraphView';
 
 interface CropDetailViewProps {
   crop: Crop;
@@ -468,7 +469,7 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
               }`}
             >
               <Bug className="w-4 h-4 text-amber-600" />
-              <span>病虫害防治图谱与解决方案 ({pests.length})</span>
+               <span>病虫害防治图谱与解决方案</span>
             </button>
 
 
@@ -775,7 +776,7 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-3xl border border-slate-200 gap-3 shadow-xs">
             <div>
               <h3 className="text-sm font-black text-slate-900">
-                {crop.name} 常见病虫害防治图谱 ({pests.length} 种)
+                 {crop.name} 病虫害防治图谱
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
                 收录发病症状、危害等级、大类归属、化学农药推荐与水肥协同抗逆技术
@@ -855,7 +856,17 @@ export const CropDetailView: React.FC<CropDetailViewProps> = ({
             })}
           </div>
 
-          {/* Pest Cards Grid */}
+           <SourcePestGraphView crop={crop} />
+
+           <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-5">
+             <div>
+               <h3 className="text-sm font-black text-slate-900">标准化病虫害档案（可编辑）</h3>
+               <p className="mt-0.5 text-xs text-slate-400">平台原有的标准档案继续保留，HTML 整理后的图文卡片见上方资料库。</p>
+             </div>
+             <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{pests.length} 条标准档案</span>
+           </div>
+
+           {/* Pest Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPests.map((pest) => {
               const primaryImg = pest.images[0] || 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80';

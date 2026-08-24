@@ -600,8 +600,6 @@ export const PestGalleryView: React.FC<PestGalleryViewProps> = ({
         </div>
       </div>
 
-      <SourceKnowledgePanel crop={crops.find((crop) => crop.id === selectedCropId)} nodes={sourceNodes} assets={sourceAssets} loading={sourceLoading} />
-
       {/* Grid of Pest Cards */}
       {filteredPests.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4 shadow-xs">

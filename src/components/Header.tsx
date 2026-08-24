@@ -278,7 +278,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="hidden sm:inline-flex items-center px-2.5 py-1 text-[11px] font-mono font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
           title="点击查看系统更新日志"
         >
-          0.0.4
+          0.0.5
         </button>
 
         {currentUser ? (

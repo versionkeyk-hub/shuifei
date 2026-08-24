@@ -2,6 +2,18 @@ import { VersionLog } from '../types';
 
 export const SYSTEM_VERSION_LOGS: VersionLog[] = [
   {
+    version: '0.0.5',
+    releaseDate: '2026-08-24',
+    title: 'HTML 病虫害资料卡片化归档',
+    isCurrent: true,
+    changes: [
+      '将导入的作物病虫害 HTML 资料按作物和病虫害问题整理为独立图文卡片。',
+      '卡片展示对应图片、识别症状、发生原因与规律、预防管理、推荐用药和水肥协同内容。',
+      '没有图片的病虫害正常显示文字卡片；有多张图片的卡片支持缩略图和放大查看。',
+      '完整技术资料保留在卡片内展开区，平台原有标准化档案继续单独保留并可编辑。'
+    ]
+  },
+  {
     version: '0.0.4',
     releaseDate: '2026-08-24',
     title: '产品族同步、技术资料归档与方案产品展示优化',
